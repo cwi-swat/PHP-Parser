@@ -22,4 +22,4 @@ class B {
 }
 -----
 script([traitDef(trait("A",[method("a",{\public()},false,[],[])])),
-classDef(class("B",{},noName(),[],[traitUse([name("C")],[]),traitUse([name("D")],[traitAlias(noName(),"a",{  },someName(name("b"))),traitAlias(noName(),"c",{ },someName(name("d"))),traitAlias(noName(),"e",{  },noName())]),traitUse([name("E"),name("F"),name("G")],[traitPrecedence(name("E"),"a",[name("F"),name("G")]),traitAlias(someName(name("E")),"b",{  },someName(name("c"))),traitAlias(someName(name("E")),"d",{ },someName(name("e"))),traitAlias(someName(name("E")),"f",{  },noName())])]))])
+classDef(class("B",{},noName(),[],[traitUse([name("C")],[]),traitUse([name("D")],[traitAlias(noName(),"a",{  },someName(name("b"))),traitAlias(noName(),"c",{ },someName(name("d"))),traitAlias(noName(),"e",{  },noName())]),traitUse([name("E"),name("F"),name("G")],[traitPrecedence(someName(name("E")),"a",{name("F"),name("G")}),traitAlias(someName(name("E")),"b",{  },someName(name("c"))),traitAlias(someName(name("E")),"d",{ },someName(name("e"))),traitAlias(someName(name("E")),"f",{  },noName())])]))])

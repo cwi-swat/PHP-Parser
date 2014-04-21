@@ -52,8 +52,8 @@ class AST2RascalTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame(array(0 => "Test2", "Dummy"), $namePartsDummy2);
 
         // test printer output
-        $this->assertTrue(1 === substr_count($prePrint, "Test2\\Dummy"));
-        $this->assertTrue(2 === substr_count($postPrint, "Test2\\Dummy"));
+        $this->assertTrue(1 === substr_count($prePrint, "Test2::Dummy"));
+        $this->assertTrue(2 === substr_count($postPrint, "Test2::Dummy"));
 
         $this->assertTrue(2 === substr_count($prePrint, "Dummy2"));
         $this->assertTrue(1 === substr_count($postPrint, "Dummy2"));

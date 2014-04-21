@@ -57,18 +57,30 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
         return array(
             // namespace tests
             array(
-                '<?php namespace ns1 {} namespace ns2 {}',
+                '<?php namespace ns1 {} namespace ns2\ns3 {} namespace {}',
                 array(
                     '@decl=|php+namespace:///ns1|',
-                    '@decl=|php+namespace:///ns2|',
+                    '@decl=|php+namespace:///ns2::ns3|',
+                    '@decl=|php+namespace:///|',
                 )
             ),
             array(
-                '<?php namespace ns1 {} namespace ns2 {} namespace {}',
+                '<?php namespace ns1; $one=1; namespace ns2\ns3; $two=2;',
                 array(
                     '@decl=|php+namespace:///ns1|',
-                    '@decl=|php+namespace:///ns2|',
-                    '@decl=|php+namespace:///-|',
+                    '@decl=|php+namespace:///ns2::ns3|',
+                    '@decl=|php+variable:///ns1/one|',
+                    '@decl=|php+variable:///ns2::ns3/two|',
+                )
+            ),
+            array(
+                '<?php namespace ns1; use \ns2\ns3\c3 as c30; $c30 = new c30; namespace ns2\ns3; trait t3 {} class c3 {}',
+                array(
+                    '@decl=|php+namespace:///ns1|',
+                    '@decl=|php+namespace:///ns2::ns3|',
+                    '@decl=|php+variable:///ns1/c30|',
+                    '@decl=|php+trait:///ns2::ns3/t3|',
+                    '@decl=|php+class:///ns2::ns3/c3|',
                 )
             ),
 
@@ -78,10 +90,21 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
                 array(
                     '@decl=|php+class:///ns1/cl1|',
                     '@decl=|php+namespace:///ns1|',
-                    '@decl=|php+class:///ns1\\\\subNs/cl2|',
-                    '@decl=|php+namespace:///ns1\\\\subNs|',
-                    '@decl=|php+class:///ns1\\\\subNs\\\\subSubNs/cl3|',
-                    '@decl=|php+namespace:///ns1\\\\subNs\\\\subSubNs|',
+                    '@decl=|php+class:///ns1::subNs/cl2|',
+                    '@decl=|php+namespace:///ns1::subNs|',
+                    '@decl=|php+class:///ns1::subNs::subSubNs/cl3|',
+                    '@decl=|php+namespace:///ns1::subNs::subSubNs|',
+                )
+            ),
+            array( // same as the test above, except for curly braces around namespaces
+                'code' => '<?php namespace ns1; class cl1 {} namespace ns1\subNs; class cl2 {} namespace ns1\subNs\subSubNs; class cl3 {}',
+                array(
+                    '@decl=|php+class:///ns1/cl1|',
+                    '@decl=|php+namespace:///ns1|',
+                    '@decl=|php+class:///ns1::subNs/cl2|',
+                    '@decl=|php+namespace:///ns1::subNs|',
+                    '@decl=|php+class:///ns1::subNs::subSubNs/cl3|',
+                    '@decl=|php+namespace:///ns1::subNs::subSubNs|',
                 )
             ),
             array(
@@ -90,18 +113,30 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
                     '@decl=|php+namespace:///ns1|',
                     '@decl=|php+class:///ns1/Class1|',
                     '@decl=|php+method:///ns1/Class1/__construct|',
-                    '@decl=|php+variable:///ns1/Class1/__construct/-/cl2|',
+                    '@decl=|php+variable:///ns1/Class1/__construct/cl2|',
                 )
             ),
 
             // interface test
             array(
-                'code' => '<?php namespace ns1 { interface if1 {} } namespace ns2 { interface if1 {} }',
+                'code' => '<?php interface if1 { const c=1; public function f($id);}',
                 array(
-                    '@decl=|php+interface:///ns1/if1|',
+                    '@decl=|php+interface:///if1|',
+                    '@decl=|php+constant:///if1/c|',
+                    '@decl=|php+method:///if1/f|',
+                    '@decl=|php+parameter:///if1/f/id|',
+                )
+            ),
+            array(
+                'code' => '<?php namespace ns1 { interface if1 {} } namespace ns2 { interface if1 { const c=1; public function f($id);} }',
+                array(
                     '@decl=|php+namespace:///ns1|',
-                    '@decl=|php+interface:///ns2/if1|',
+                    '@decl=|php+interface:///ns1/if1|',
                     '@decl=|php+namespace:///ns2|',
+                    '@decl=|php+interface:///ns2/if1|',
+                    '@decl=|php+constant:///ns2/if1/c|',
+                    '@decl=|php+method:///ns2/if1/f|',
+                    '@decl=|php+parameter:///ns2/if1/f/id|',
                 )
             ),
 
@@ -120,10 +155,10 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php class cl1 { public function m1() {} protected function m2() {} private function m3() {} }',
                 array(
-                    '@decl=|php+method:///-/cl1/m1|',
-                    '@decl=|php+method:///-/cl1/m2|',
-                    '@decl=|php+method:///-/cl1/m3|',
-                    '@decl=|php+class:///-/cl1|',
+                    '@decl=|php+method:///cl1/m1|',
+                    '@decl=|php+method:///cl1/m2|',
+                    '@decl=|php+method:///cl1/m3|',
+                    '@decl=|php+class:///cl1|',
                 )
             ),
             array( // inside namespace
@@ -141,10 +176,10 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php class cl1 { public $m1; protected $m2; private $m3; }',
                 array(
-                    '@decl=|php+field:///-/cl1/m1|',
-                    '@decl=|php+field:///-/cl1/m2|',
-                    '@decl=|php+field:///-/cl1/m3|',
-                    '@decl=|php+class:///-/cl1|',
+                    '@decl=|php+field:///cl1/m1|',
+                    '@decl=|php+field:///cl1/m2|',
+                    '@decl=|php+field:///cl1/m3|',
+                    '@decl=|php+class:///cl1|',
                 )
             ),
             array( // inside namespace
@@ -162,51 +197,66 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php $one=1; class cl1 { } $two=2;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+class:///-/cl1|',
-                    '@decl=|php+variable:///-/-/-/-/two|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+class:///cl1|',
+                    '@decl=|php+variable:///two|',
                 )
             ),
             array(
                 'code' => '<?php $one=1; class cl1 { public function x() { $three=3; } }',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+variable:///-/cl1/x/-/three|',
-                    '@decl=|php+method:///-/cl1/x|',
-                    '@decl=|php+class:///-/cl1|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+variable:///cl1/x/three|',
+                    '@decl=|php+method:///cl1/x|',
+                    '@decl=|php+class:///cl1|',
                 )
             ),
             array(
                 'code' => '<?php $one=1; class cl1 { public function x() { $two=2; function y() { $three=3; } } }',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+variable:///-/cl1/x/-/two|',
-                    '@decl=|php+variable:///-/cl1/x/y/three|',
-                    '@decl=|php+function:///-/cl1/x/y|',
-                    '@decl=|php+method:///-/cl1/x|',
-                    '@decl=|php+class:///-/cl1|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+variable:///cl1/x/two|',
+                    '@decl=|php+variable:///y/three|',
+                    '@decl=|php+function:///y|',
+                    '@decl=|php+method:///cl1/x|',
+                    '@decl=|php+class:///cl1|',
                 )
             ),
             array(
                 'code' => '<?php $one=1; interface cl1 { public function x() { $two=2; function y() { $three=3; } } }',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+variable:///-/cl1/x/-/two|',
-                    '@decl=|php+variable:///-/cl1/x/y/three|',
-                    '@decl=|php+function:///-/cl1/x/y|',
-                    '@decl=|php+method:///-/cl1/x|',
-                    '@decl=|php+interface:///-/cl1|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+variable:///cl1/x/two|',
+                    '@decl=|php+variable:///y/three|',
+                    '@decl=|php+function:///y|',
+                    '@decl=|php+method:///cl1/x|',
+                    '@decl=|php+interface:///cl1|',
                 )
             ),
             array(
                 'code' => '<?php $one=1; trait cl1 { public function x() { $two=2; function y() { $three=3; } } }',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+variable:///-/cl1/x/-/two|',
-                    '@decl=|php+variable:///-/cl1/x/y/three|',
-                    '@decl=|php+function:///-/cl1/x/y|',
-                    '@decl=|php+method:///-/cl1/x|',
-                    '@decl=|php+trait:///-/cl1|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+variable:///cl1/x/two|',
+                    '@decl=|php+variable:///y/three|',
+                    '@decl=|php+function:///y|',
+                    '@decl=|php+method:///cl1/x|',
+                    '@decl=|php+trait:///cl1|',
+                )
+            ),
+            array(
+                'code' => '<?php function One() { $_1=1; function Two() { $_2=2; class Three { public $_3=3; public function Four() { $_4=4; function Five() {$_5=5;} } } } }',
+                array(
+                    '@decl=|php+function:///One|',
+                    '@decl=|php+function:///Two|',
+                    '@decl=|php+class:///Three|',
+                    '@decl=|php+method:///Three/Four|',
+                    '@decl=|php+function:///Five|',
+                    '@decl=|php+variable:///One/_1|',
+                    '@decl=|php+variable:///Two/_2|',
+                    '@decl=|php+field:///Three/_3|',
+                    '@decl=|php+variable:///Three/Four/_4|',
+                    '@decl=|php+variable:///Five/_5|',
                 )
             ),
 
@@ -214,43 +264,54 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php $one=1; function two ($three) { $four=4; } $five=5;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+parameter:///-/-/-/two/three|',
-                    '@decl=|php+variable:///-/-/-/two/four|',
-                    '@decl=|php+function:///-/-/-/two|',
-                    '@decl=|php+variable:///-/-/-/-/five|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+parameter:///two/three|',
+                    '@decl=|php+variable:///two/four|',
+                    '@decl=|php+function:///two|',
+                    '@decl=|php+variable:///five|',
                 )
             ),
             array(
                 'code' => '<?php $one=1; class two { public function three ($four) { function five ($six) { $seven=7; } $eight=8; } } $nine=9;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/one|',
-                    '@decl=|php+parameter:///-/two/three/-/four|',
-                    '@decl=|php+parameter:///-/two/three/five/six|',
-                    '@decl=|php+variable:///-/two/three/five/seven|',
-                    '@decl=|php+function:///-/two/three/five|',
-                    '@decl=|php+variable:///-/two/three/-/eight|',
-                    '@decl=|php+method:///-/two/three|',
-                    '@decl=|php+class:///-/two|',
-                    '@decl=|php+variable:///-/-/-/-/nine|',
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+class:///two|',
+                    '@decl=|php+method:///two/three|',
+                    '@decl=|php+parameter:///two/three/four|',
+                    '@decl=|php+function:///five|',
+                    '@decl=|php+parameter:///five/six|',
+                    '@decl=|php+variable:///five/seven|',
+                    '@decl=|php+variable:///two/three/eight|',
+                    '@decl=|php+variable:///nine|',
+                )
+            ),
+            // anonymous function
+            array(
+                'code' => '<?php $greet = function($n) { echo $n; };',
+                array(
+                    '@decl=|php+variable:///greet|',
+                    // closure are not part of the declarations (yet)
                 )
             ),
             array(
-                'code' => '<?php function f ($a, $b, array $c) {}',
+                'code' => '<?php function f ($a=true, $b, array $c) {}',
                 array(
-                    '@decl=|php+parameter:///-/-/-/f/a|',
-                    '@decl=|php+parameter:///-/-/-/f/b|',
-                    '@decl=|php+parameter:///-/-/-/f/c|',
-                    '@decl=|php+function:///-/-/-/f|',
+                    '@decl=|php+parameter:///f/a|',
+                    '@decl=|php+parameter:///f/b|',
+                    '@decl=|php+parameter:///f/c|',
+                    '@decl=|php+function:///f|',
                 )
             ),
 
             // variable declarations
             array(
-                'code' => '<?php $a = 1; $b = $a;',
+                'code' => '<?php $a = 1; $b = $a; function f ($p) { $v=4; }',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/a|',
-                    '@decl=|php+variable:///-/-/-/-/b|',
+                    '@decl=|php+variable:///a|',
+                    '@decl=|php+variable:///b|',
+                    '@decl=|php+function:///f|',
+                    '@decl=|php+parameter:///f/p|',
+                    '@decl=|php+variable:///f/v|',
                 )
             ),
             /**
@@ -261,7 +322,7 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
                 "PhpParser\Node\Expr\AssignOp\Concat"       .=
                 "PhpParser\Node\Expr\AssignOp\Div"          /=
                 "PhpParser\Node\Expr\AssignOp\Minus"        -=
-                "PhpParser\Node\Expr\AssignOp\Mod"          \=
+                "PhpParser\Node\Expr\AssignOp\Mod"          %=
                 "PhpParser\Node\Expr\AssignOp\Mul"          *=
                 "PhpParser\Node\Expr\AssignOp\Plus"         +=
                 "PhpParser\Node\Expr\AssignOp\ShiftLeft"    <<=
@@ -270,17 +331,39 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php $a &= 1; $b |= 1; $c ^= 1; $d .= 1; $e /= 1; $f -= 1; $g %= 1; $h *= 1; $i += 1; $j <<= 1; $k >>= 1;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/a|',
-                    '@decl=|php+variable:///-/-/-/-/b|',
-                    '@decl=|php+variable:///-/-/-/-/c|',
-                    '@decl=|php+variable:///-/-/-/-/d|',
-                    '@decl=|php+variable:///-/-/-/-/e|',
-                    '@decl=|php+variable:///-/-/-/-/f|',
-                    '@decl=|php+variable:///-/-/-/-/g|',
-                    '@decl=|php+variable:///-/-/-/-/h|',
-                    '@decl=|php+variable:///-/-/-/-/i|',
-                    '@decl=|php+variable:///-/-/-/-/j|',
-                    '@decl=|php+variable:///-/-/-/-/k|',
+                    '@decl=|php+variable:///a|',
+                    '@decl=|php+variable:///b|',
+                    '@decl=|php+variable:///c|',
+                    '@decl=|php+variable:///d|',
+                    '@decl=|php+variable:///e|',
+                    '@decl=|php+variable:///f|',
+                    '@decl=|php+variable:///g|',
+                    '@decl=|php+variable:///h|',
+                    '@decl=|php+variable:///i|',
+                    '@decl=|php+variable:///j|',
+                    '@decl=|php+variable:///k|',
+                )
+            ),
+            array(
+                'code' => '<?php $a++; ++$b; $c--; --$d;',
+                array(
+                    '@decl=|php+variable:///a|',
+                    '@decl=|php+variable:///b|',
+                    '@decl=|php+variable:///c|',
+                    '@decl=|php+variable:///d|',
+                )
+            ),
+
+            // conditional declarations
+            array(
+                'code' => '<?php if (true) { $one=1; } if (1) { function two ($three) { $four=4; } } if (1) { class X {} } else { class X {} } ',
+                array(
+                    '@decl=|php+variable:///one|',
+                    '@decl=|php+parameter:///two/three|',
+                    '@decl=|php+variable:///two/four|',
+                    '@decl=|php+function:///two|',
+                    '@decl=|php+class:///X|',
+                    '@decl=|php+class:///X|',
                 )
             ),
 
@@ -289,21 +372,21 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php $c="CEE"; $a = "c"; $a = $$a;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/c|',
-                    '@decl=|php+variable:///-/-/-/-/a|',
-                    '@decl=|php+variable:///-/-/-/-/a|',
+                    '@decl=|php+variable:///c|',
+                    '@decl=|php+variable:///a|',
+                    '@decl=|php+variable:///a|',
                 )
             ),
             array(
                 'code' => '<?php $$a = 1;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/a|',
+                    '@decl=|php+variable:///a|', // this is not right!
                 )
             ),
             array(
                 'code' => '<?php $$$a = 1;',
                 array(
-                    '@decl=|php+variable:///-/-/-/-/a|',
+                    '@decl=|php+variable:///a|', // this is not right
                 )
             ),
 
@@ -311,8 +394,8 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php  eval("\$a = \'a\';"); $b = $a;',
                 array(
-                    //'@decl=|php+variable:///////a|', GETTING DECLARATIONS FROM EVAL DOES NOT WORK!!!
-                    '@decl=|php+variable:///-/-/-/-/b|',
+                    //'@decl=|php+variable:///a|', GETTING DECLARATIONS FROM EVAL DOES NOT WORK!!!
+                    '@decl=|php+variable:///b|',
                 )
             ),
         );
@@ -325,6 +408,7 @@ class DeclarationsTest extends \PHPUnit_Framework_TestCase
     private function parseAndValidateResults($code, array $expectedDeclarations)
     {
         $stmtStr = $this->codeToRascalAST($code);
+        $stmtStr = stripslashes($stmtStr);
 
         if (preg_match_all('/(@decl=\|([^|]*)?\|)/', $stmtStr, $matches)) {
             $declarations = $matches[1];

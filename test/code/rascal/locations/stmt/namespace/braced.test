@@ -9,5 +9,5 @@ namespace {
     bar;
 }
 -----
-script([namespace(someName(name("Foo\Bar")[@at=|file:///tmp/BracedNamespaces.php|(17,7,<3,0>,<3,0>)]),[exprstmt(fetchConst(name("foo")[@at=|file:///tmp/BracedNamespaces.php|(31,3,<4,0>,<4,0>)])[@at=|file:///tmp/BracedNamespaces.php|(31,3,<4,0>,<4,0>)])[@at=|file:///tmp/BracedNamespaces.php|(31,4,<4,0>,<4,0>)]])[@at=|file:///tmp/BracedNamespaces.php|(7,30,<3,0>,<3,0>)],
+script([namespace(someName(name("Foo::Bar")[@at=|file:///tmp/BracedNamespaces.php|(17,7,<3,0>,<3,0>)]),[exprstmt(fetchConst(name("foo")[@at=|file:///tmp/BracedNamespaces.php|(31,3,<4,0>,<4,0>)])[@at=|file:///tmp/BracedNamespaces.php|(31,3,<4,0>,<4,0>)])[@at=|file:///tmp/BracedNamespaces.php|(31,4,<4,0>,<4,0>)]])[@at=|file:///tmp/BracedNamespaces.php|(7,30,<3,0>,<3,0>)],
 namespace(noName(),[exprstmt(fetchConst(name("bar")[@at=|file:///tmp/BracedNamespaces.php|(54,3,<7,0>,<7,0>)])[@at=|file:///tmp/BracedNamespaces.php|(54,3,<7,0>,<7,0>)])[@at=|file:///tmp/BracedNamespaces.php|(54,4,<7,0>,<7,0>)]])[@at=|file:///tmp/BracedNamespaces.php|(38,22,<6,0>,<6,0>)]])

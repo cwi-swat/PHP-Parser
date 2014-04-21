@@ -8,6 +8,6 @@ A\B;
 namespace\A\B;
 -----
 script([exprstmt(fetchConst(name("A"))),
-exprstmt(fetchConst(name("A\B"))),
-exprstmt(fetchConst(name("A\B"))),
-exprstmt(fetchConst(name("A\B")))])
+exprstmt(fetchConst(name("A::B"))),
+exprstmt(fetchConst(name("A::B"))),
+exprstmt(fetchConst(name("A::B")))])

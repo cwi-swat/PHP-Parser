@@ -10,8 +10,8 @@ use F\G as H, J;
 use \A;
 use \A as B;
 -----
-script([use([use(name("A\B"),someName(name("B")))]),
-use([use(name("C\D"),someName(name("E")))]),
-use([use(name("F\G"),someName(name("H"))),use(name("J"),someName(name("J")))]),
+script([use([use(name("A::B"),someName(name("B")))]),
+use([use(name("C::D"),someName(name("E")))]),
+use([use(name("F::G"),someName(name("H"))),use(name("J"),someName(name("J")))]),
 use([use(name("A"),someName(name("A")))]),
 use([use(name("A"),someName(name("B")))])])

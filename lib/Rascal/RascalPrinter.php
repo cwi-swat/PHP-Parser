@@ -21,6 +21,8 @@ class RascalPrinter extends BasePrinter
 
     private $insideTrait = false;
 
+    private $insideFunction = false;
+
     private $currentFunction = "";
 
     private $currentClass = "";
@@ -68,12 +70,12 @@ class RascalPrinter extends BasePrinter
 
     private function addScopeInformation()
     {
-        $ns = empty($this->currentNamespace) ? '-' : $this->currentNamespace;
-        $cl = empty($this->currentClass) ? '-' : $this->currentClass;
+        $ns = $this->currentNamespace;
+        $cl = $this->currentClass;
         $cl = empty($this->currentInterface) ? $cl : $this->currentInterface;
-        $cl = empty($this->currentTrait) ? $cl : $this->currentTrait;
-        $mt = empty($this->currentMethod) ? '-' : $this->currentMethod;
-        $fn = empty($this->currentFunction) ? '-' : $this->currentFunction;
+        $cl = empty($this->currentTrait)     ? $cl : $this->currentTrait;
+        $mt = $this->currentMethod;
+        $fn = $this->currentFunction;
         return sprintf("@scope=scope(\"%s\",\"%s\",\"%s\",\"%s\")",
             $this->rascalizeString($ns),
             $this->rascalizeString($cl),
@@ -91,41 +93,47 @@ class RascalPrinter extends BasePrinter
         $method = $this->currentMethod;
         $function = $this->currentFunction;
 
-        $tempNs = str_replace('\\', '/', $namespace);
-        $class= str_replace("{$tempNs}", '', str_replace('\\', '/', $class));
-        $trait= str_replace("{$tempNs}", '', str_replace('\\', '/', $trait));
-        $interface = str_replace("{$tempNs}", '', str_replace('\\', '/', $interface));
+        // define the namespace name with a trailing slash, or leave empty for global namespace
+        $ns = empty($namespace) ? '' : $namespace . "/";
 
         if (empty($class) && (!empty($trait) || !empty($interface))) {
             // use trait or interface as className when there is a currentTrait or currentInterface but no currentClass
             $class = !empty($trait) ? $trait : $interface;
         }
 
-        // if they are empty, define some invalid name
-        $namespace = empty($namespace) ? '-' : $namespace;
-        $class = empty($class) ? '-' : $class;
-        $method = empty($method) ? '-' : $method;
-        $function = empty($function) ? '-' : $function;
-
         $decl = "@decl=|php+%s:///%s|";
         if ($node instanceof \PhpParser\Node\Stmt\Namespace_)
             return $this->rascalizeString(sprintf($decl, "namespace", $namespace));
         else if ($node instanceof \PhpParser\Node\Stmt\Class_)
-            return $this->rascalizeString(sprintf($decl, "class", $namespace . "/" . $class));
+            return $this->rascalizeString(sprintf($decl, "class", $ns . $class));
         else if ($node instanceof \PhpParser\Node\Stmt\Interface_)
-            return $this->rascalizeString(sprintf($decl, "interface", $namespace . "/" . $class));
+            return $this->rascalizeString(sprintf($decl, "interface", $ns . $class));
         else if ($node instanceof \PhpParser\Node\Stmt\Trait_)
-            return $this->rascalizeString(sprintf($decl, "trait", $namespace . "/" . $class));
+            return $this->rascalizeString(sprintf($decl, "trait", $ns . $class));
         else if ($node instanceof \PhpParser\Node\Stmt\PropertyProperty)
-            return $this->rascalizeString(sprintf($decl, "field", $namespace . "/" . $class . "/" . $node->name));
+            return $this->rascalizeString(sprintf($decl, "field", $ns . $class . "/" . $node->name));
+        else if ($node instanceof \PhpParser\Node\Const_)
+            return $this->rascalizeString(sprintf($decl, "constant", $ns . $class . "/" . $node->name));
         else if ($node instanceof \PhpParser\Node\Stmt\ClassMethod)
-            return $this->rascalizeString(sprintf($decl, "method", $namespace . "/" . $class . "/" . $method));
+            return $this->rascalizeString(sprintf($decl, "method", $ns . $class . "/" . $method));
         else if ($node instanceof \PhpParser\Node\Stmt\Function_)
-            return $this->rascalizeString(sprintf($decl, "function", $namespace . "/" . $class . "/" . $method . "/" . $function));
-        else if ($node instanceof \PhpParser\Node\Expr\Variable && $this->inAssignExpr && !$node->name instanceof \PhpParser\Node\Expr)
-            return $this->rascalizeString(sprintf($decl, "variable", $namespace . "/" . $class . "/" . $method . "/" . $function . "/" . $node->name));
-        else if ($node instanceof \PhpParser\Node\Param)
-            return $this->rascalizeString(sprintf($decl, "parameter", $namespace . "/" . $class . "/" . $method . "/" . $function . "/" . $node->name));
+            return $this->rascalizeString(sprintf($decl, "function", $ns . $function));
+        else if ($node instanceof \PhpParser\Node\Expr\Variable && $this->inAssignExpr && !$node->name instanceof \PhpParser\Node\Expr) {
+            // only declare variables that are inside an assign expression, and the name must not be an expression
+            // (we are not able to handle this, atleast for now)
+            if ($this->insideFunction) // function variable
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $function . "/" . $node->name));
+            else if ($this->currentMethod) // method variable
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $class . "/" . $method . "/" . $node->name));
+            else // global var
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $node->name));
+        }
+        else if ($node instanceof \PhpParser\Node\Param) {
+            if ($this->insideFunction) // function parameter
+                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $function . "/" . $node->name));
+            if ($this->currentMethod) // method parameter
+                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $class . "/" . $method . "/" . $node->name));
+        }
     }
 
     private function addLocationTag(\PhpParser\Node $node)
@@ -764,32 +772,34 @@ class RascalPrinter extends BasePrinter
 
     public function pprintPostDecExpr(\PhpParser\Node\Expr\PostDec $node)
     {
-        $operand = $this->pprint($node->var);
-        $fragment = "unaryOperation(" . $operand . ",postDec())";
-        $fragment .= $this->annotateASTNode($node);
-        return $fragment;
+        return $this->handleIncreaseDecreaseVarExpression($node, "postDec");
     }
 
     public function pprintPostIncExpr(\PhpParser\Node\Expr\PostInc $node)
     {
-        $operand = $this->pprint($node->var);
-        $fragment = "unaryOperation(" . $operand . ",postInc())";
-        $fragment .= $this->annotateASTNode($node);
-        return $fragment;
+        return $this->handleIncreaseDecreaseVarExpression($node, "postInc");
     }
 
     public function pprintPreDecExpr(\PhpParser\Node\Expr\PreDec $node)
     {
-        $operand = $this->pprint($node->var);
-        $fragment = "unaryOperation(" . $operand . ",preDec())";
-        $fragment .= $this->annotateASTNode($node);
-        return $fragment;
+        return $this->handleIncreaseDecreaseVarExpression($node, "preDec");
     }
 
     public function pprintPreIncExpr(\PhpParser\Node\Expr\PreInc $node)
     {
+        return $this->handleIncreaseDecreaseVarExpression($node, "preInc");
+    }
+
+    /**
+     * @param \PhpParser\Node\Expr\PostDec $node
+     * @return string
+     */
+    private function handleIncreaseDecreaseVarExpression(\PhpParser\Node\Expr $node, $operation)
+    {
+        $this->inAssignExpr = true;
         $operand = $this->pprint($node->var);
-        $fragment = "unaryOperation(" . $operand . ",preInc())";
+        $this->inAssignExpr = false;
+        $fragment = "unaryOperation(" . $operand . ",".$operation."())";
         $fragment .= $this->annotateASTNode($node);
         return $fragment;
     }
@@ -1202,6 +1212,9 @@ class RascalPrinter extends BasePrinter
         $priorMethod = $this->currentMethod;
         $this->currentMethod = $node->name;
 
+        $priorInsideFunction = $this->insideFunction;
+        $this->insideFunction = false;
+
         $body = array();
         if (null != $node->stmts)
             foreach ($node->stmts as $thestmt)
@@ -1233,6 +1246,7 @@ class RascalPrinter extends BasePrinter
         $fragment .= $this->annotateASTNode($node);
 
         $this->currentMethod = $priorMethod;
+        $this->insideFunction = $priorInsideFunction;
 
         return $fragment;
     }
@@ -1393,6 +1407,9 @@ class RascalPrinter extends BasePrinter
         $priorFunction = $this->currentFunction;
         $this->currentFunction = $node->name;
 
+        $priorInsideFunction = $this->insideFunction;
+        $this->insideFunction = true;
+
         $body = array();
         foreach ($node->stmts as $stmt)
             $body[] = $this->pprint($stmt);
@@ -1409,6 +1426,7 @@ class RascalPrinter extends BasePrinter
         $fragment .= $this->annotateASTNode($node);
 
         $this->currentFunction = $priorFunction;
+        $this->insideFunction = $priorInsideFunction;
 
         return $fragment;
     }
@@ -1742,7 +1760,13 @@ class RascalPrinter extends BasePrinter
         foreach ($node->insteadof as $item)
             $insteadOf[] = $this->pprint($item);
 
-        $fragment = "traitPrecedence(" . $this->pprint($node->trait) . ",\"" . $node->method . "\",[" . implode(",", $insteadOf) . "])";
+        if (null != $node->trait) {
+            $trait = "someName(" . $this->pprint($node->trait) . ")";
+        } else {
+            $trait = "noName()";
+        }
+
+        $fragment = "traitPrecedence(" . $trait . ",\"" . $node->method . "\",{" . implode(",", $insteadOf) . "})";
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
@@ -1771,7 +1795,6 @@ class RascalPrinter extends BasePrinter
 
         return $fragment;
     }
-
     public function pprintUnsetStmt(\PhpParser\Node\Stmt\Unset_ $node)
     {
         $vars = array();
@@ -1783,6 +1806,7 @@ class RascalPrinter extends BasePrinter
 
         return $fragment;
     }
+
     public function pprintUseStmt(\PhpParser\Node\Stmt\Use_ $node)
     {
         $uses = array();
@@ -1794,6 +1818,7 @@ class RascalPrinter extends BasePrinter
 
         return $fragment;
     }
+
 
     public function pprintUseUseStmt(\PhpParser\Node\Stmt\UseUse $node)
     {
@@ -1820,7 +1845,6 @@ class RascalPrinter extends BasePrinter
 
         return $fragment;
     }
-
     /**
      * @param string|\PhpParser\Node\Name $node
      * @return string
@@ -1830,7 +1854,7 @@ class RascalPrinter extends BasePrinter
         if (is_string($node))
             $fragment = $node;
         else if (is_array($node->parts))
-            $fragment = implode("\\", $node->parts);
+            $fragment = implode("::", $node->parts);
         else
             $fragment = $node->parts;
 

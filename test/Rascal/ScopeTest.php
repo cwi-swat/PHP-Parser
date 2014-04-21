@@ -59,32 +59,32 @@ class ScopeTest extends \PHPUnit_Framework_TestCase
             array(
                 '<?php namespace ns1;',
                 array(
-                    '@scope=scope("ns1","-","-","-")', // namespace node
-                    '@scope=scope("ns1","-","-","-")'  // namespace name node
+                    '@scope=scope("ns1","","","")', // namespace node
+                    '@scope=scope("ns1","","","")'  // namespace name node
                 )
             ),
             array(
                 '<?php namespace ns2;',
                 array(
-                    '@scope=scope("ns2","-","-","-")', // namespace node
-                    '@scope=scope("ns2","-","-","-")'  // namespace name node
+                    '@scope=scope("ns2","","","")', // namespace node
+                    '@scope=scope("ns2","","","")'  // namespace name node
                 )
             ),
             array(
                 '<?php namespace ns1\ns2;',
                 array(
-                    '@scope=scope("ns1\\\\ns2","-","-","-")', // namespace node
-                    '@scope=scope("ns1\\\\ns2","-","-","-")', // namespace name node
+                    '@scope=scope("ns1::ns2","","","")', // namespace node
+                    '@scope=scope("ns1::ns2","","","")', // namespace name node
                 )
             ),
             array(
                 '<?php namespace ns1 {} namespace ns2 {} namespace {}',
                 array(
-                    '@scope=scope("ns1","-","-","-")', // namespace node
-                    '@scope=scope("ns1","-","-","-")', // namespace name node
-                    '@scope=scope("ns2","-","-","-")', // namespace node
-                    '@scope=scope("ns2","-","-","-")', // namespace name node
-                    '@scope=scope("-","-","-","-")', // namespace node
+                    '@scope=scope("ns1","","","")', // namespace node
+                    '@scope=scope("ns1","","","")', // namespace name node
+                    '@scope=scope("ns2","","","")', // namespace node
+                    '@scope=scope("ns2","","","")', // namespace name node
+                    '@scope=scope("","","","")', // namespace node
                 )
             ),
 
@@ -92,50 +92,50 @@ class ScopeTest extends \PHPUnit_Framework_TestCase
             array(
                 'code' => '<?php namespace ns1\ns2; class cl3 {}',
                 array(
-                    '@scope=scope("ns1\\\\ns2","-","-","-")', // namespace node
-                    '@scope=scope("ns1\\\\ns2","-","-","-")', // namespace name node
-                    '@scope=scope("ns1\\\\ns2","cl3","-","-")', // class node
+                    '@scope=scope("ns1::ns2","","","")', // namespace node
+                    '@scope=scope("ns1::ns2","","","")', // namespace name node
+                    '@scope=scope("ns1::ns2","cl3","","")', // class node
                 )
             ),
             array(
                 'code' => '<?php namespace ns1 { class cl1 {} } namespace ns2 { class cl2{} }',
                 array(
-                    '@scope=scope("ns1","-","-","-")', // namespace node
-                    '@scope=scope("ns1","-","-","-")', // namespace name node
-                    '@scope=scope("ns1","cl1","-","-")', // class node
-                    '@scope=scope("ns2","-","-","-")', // namespace node
-                    '@scope=scope("ns2","-","-","-")', // namespace name node
-                    '@scope=scope("ns2","cl2","-","-")', // class node
+                    '@scope=scope("ns1","","","")', // namespace node
+                    '@scope=scope("ns1","","","")', // namespace name node
+                    '@scope=scope("ns1","cl1","","")', // class node
+                    '@scope=scope("ns2","","","")', // namespace node
+                    '@scope=scope("ns2","","","")', // namespace name node
+                    '@scope=scope("ns2","cl2","","")', // class node
                 )
             ),
             array(
                 'code' => '<?php namespace ns1 { } namespace { class cl2 {} }',
                 array(
-                    '@scope=scope("ns1","-","-","-")', // namespace node
-                    '@scope=scope("ns1","-","-","-")', // namespace name node
-                    '@scope=scope("-","-","-","-")', // namespace node
-                    '@scope=scope("-","cl2","-","-")', // class node
+                    '@scope=scope("ns1","","","")', // namespace node
+                    '@scope=scope("ns1","","","")', // namespace name node
+                    '@scope=scope("","","","")', // namespace node
+                    '@scope=scope("","cl2","","")', // class node
                 )
             ),
             array(
                 'code' => '<?php namespace ns1; use Main\Sub\Class2 as Cl2; class Class1 { public function __construct() { $cl2 = new Cl2; } }',
                 array(
-                    '@scope=scope("ns1","-","-","-")', // namespace node
-                    '@scope=scope("ns1","-","-","-")', // namespace name node
+                    '@scope=scope("ns1","","","")', // namespace node
+                    '@scope=scope("ns1","","","")', // namespace name node
 
-                    '@scope=scope("ns1","-","-","-")', // use statement
-                    '@scope=scope("ns1","-","-","-")', // name of use statement node
-                    '@scope=scope("ns1","-","-","-")', // name of the alias node
+                    '@scope=scope("ns1","","","")', // use statement
+                    '@scope=scope("ns1","","","")', // name of use statement node
+                    '@scope=scope("ns1","","","")', // name of the alias node
 
-                    '@scope=scope("ns1","Class1","-","-")', // class node
+                    '@scope=scope("ns1","Class1","","")', // class node
 
-                    '@scope=scope("ns1","Class1","__construct","-")', // class method node
-                    '@scope=scope("ns1","Class1","__construct","-")', // expression statement node
+                    '@scope=scope("ns1","Class1","__construct","")', // class method node
+                    '@scope=scope("ns1","Class1","__construct","")', // expression statement node
 
-                    '@scope=scope("ns1","Class1","__construct","-")', // expression statement node
-                    '@scope=scope("ns1","Class1","__construct","-")', // variable name node
-                    '@scope=scope("ns1","Class1","__construct","-")', // assignment node
-                    '@scope=scope("ns1","Class1","__construct","-")', // class instance name node
+                    '@scope=scope("ns1","Class1","__construct","")', // expression statement node
+                    '@scope=scope("ns1","Class1","__construct","")', // variable name node
+                    '@scope=scope("ns1","Class1","__construct","")', // assignment node
+                    '@scope=scope("ns1","Class1","__construct","")', // class instance name node
                 )
             ),
 //

@@ -8,5 +8,5 @@ foo;
 namespace Bar;
 bar;
 -----
-script([namespace(someName(name("Foo\Bar")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(17,7,<3,0>,<3,0>)]),[exprstmt(fetchConst(name("foo")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,3,<4,0>,<4,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,3,<4,0>,<4,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,4,<4,0>,<4,0>)]])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(7,18,<3,0>,<3,0>)],
+script([namespace(someName(name("Foo::Bar")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(17,7,<3,0>,<3,0>)]),[exprstmt(fetchConst(name("foo")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,3,<4,0>,<4,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,3,<4,0>,<4,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(26,4,<4,0>,<4,0>)]])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(7,18,<3,0>,<3,0>)],
 namespace(someName(name("Bar")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(42,3,<6,0>,<6,0>)]),[exprstmt(fetchConst(name("bar")[@at=|file:///tmp/SemicolonStyleNamespaces.php|(47,3,<7,0>,<7,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(47,3,<7,0>,<7,0>)])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(47,4,<7,0>,<7,0>)]])[@at=|file:///tmp/SemicolonStyleNamespaces.php|(32,14,<6,0>,<6,0>)]])

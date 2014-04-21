@@ -10,8 +10,8 @@ use F\G as H, J;
 use \A;
 use \A as B;
 -----
-script([use([use(name("A\B")[@at=|file:///tmp/AliasesUse.php|(11,3,<3,0>,<3,0>)],someName(name("B")))[@at=|file:///tmp/AliasesUse.php|(11,3,<3,0>,<3,0>)]])[@at=|file:///tmp/AliasesUse.php|(7,8,<3,0>,<3,0>)],
-use([use(name("C\D")[@at=|file:///tmp/AliasesUse.php|(20,3,<4,0>,<4,0>)],someName(name("E")))[@at=|file:///tmp/AliasesUse.php|(20,8,<4,0>,<4,0>)]])[@at=|file:///tmp/AliasesUse.php|(16,13,<4,0>,<4,0>)],
-use([use(name("F\G")[@at=|file:///tmp/AliasesUse.php|(34,3,<5,0>,<5,0>)],someName(name("H")))[@at=|file:///tmp/AliasesUse.php|(34,8,<5,0>,<5,0>)],use(name("J")[@at=|file:///tmp/AliasesUse.php|(44,1,<5,0>,<5,0>)],someName(name("J")))[@at=|file:///tmp/AliasesUse.php|(44,1,<5,0>,<5,0>)]])[@at=|file:///tmp/AliasesUse.php|(30,16,<5,0>,<5,0>)],
+script([use([use(name("A::B")[@at=|file:///tmp/AliasesUse.php|(11,3,<3,0>,<3,0>)],someName(name("B")))[@at=|file:///tmp/AliasesUse.php|(11,3,<3,0>,<3,0>)]])[@at=|file:///tmp/AliasesUse.php|(7,8,<3,0>,<3,0>)],
+use([use(name("C::D")[@at=|file:///tmp/AliasesUse.php|(20,3,<4,0>,<4,0>)],someName(name("E")))[@at=|file:///tmp/AliasesUse.php|(20,8,<4,0>,<4,0>)]])[@at=|file:///tmp/AliasesUse.php|(16,13,<4,0>,<4,0>)],
+use([use(name("F::G")[@at=|file:///tmp/AliasesUse.php|(34,3,<5,0>,<5,0>)],someName(name("H")))[@at=|file:///tmp/AliasesUse.php|(34,8,<5,0>,<5,0>)],use(name("J")[@at=|file:///tmp/AliasesUse.php|(44,1,<5,0>,<5,0>)],someName(name("J")))[@at=|file:///tmp/AliasesUse.php|(44,1,<5,0>,<5,0>)]])[@at=|file:///tmp/AliasesUse.php|(30,16,<5,0>,<5,0>)],
 use([use(name("A")[@at=|file:///tmp/AliasesUse.php|(90,1,<8,0>,<8,0>)],someName(name("A")))[@at=|file:///tmp/AliasesUse.php|(89,2,<8,0>,<8,0>)]])[@at=|file:///tmp/AliasesUse.php|(85,7,<8,0>,<8,0>)],
 use([use(name("A")[@at=|file:///tmp/AliasesUse.php|(98,1,<9,0>,<9,0>)],someName(name("B")))[@at=|file:///tmp/AliasesUse.php|(97,7,<9,0>,<9,0>)]])[@at=|file:///tmp/AliasesUse.php|(93,12,<9,0>,<9,0>)]])
