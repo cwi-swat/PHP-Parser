@@ -11,7 +11,7 @@ use PhpParser\Lexer;
 if (!class_exists('Autoloader'))
     require_once __DIR__ . '/../bootstrap.php';
 
-ini_set('xdebug.max_nesting_level', 2000);
+ini_set('xdebug.max_nesting_level', 10000);
 
 if (count($argv) < 2) {
     echo "Expected at least 1 argument\n";
