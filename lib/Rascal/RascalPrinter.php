@@ -607,7 +607,11 @@ class RascalPrinter extends BasePrinter
 
     public function pprintClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node)
     {
-        $fragment = "closureUse(\"" . $node->var . "\",";
+        if ($node->var instanceof \PhpParser\Node\Expr) {
+            $fragment = "closureUse(" . $node->var . ",";
+        } else {
+            $fragment = "closureUse(scalar(string(\"" . $node->var . "\")),";           
+        }
         if ($node->byRef)
             $fragment .= "true";
         else
