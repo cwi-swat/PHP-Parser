@@ -19,7 +19,7 @@ if (count($argv) < 2) {
 }
 
 if (!isset($opts))
-    $opts = getopt("f:lslirp:", array(
+    $opts = getopt("f:lslirp:n:d:", array(
         "file:",
         "enableLocations",
         "addDecl",
@@ -27,7 +27,9 @@ if (!isset($opts))
         "relativeLocations",
         "prefix:",
         "phpdocs",
-        "resolveNames"
+        "resolveNames",
+        "projectName:",
+        "projectDir:",
     ));
 
 if (isset($opts["f"]))
@@ -42,6 +44,20 @@ else
             echo "errscript(\"The file must be provided using either -f or --file\")";
             exit(-1);
         }
+
+$usesProjectLoc = false;
+if (isset($opts["projectName"]) && isset($opts["projectDir"])) {
+    $projectName = $opts["projectName"];
+    $projectDir = $opts["projectDir"];
+    $usesProjectLoc = true;
+} elseif (isset($opts["n"]) && isset($opts["d"])) {
+    $projectName = $opts["n"];
+    $projectDir = $opts["d"];
+    $usesProjectLoc = true;
+} else {
+    $projectName = "";
+    $projectDir = "";
+}
 
 $enableLocations = false;
 if (isset($opts["l"]) || isset($opts["enableLocations"]))
@@ -68,6 +84,11 @@ $relativeLocations = false;
 if (isset($opts["r"]) || isset($opts["relativeLocations"]))
     $relativeLocations = true;
 
+if ($usesProjectLoc && $relativeLocations) {
+    echo "errscript(\"Cannot use a project location and relative locations at the same time\")";
+    exit(-1);
+}
+
 $addPHPDocs = false;
 if (isset($opts["phpdocs"]))
   $addPHPDocs = true;
@@ -79,20 +100,21 @@ if (isset($_SERVER['HOME'])) {
 }
 
 $inputCode = '';
-if (! $relativeLocations && file_exists($file))
+if (! $relativeLocations && ! $usesProjectLoc && file_exists($file)) {
     $inputCode = file_get_contents($file);
-else
-    if ($relativeLocations && file_exists($homedir . $file))
-        $inputCode = file_get_contents($homedir . $file);
-    else {
-        echo "errscript(\"The given file, $file, does not exist\")";
-        exit(-1);
-    }
+} elseif ($usesProjectLoc && file_exists($projectDir . $file)) {
+    $inputCode = file_get_contents($projectDir . $file);    
+} elseif ($relativeLocations && file_exists($homedir . $file)) {
+    $inputCode = file_get_contents($homedir . $file);
+} else {
+    echo "errscript(\"The given file, $file, does not exist, 1 is $projectDir and 2 is $projectName and 3 is $usesProjectLoc\")";
+    exit(-1);
+}
 
 $resolveNames = isset($opts['resolveNames']) ? true : false;
 
 $parser = new Parser(new Lexer\Emulative);
-$printer = new RascalPrinter($file, $enableLocations, $relativeLocations, $uniqueIds, $prefix, $addPHPDocs, $addDeclarations);
+$printer = new RascalPrinter($file, $enableLocations, $relativeLocations, $uniqueIds, $prefix, $projectName, $addPHPDocs, $addDeclarations);
 
 try {
     $parseTree = $parser->parse($inputCode);

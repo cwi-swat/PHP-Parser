@@ -37,6 +37,8 @@ class RascalPrinter extends BasePrinter
 
     private $inAssignExpr = false;
 
+    private $projectName = "";
+
     /**
      *
      * @param string $str
@@ -46,7 +48,7 @@ class RascalPrinter extends BasePrinter
      * @param string $prefix
      * @param bool $docs
      */
-    public function __construct($str, $locs, $rel, $ids, $prefix, $docs = false, $addDecl = false)
+    public function __construct($str, $locs, $rel, $ids, $prefix, $projectName, $docs = false, $addDecl = false)
     {
         $this->filename = $str;
         $this->addLocations = $locs;
@@ -55,6 +57,7 @@ class RascalPrinter extends BasePrinter
         $this->addIds = $ids;
         $this->idPrefix = $prefix;
         $this->addPhpDocs = $docs;
+        $this->projectName = $projectName;
     }
 
     public function rascalizeString($str)
@@ -139,7 +142,9 @@ class RascalPrinter extends BasePrinter
 
     private function addLocationTag(\PhpParser\Node $node)
     {
-        if ($this->relativeLocations) {
+        if ($this->projectName != "") {
+            return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+        } elseif ($this->relativeLocations) {
             return "@at=|home://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
         } else {
             return "@at=|file://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
