@@ -164,7 +164,8 @@ class RascalPrinter extends BasePrinter
         $docString = "@phpdoc=\"%s\"";
         if ($node instanceof \PhpParser\Node\Stmt\Class_ ||
             $node instanceof \PhpParser\Node\Stmt\Interface_ ||
-            $node instanceof \PhpParser\Node\Expr\Variable
+            $node instanceof \PhpParser\Node\Expr\Variable ||
+            $node instanceof \PhpParser\Node\Stmt\ClassMethod
         )
             if ($doc = $node->getDocComment())
                 return sprintf($docString, $this->rascalizeString($doc));
