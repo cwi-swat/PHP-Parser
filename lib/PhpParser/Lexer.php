@@ -146,9 +146,9 @@ class Lexer
         }
 
         while (1) {
+            $startingOffset = $this->offset;
             if (isset($this->tokens[++$this->pos])) {
                 $token = $this->tokens[$this->pos];
-                $startingOffset = $this->offset;
                 $this->length = (is_string($token)) ? 1 : strlen($token[1]);
                 $this->offset += $this->length;
             } else {
