@@ -1,3 +1,7 @@
 .project
 .idea
 sandbox
+vendor/
+composer.lock
+grammar/kmyacc.exe
+grammar/y.output

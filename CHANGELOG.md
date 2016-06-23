@@ -1,65 +1,138 @@
-Version 1.0.0-dev
+Version 2.1.1-dev
 -----------------
 
 Nothing yet.
 
-Version 1.0.0-beta1 (27.03.2014)
+Version 2.1.0 (2016-04-19)
+--------------------------
+
+### Fixed
+
+* Properly support `B""` strings (with uppercase `B`) in a number of places.
+* Fixed reformatting of indented parts in a certain non-standard comment style.
+
+### Added
+
+* Added `dumpComments` option to node dumper, to enable dumping of comments associated with nodes.
+* Added `Stmt\Nop` node, that is used to collect comments located at the end of a block or at the
+  end of a file (without a following node with which they could otherwise be associated).
+* Added `kind` attribute to `Expr\Exit` to distinguish between `exit` and `die`.
+* Added `kind` attribute to `Scalar\LNumber` to distinguish between decimal, binary, octal and
+  hexadecimal numbers.
+* Added `kind` attribtue to `Expr\Array` to distinguish between `array()` and `[]`.
+* Added `kind` attribute to `Scalar\String` and `Scalar\Encapsed` to distinguish between
+  single-quoted, double-quoted, heredoc and nowdoc string.
+* Added `docLabel` attribute to `Scalar\String` and `Scalar\Encapsed`, if it is a heredoc or
+  nowdoc string.
+* Added start file offset information to `Comment` nodes.
+* Added `setReturnType()` method to function and method builders.
+* Added `-h` and `--help` options to `php-parse` script.
+
+### Changed
+
+* Invalid octal literals now throw a parse error in PHP 7 mode.
+* The pretty printer takes all the new attributes mentioned in the previous section into account.
+* The protected `AbstractPrettyPrinter::pComments()` method no longer returns a trailing newline.
+* The bundled autoloader supports library files being stored in a different directory than
+  `PhpParser` for easier downstream distribution.
+
+### Deprecated
+
+* The `Comment::setLine()` and `Comment::setText()` methods have been deprecated. Construct new
+  objects instead.
+
+### Removed
+
+* The internal (but public) method `Scalar\LNumber::parse()` has been removed. A non-internal
+  `LNumber::fromString()` method has been added instead.
+
+Version 2.0.1 (2016-02-28)
+--------------------------
+
+### Fixed
+
+* `declare() {}` and `declare();` are not semantically equivalent and will now result in different
+  ASTs. The format case will have an empty `stmts` array, while the latter will set `stmts` to
+  `null`.
+* Magic constants are now supported as semi-reserved keywords.
+* A shebang line like `#!/usr/bin/env php` is now allowed at the start of a namespaced file.
+  Previously this generated an exception.
+* The `prettyPrintFile()` method will not strip a trailing `?>` from the raw data that follows a
+  `__halt_compiler()` statement.
+* The `prettyPrintFile()` method will not strip an opening `<?php` if the file starts with a
+  comment followed by InlineHTML.
+
+Version 2.0.0 (2015-12-04)
+--------------------------
+
+### Changed
+
+* String parts of encapsed strings are now represented using `Scalar\EncapsStringPart` nodes.
+  Previously raw strings were used. This affects the `parts` child of `Scalar\Encaps` and
+  `Expr\ShellExec`. The change has been done to allow assignment of attributes to encapsed string
+  parts.
+
+Version 2.0.0-beta1 (2015-10-21)
 --------------------------------
 
-* [BC] PHP-Parser now requires PHP 5.3 or newer to run. It is however still possible to *parse* PHP 5.2 source code,
-  while running on a newer version.
+### Fixed
 
-* [BC] The library has been moved to use namespaces with the `PhpParser` vendor prefix. However, the old names using
-  underscores are still available as aliases, as such most code should continue running on the new version without
-  further changes.
+* Fixed issue with too many newlines being stripped at the end of heredoc/nowdoc strings in some
+  cases. (#227)
 
-  However, code performing dispatch operations on `Node::getType()` may be affected by some of the name changes. For
-  example a `+` node will now return type `Expr_BinaryOp_Plus` instead of `Expr_Plus`. In particular this may affect
-  custom pretty printers.
+### Changed
 
-  Due to conflicts with reserved keywords, some class names now end with an underscore, e.g. `PHPParser_Node_Stmt_Class`
-  is now `PhpParser\Node\Stmt\Class_`. (But as usual, the old name is still available)
+* Update group use support to be in line with recent PHP 7.0 builds.
+* Renamed `php-parse.php` to `php-parse` and registered it as a composer bin.
+* Use composer PSR-4 autoloader instead of custom autoloader.
+* Specify phpunit as a dev dependency.
 
-* [PHP 5.6] Added support for the power operator `**` (node `Expr\BinaryOp\Pow`) and the compound power assignment
-  operator `**=` (node `Expr\AssignOp\Pow`).
+### Added
 
-* [PHP 5.6] Added support for variadic functions: `Param` nodes now have `variadic` as a boolean subnode.
+* Added `shortArraySyntax` option to pretty printer, to print all arrays using short syntax.
 
-* [PHP 5.6] Added support for argument unpacking: `Arg` nodes now have `unpack` as a boolean subnode.
+Version 2.0.0-alpha1 (2015-07-14)
+---------------------------------
 
-* [PHP 5.6] Added support for aliasing of functions and constants. `Stmt\Use_` nodes now have an integral `type`
-  subnode, which is one of `Stmt\Use_::TYPE_NORMAL` (`use`), `Stmt\Use_::TYPE_FUNCTION` (`use function`) or
-  `Stmt\Use_::TYPE_CONSTANT` (`use const`).
+A more detailed description of backwards incompatible changes can be found in the
+[upgrading guide](UPGRADE-2.0.md).
 
-  The `NameResolver` now also supports resolution of such aliases.
+### Removed
 
-* [PHP 5.6] Added support for constant scalar expressions. This means that certain expressions are now allowed as the
-  initializer for constants, properties, parameters, static variables, etc.
+* Removed support for running on PHP 5.4. It is however still possible to parse PHP 5.2 and PHP 5.3
+  code while running on a newer version.
+* Removed legacy class name aliases. This includes the old non-namespaced class names and the old
+  names for classes that were renamed for PHP 7 compatibility.
+* Removed support for legacy node format. All nodes must have a `getSubNodeNames()` method now.
 
-* [BC] Improved pretty printing of empty statements lists, which are now printed as `{\n}` instead of `{\n    \n}`.
-  This changes the behavior of the protected `PrettyPrinterAbstract::pStmts()` method, so custom pretty printing code
-  making use it of may need to be adjusted.
+### Added
 
-* Changed the order of some subnodes to be consistent with their order in the sour code. For example `Stmt\If->cond`
-  will now appear before `Stmt\If->stmts` etc.
+* Added support for remaining PHP 7 features that were not present in 1.x:
+  * Group use declarations. These are represented using `Stmt\GroupUse` nodes. Furthermore a `type`
+    attribute was added to `Stmt\UseUse` to handle mixed group use declarations.
+  * Uniform variable syntax.
+  * Generalized yield operator.
+  * Scalar type declarations. These are presented using `'bool'`, `'int'`, `'float'` and `'string'`
+    as the type. The PHP 5 parser also accepts these, however they'll be `Name` instances there.
+  * Unicode escape sequences.
+* Added `PhpParser\ParserFactory` class, which should be used to create parser instances.
+* Added `Name::concat()` which concatenates two names.
+* Added `Name->slice()` which takes a subslice of a name.
 
-* Added `Scalar\MagicConstant->getName()`, which returns the name of the magic constant (e.g. `__CLASS__`).
+### Changed
 
-**The following changes are also included in 0.9.5-dev**:
-
-* [BC] Deprecated `PHPParser_Template` and `PHPParser_TemplateLoader`. This functionality does not belong in the main project
-  and - as far as I know - nobody is using it.
-
-* Add `NodeTraverser::removeVisitor()` method, which removes a visitor from the node traverser. This also modifies the
-  corresponding `NodeTraverserInterface`.
-
-* Fix alias resolution in `NameResolver`: Class names are now correctly handled as case-insensitive.
-
-* The undefined variable error, which is used to the lexer to reset the error state, will no longer interfere with
-  custom error handlers.
+* `PhpParser\Parser` is now an interface, implemented by `Parser\Php5`, `Parser\Php7` and
+  `Parser\Multiple`. The `Multiple` parser will try multiple parsers, until one succeeds.
+* Token constants are now defined on `PhpParser\Parser\Tokens` rather than `PhpParser\Parser`.
+* The `Name->set()`, `Name->append()`, `Name->prepend()` and `Name->setFirst()` methods are
+  deprecated in favor of `Name::concat()` and `Name->slice()`.
+* The `NodeTraverser` no longer clones nodes by default. The old behavior can be restored by
+  passing `true` to the constructor.
+* The constructor for `Scalar` nodes no longer has a default value. E.g. `new LNumber()` should now
+  be written as `new LNumber(0)`.
 
 ---
 
-**This changelog only includes changes from the 1.0 series. For older changes see the [0.9 series changelog][1].**
-
- [1]: https://github.com/nikic/PHP-Parser/blob/0.9/CHANGELOG.md
+**This changelog only includes changes from the 2.0 series. For older changes see the
+[1.x series changelog](https://github.com/nikic/PHP-Parser/blob/1.x/CHANGELOG.md) and the
+[0.9 series changelog](https://github.com/nikic/PHP-Parser/blob/0.9/CHANGELOG.md).**

@@ -9,6 +9,9 @@ use PhpParser\Node;
  */
 class Expr extends Node\Stmt
 {
+    /** @var null|Node\Expr The expr evaluated for this expr stmt */
+    public $expr;
+
     /**
      * Constructs an expr node.
      *
@@ -18,11 +21,12 @@ class Expr extends Node\Stmt
      */
     public function __construct(Node\Expr $expr, $attributes)
     {
-        parent::__construct(
-            array(
-                'expr' => $expr,
-            ),
-            $attributes
-        );
+        parent::__construct($attributes);
+        $this->expr = $expr;
+    }
+
+    public function getSubNodeNames() {
+        return array('expr');
     }
 }
+
