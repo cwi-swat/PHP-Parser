@@ -14,6 +14,8 @@ class Lexer
     protected $tokenMap;
     protected $dropTokens;
 
+    protected $priorComments;
+
     /**
      * Creates a Lexer.
      */
@@ -91,6 +93,11 @@ class Lexer
         $startAttributes = array();
         $endAttributes   = array();
 
+        if (isset($this->priorComments)) {
+            $startAttributes['comments'] = $this->priorComments;
+            unset($this->priorComments);
+        }
+
         while (isset($this->tokens[++$this->pos])) {
             $token = $this->tokens[$this->pos];
             
@@ -129,6 +136,13 @@ class Lexer
 	                $startAttributes['startLength'] = $this->length; 
     	            $endAttributes['endOffset'] = $startingOffset;
         	        $endAttributes['endLength'] = $this->length; 
+
+                    // If we end with a close tag and we have doc comments, this means the block
+                    // ended with the comment and no actual construct, so the comment will be lost.
+                    // We preserve it for the next time around.
+                    if ($token[0] == T_CLOSE_TAG && isset($startAttributes['comments'])) {
+                        $this->priorComments = $startAttributes['comments'];
+                    }
 
                     return $this->tokenMap[$token[0]];
                 }

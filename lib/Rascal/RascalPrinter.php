@@ -162,13 +162,39 @@ class RascalPrinter extends BasePrinter
     private function addPhpDocForNode(\PHPParser\Node $node)
     {
         $docString = "@phpdoc=\"%s\"";
-        if ($node instanceof \PhpParser\Node\Stmt\Class_ ||
-            $node instanceof \PhpParser\Node\Stmt\Interface_ ||
-            $node instanceof \PhpParser\Node\Expr\Variable ||
-            $node instanceof \PhpParser\Node\Stmt\ClassMethod
-        )
-            if ($doc = $node->getDocComment())
-                return sprintf($docString, $this->rascalizeString($doc));
+        if ($doc = $node->getDocComment())
+        {
+            return sprintf($docString, $this->rascalizeString($doc));
+        }
+        // if ($node instanceof \PhpParser\Node\Stmt\Class_ ||
+        //     $node instanceof \PhpParser\Node\Stmt\Interface_ ||
+        //     $node instanceof \PhpParser\Node\Expr\Variable ||
+        //     $node instanceof \PhpParser\Node\Stmt\ClassMethod ||
+        //     $node instanceof \PhpParser\Node\Stmt\InlineHTML
+        // )
+        // {
+        //     if ($doc = $node->getDocComment())
+        //     {
+        //         return sprintf($docString, $this->rascalizeString($doc));
+        //     }
+        // }
+
+        // if ($node instanceof \PhpParser\Node\Expr\FuncCall &&
+        //     $node->name instanceof \PhpParser\Node\Name)
+        // {
+        //     $imploded = $this->implodeName($node->name);
+        //     if ($imploded == 'do_action' ||
+        //         $imploded == 'do_action_ref_array' ||
+        //         $imploded == 'apply_filters' ||
+        //         $imploded == 'apply_filters_ref_array')
+        //     {
+        //         if ($doc = $node->getDocComment())
+        //         {
+        //             return sprintf($docString, $this->rascalizeString($doc));
+        //         }
+        //     }
+        // }
+
         return sprintf($docString, null);
     }
 
@@ -185,7 +211,7 @@ class RascalPrinter extends BasePrinter
         }
         if ($this->addIds)
             $tagsToAdd[] = $this->addUniqueId();
-        if ($this->addPhpDocs)
+        if ($this->addPhpDocs && $node->getDocComment())
             $tagsToAdd[] = $this->addPhpDocForNode($node);
 
         if (count($tagsToAdd) > 0)
