@@ -5,6 +5,8 @@ namespace Rascal;
 require '../bootstrap.php';
 ini_set('xdebug.max_nesting_level', 2000);
 
+use PhpParser\ParserFactory;
+
 $classNames = array();
 $abstractClassNames = array();
 
@@ -19,7 +21,7 @@ class GenerateCode extends \PhpParser\NodeVisitorAbstract
         if ($node instanceof \PhpParser\Node\Stmt\Namespace_) {
             $this->namespace = '\\' . $node->name;
         } else if ($node instanceof \PhpParser\Node\Stmt\Class_) {
-            if ($node->isAbstract) {
+            if ($node->isAbstract()) {
                 array_push($abstractClassNames, $node->name);
             } else if ($this->namespace . '\\' . $node->name !== "\\PhpParser\\Node\\Expr") {
                 array_push($classNames, $this->namespace . '\\' . $node->name);
@@ -35,7 +37,7 @@ class GenerateCode extends \PhpParser\NodeVisitorAbstract
     }
 }
 
-$parser = new \PhpParser\Parser(new \PhpParser\Lexer);
+$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 $visitor = new \PhpParser\NodeTraverser;
 $rvis = new GenerateCode;
 $visitor->addVisitor($rvis);
@@ -68,12 +70,6 @@ $ifcLeaves = "";
 $ifcPrints = "\tpublic function pprint(\PhpParser\Node \$node);\n";
 
 $firstPass = true;
-
-// TODO: This is not elegant, but, since Scalar extends Expr, these are going
-// in the file in the wrong order. This just forces PHPParser_Node_Expr to be
-// the last class handled. The better fix would be to compute the inherits
-// relation and base the order on this instead.
-array_push($classNames, "\\PhpParser\\Node\\Expr");
 
 foreach ($classNames as $className) {
     $callName = preg_replace('/(.*)_$/', '\\1', $className); // remove underscore (_) at the end of line

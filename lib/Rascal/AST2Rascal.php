@@ -7,6 +7,7 @@ use PhpParser\NodeVisitor\NameResolver;
 use Rascal\NodeVisitor\NameResolver as NameResolverRascal;
 use PhpParser\Parser;
 use PhpParser\Lexer;
+use PhpParser\ParserFactory;
 
 if (!class_exists('Autoloader'))
     require_once __DIR__ . '/../bootstrap.php';
@@ -113,7 +114,7 @@ if (! $relativeLocations && ! $usesProjectLoc && file_exists($file)) {
 
 $resolveNames = isset($opts['resolveNames']) ? true : false;
 
-$parser = new Parser(new Lexer\Emulative);
+$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 $printer = new RascalPrinter($file, $enableLocations, $relativeLocations, $uniqueIds, $prefix, $projectName, $addPHPDocs, $addDeclarations);
 
 try {

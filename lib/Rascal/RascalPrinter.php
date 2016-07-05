@@ -143,11 +143,23 @@ class RascalPrinter extends BasePrinter
     private function addLocationTag(\PhpParser\Node $node)
     {
         if ($this->projectName != "") {
-            return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getOffset() >= 0) {
+                return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            } else {
+                return "@at=|project://{$this->projectName}/{$this->filename}|";
+            }
         } elseif ($this->relativeLocations) {
-            return "@at=|home://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getOffset() >= 0) {
+                return "@at=|home://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            } else {
+                return "@at=|home://{$this->filename}|";
+            }
         } else {
-            return "@at=|file://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getOffset() >= 0) {
+                return "@at=|file://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            } else {
+                return "@at=|file://{$this->filename}|";
+            }
         }
     }
 
@@ -345,6 +357,11 @@ class RascalPrinter extends BasePrinter
         return $this->handleAssignOpExpression($node, "plus");
     }
 
+    public function pprintPowAssignOpExpr(\PhpParser\Node\Expr\AssignOp\Pow $node)
+    {
+        return $this->handleAssignOpExpression($node, "pow");
+    }
+
     public function pprintShiftLeftAssignOpExpr(\PhpParser\Node\Expr\AssignOp\ShiftLeft $node)
     {
         return $this->handleAssignOpExpression($node, "leftShift");
@@ -407,6 +424,11 @@ class RascalPrinter extends BasePrinter
     public function pprintBooleanOrBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\BooleanOr $node)
     {
         return $this->handleBinaryOpExpression($node, "booleanOr");
+    }
+
+    public function pprintCoalesceBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Coalesce $node)
+    {
+        return $this->handleBinaryOpExpression($node, "coalesce");
     }
 
     public function pprintConcatBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Concat $node)
@@ -504,6 +526,16 @@ class RascalPrinter extends BasePrinter
         return $this->handleBinaryOpExpression($node, "plus");
     }
 
+    public function pprintPowBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Pow $node)
+    {
+        return $this->handleBinaryOpExpression($node, "pow");
+    }
+
+    public function pprintSpaceshipBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Spaceship $node)
+    {
+        return $this->handleBinaryOpExpression($node, "spaceship");
+    }
+
     /**
      * @param \PhpParser\Node\Expr\BinaryOp $node
      * @param string $operation
@@ -545,7 +577,7 @@ class RascalPrinter extends BasePrinter
         return $this->handleCastExpression($node, "array");
     }
 
-    public function pprintBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool $node)
+    public function pprintBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool_ $node)
     {
         return $this->handleCastExpression($node, "\\bool");
     }
@@ -555,17 +587,17 @@ class RascalPrinter extends BasePrinter
         return $this->handleCastExpression($node, "float");
     }
 
-    public function pprintIntCastExpr(\PhpParser\Node\Expr\Cast\Int $node)
+    public function pprintIntCastExpr(\PhpParser\Node\Expr\Cast\Int_ $node)
     {
         return $this->handleCastExpression($node, "\\int");
     }
 
-    public function pprintObjectCastExpr(\PhpParser\Node\Expr\Cast\Object $node)
+    public function pprintObjectCastExpr(\PhpParser\Node\Expr\Cast\Object_ $node)
     {
         return $this->handleCastExpression($node, "object");
     }
 
-    public function pprintStringCastExpr(\PhpParser\Node\Expr\Cast\String $node)
+    public function pprintStringCastExpr(\PhpParser\Node\Expr\Cast\String_ $node)
     {
         return $this->handleCastExpression($node, "string");
     }
@@ -987,6 +1019,14 @@ class RascalPrinter extends BasePrinter
         return $fragment;
     }
 
+    public function pprintYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node)
+    {
+        $fromPart = $this->pprint($node->expr);
+        $fragment = "yieldFrom({$fromPart})";
+
+        return $fragment;
+    }
+
     public function pprintFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
     {
         return $this->pprintName($node);
@@ -1055,11 +1095,24 @@ class RascalPrinter extends BasePrinter
         foreach ($node->parts as $item) {
             if ($item instanceof \PhpParser\Node\Expr) {
                 $parts[] = $this->pprint($item);
+            } elseif ($item instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
+                $parts[] = $this->pprint($item);
             } else {
+                // TODO: This may no longer be reachable because of the addition of
+                // the EncapsedStringPart class, verify this...
                 $parts[] = "scalar(string(\"" . $this->rascalizeString($item) . "\"))";
             }
         }
         $fragment = "scalar(encapsed([" . implode(",", $parts) . "]))";
+        $fragment .= $this->annotateASTNode($node);
+
+        return $fragment;
+    }
+
+    public function pprintEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
+    {
+        $fragment = "string(\"" . $this->rascalizeString($node->value) . "\")";
+        $fragment = "scalar(" . $fragment . ")";
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
@@ -1143,7 +1196,7 @@ class RascalPrinter extends BasePrinter
         return $fragment;
     }
 
-    public function pprintStringScalar(\PhpParser\Node\Scalar\String $node)
+    public function pprintStringScalar(\PhpParser\Node\Scalar\String_ $node)
     {
         $fragment = "string(\"" . $this->rascalizeString($node->value) . "\")";
         $fragment = "scalar(" . $fragment . ")";
@@ -1320,8 +1373,11 @@ class RascalPrinter extends BasePrinter
     public function pprintDeclareStmt(\PhpParser\Node\Stmt\Declare_ $node)
     {
         $body = array();
-        foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+        if (isset($node->stmts)) {
+            foreach ($node->stmts as $stmt) {
+                $body[] = $this->pprint($stmt);
+            }
+        }
 
         $decls = array();
         foreach ($node->declares as $decl)
@@ -1492,6 +1548,19 @@ class RascalPrinter extends BasePrinter
         return $fragment;
     }
 
+    public function pprintGroupUseStmt(\PhpParser\Node\Stmt\GroupUse $node)
+    {
+        // TODO: Verify this, the syntax for use has changed in PHP 7
+        $uses = array();
+        foreach ($node->uses as $use)
+            $uses[] = $this->pprint($use);
+
+        $fragment = "use([" . implode(",", $uses) . "])";
+        $fragment .= $this->annotateASTNode($node);
+
+        return $fragment;
+    }
+
     public function pprintHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node)
     {
         $fragment = "haltCompiler(\"" . $this->rascalizeString($node->remaining) . "\")";
@@ -1570,9 +1639,9 @@ class RascalPrinter extends BasePrinter
 
     public function pprintNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node)
     {
-// If we have a non-null name, set this to the namespace name; if we
-// don't, this is a global namespace declaration, like
-// namespace { global stuff }
+        // If we have a non-null name, set this to the namespace name; if we
+        // don't, this is a global namespace declaration, like
+        // namespace { global stuff }
         $priorNamespace = $this->currentNamespace;
         if (null != $node->name)
             $this->currentNamespace = $this->implodeName($node->name);
@@ -1583,8 +1652,8 @@ class RascalPrinter extends BasePrinter
         foreach ($node->stmts as $stmt)
             $body[] = $this->pprint($stmt);
 
-// Again check the name -- since it is optional, we return an OptionName
-// here, which could be noName() if this is a global namespace
+        // Again check the name -- since it is optional, we return an OptionName
+        // here, which could be noName() if this is a global namespace
         if (null != $node->name) {
             $headerName = $this->pprint($node->name);
             $name = "someName({$headerName})";
@@ -1592,10 +1661,10 @@ class RascalPrinter extends BasePrinter
             $name = "noName()";
         }
 
-// The third option shouldn't occur, but is put in just in case; the first
-// option is the case where we have a body, the second is where we have
-// a namespace header, like namespace DB; that opens a new block but doesn't
-// enclose it in braces
+        // The third option shouldn't occur, but is put in just in case; the first
+        // option is the case where we have a body, the second is where we have
+        // a namespace header, like namespace DB; that opens a new block but doesn't
+        // enclose it in braces
         if (null != $node->stmts)
             $fragment = "namespace(" . $name . ",[" . implode(",", $body) . "])";
         else
@@ -1606,13 +1675,20 @@ class RascalPrinter extends BasePrinter
 
         $fragment .= $this->annotateASTNode($node);
 
-// If we had a statement body, then we reset the namespace at the end; if
-// we didn't, it means that we just had a namespace declaration like
-// namespace DB; which had no body, but then is still active at the end
-// in which case we don't want to reset it
+        // If we had a statement body, then we reset the namespace at the end; if
+        // we didn't, it means that we just had a namespace declaration like
+        // namespace DB; which had no body, but then is still active at the end
+        // in which case we don't want to reset it
         if (null != $node->stmts)
             $this->currentNamespace = $priorNamespace;
 
+        return $fragment;
+    }
+
+    public function pprintNopStmt(\PhpParser\Node\Stmt\Nop $node)
+    {
+        $fragment = "emptyStmt()";
+        $fragment .= $this->annotateASTNode($node);
         return $fragment;
     }
 
@@ -1850,6 +1926,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintUseStmt(\PhpParser\Node\Stmt\Use_ $node)
     {
+        // TODO: Verify this, the syntax for use has changed in PHP 7
         $uses = array();
         foreach ($node->uses as $use)
             $uses[] = $this->pprint($use);

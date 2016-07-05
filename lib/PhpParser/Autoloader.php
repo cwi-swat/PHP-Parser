@@ -30,8 +30,13 @@ class Autoloader
      * @param string $class A class name.
      */
     static public function autoload($class) {
-        if (0 === strpos($class, 'PhpParser\\') || 0 === strpos($class, 'Rascal\\')) {
+        if (0 === strpos($class, 'PhpParser\\')) {
             $fileName = __DIR__ . strtr(substr($class, 9), '\\', '/') . '.php';
+            if (file_exists($fileName)) {
+                require $fileName;
+            }
+        } elseif (0 === strpos($class, 'Rascal\\')) {
+            $fileName = dirname(__DIR__) . '/' . strtr($class, '\\', '/') . '.php';
             if (file_exists($fileName)) {
                 require $fileName;
             }

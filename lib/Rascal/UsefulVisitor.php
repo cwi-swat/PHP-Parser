@@ -42,12 +42,12 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterMulAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\Plus) {
 			return $this->visitor->enterPlusAssignOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\Pow) {
+			return $this->visitor->enterPowAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\ShiftLeft) {
 			return $this->visitor->enterShiftLeftAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\ShiftRight) {
 			return $this->visitor->enterShiftRightAssignOpExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp) {
-			return $this->visitor->enterAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignRef) {
 			return $this->visitor->enterAssignRefExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\BitwiseAnd) {
@@ -60,6 +60,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterBooleanAndBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\BooleanOr) {
 			return $this->visitor->enterBooleanOrBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Coalesce) {
+			return $this->visitor->enterCoalesceBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Concat) {
 			return $this->visitor->enterConcatBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Div) {
@@ -90,6 +92,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterNotIdenticalBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Plus) {
 			return $this->visitor->enterPlusBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Pow) {
+			return $this->visitor->enterPowBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\ShiftLeft) {
 			return $this->visitor->enterShiftLeftBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\ShiftRight) {
@@ -98,28 +102,26 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterSmallerBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\SmallerOrEqual) {
 			return $this->visitor->enterSmallerOrEqualBinaryOpExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp) {
-			return $this->visitor->enterBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Spaceship) {
+			return $this->visitor->enterSpaceshipBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BitwiseNot) {
 			return $this->visitor->enterBitwiseNotExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BooleanNot) {
 			return $this->visitor->enterBooleanNotExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Array_) {
 			return $this->visitor->enterArrayCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Bool) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Bool_) {
 			return $this->visitor->enterBoolCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Double) {
 			return $this->visitor->enterDoubleCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Int) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Int_) {
 			return $this->visitor->enterIntCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Object) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Object_) {
 			return $this->visitor->enterObjectCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\String) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\String_) {
 			return $this->visitor->enterStringCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Unset_) {
 			return $this->visitor->enterUnsetCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast) {
-			return $this->visitor->enterCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\ClassConstFetch) {
 			return $this->visitor->enterClassConstFetchExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Clone_) {
@@ -180,6 +182,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterVariableExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Yield_) {
 			return $this->visitor->enterYieldExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\YieldFrom) {
+			return $this->visitor->enterYieldFromExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\FullyQualified) {
 			return $this->visitor->enterFullyQualifiedName($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\Relative) {
@@ -192,6 +196,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterDNumberScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\Encapsed) {
 			return $this->visitor->enterEncapsedScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
+			return $this->visitor->enterEncapsedStringPartScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\LNumber) {
 			return $this->visitor->enterLNumberScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Class_) {
@@ -210,12 +216,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterNamespaceMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Trait_) {
 			return $this->visitor->enterTraitMagicConstScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst) {
-			return $this->visitor->enterMagicConstScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar\String) {
+		} elseif ($node instanceof \PhpParser\Node\Scalar\String_) {
 			return $this->visitor->enterStringScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar) {
-			return $this->visitor->enterScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Break_) {
 			return $this->visitor->enterBreakStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Case_) {
@@ -256,6 +258,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterGlobalStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Goto_) {
 			return $this->visitor->enterGotoStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\GroupUse) {
+			return $this->visitor->enterGroupUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\HaltCompiler) {
 			return $this->visitor->enterHaltCompilerStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\If_) {
@@ -268,6 +272,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterLabelStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Namespace_) {
 			return $this->visitor->enterNamespaceStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\Nop) {
+			return $this->visitor->enterNopStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Property) {
 			return $this->visitor->enterPropertyStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\PropertyProperty) {
@@ -290,8 +296,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterAliasTraitUseAdaptationStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\TraitUseAdaptation\Precedence) {
 			return $this->visitor->enterPrecedenceTraitUseAdaptationStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\TraitUseAdaptation) {
-			return $this->visitor->enterTraitUseAdaptationStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\TryCatch) {
 			return $this->visitor->enterTryCatchStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Unset_) {
@@ -302,10 +306,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterUseUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\While_) {
 			return $this->visitor->enterWhileStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt) {
-			return $this->visitor->enterStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr) {
-			return $this->visitor->enterExpr($node);
 		}
 	}
 	public function leaveNode(\PhpParser\Node $node)
@@ -340,12 +340,12 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveMulAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\Plus) {
 			return $this->visitor->leavePlusAssignOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\Pow) {
+			return $this->visitor->leavePowAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\ShiftLeft) {
 			return $this->visitor->leaveShiftLeftAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp\ShiftRight) {
 			return $this->visitor->leaveShiftRightAssignOpExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\AssignOp) {
-			return $this->visitor->leaveAssignOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignRef) {
 			return $this->visitor->leaveAssignRefExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\BitwiseAnd) {
@@ -358,6 +358,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveBooleanAndBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\BooleanOr) {
 			return $this->visitor->leaveBooleanOrBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Coalesce) {
+			return $this->visitor->leaveCoalesceBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Concat) {
 			return $this->visitor->leaveConcatBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Div) {
@@ -388,6 +390,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveNotIdenticalBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Plus) {
 			return $this->visitor->leavePlusBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Pow) {
+			return $this->visitor->leavePowBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\ShiftLeft) {
 			return $this->visitor->leaveShiftLeftBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\ShiftRight) {
@@ -396,28 +400,26 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveSmallerBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\SmallerOrEqual) {
 			return $this->visitor->leaveSmallerOrEqualBinaryOpExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp) {
-			return $this->visitor->leaveBinaryOpExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\BinaryOp\Spaceship) {
+			return $this->visitor->leaveSpaceshipBinaryOpExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BitwiseNot) {
 			return $this->visitor->leaveBitwiseNotExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\BooleanNot) {
 			return $this->visitor->leaveBooleanNotExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Array_) {
 			return $this->visitor->leaveArrayCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Bool) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Bool_) {
 			return $this->visitor->leaveBoolCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Double) {
 			return $this->visitor->leaveDoubleCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Int) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Int_) {
 			return $this->visitor->leaveIntCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Object) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Object_) {
 			return $this->visitor->leaveObjectCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\String) {
+		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\String_) {
 			return $this->visitor->leaveStringCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Cast\Unset_) {
 			return $this->visitor->leaveUnsetCastExpr($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr\Cast) {
-			return $this->visitor->leaveCastExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\ClassConstFetch) {
 			return $this->visitor->leaveClassConstFetchExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Clone_) {
@@ -478,6 +480,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveVariableExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Yield_) {
 			return $this->visitor->leaveYieldExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\YieldFrom) {
+			return $this->visitor->leaveYieldFromExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\FullyQualified) {
 			return $this->visitor->leaveFullyQualifiedName($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\Relative) {
@@ -490,6 +494,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveDNumberScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\Encapsed) {
 			return $this->visitor->leaveEncapsedScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
+			return $this->visitor->leaveEncapsedStringPartScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\LNumber) {
 			return $this->visitor->leaveLNumberScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Class_) {
@@ -508,12 +514,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveNamespaceMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Trait_) {
 			return $this->visitor->leaveTraitMagicConstScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst) {
-			return $this->visitor->leaveMagicConstScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar\String) {
+		} elseif ($node instanceof \PhpParser\Node\Scalar\String_) {
 			return $this->visitor->leaveStringScalar($node);
-		} elseif ($node instanceof \PhpParser\Node\Scalar) {
-			return $this->visitor->leaveScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Break_) {
 			return $this->visitor->leaveBreakStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Case_) {
@@ -554,6 +556,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveGlobalStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Goto_) {
 			return $this->visitor->leaveGotoStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\GroupUse) {
+			return $this->visitor->leaveGroupUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\HaltCompiler) {
 			return $this->visitor->leaveHaltCompilerStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\If_) {
@@ -566,6 +570,8 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveLabelStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Namespace_) {
 			return $this->visitor->leaveNamespaceStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\Nop) {
+			return $this->visitor->leaveNopStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Property) {
 			return $this->visitor->leavePropertyStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\PropertyProperty) {
@@ -588,8 +594,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveAliasTraitUseAdaptationStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\TraitUseAdaptation\Precedence) {
 			return $this->visitor->leavePrecedenceTraitUseAdaptationStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\TraitUseAdaptation) {
-			return $this->visitor->leaveTraitUseAdaptationStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\TryCatch) {
 			return $this->visitor->leaveTryCatchStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Unset_) {
@@ -600,10 +604,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveUseUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\While_) {
 			return $this->visitor->leaveWhileStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt) {
-			return $this->visitor->leaveStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Expr) {
-			return $this->visitor->leaveExpr($node);
 		}
 	}
 }

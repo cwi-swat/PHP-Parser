@@ -63,15 +63,15 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterPowAssignOpExpr(\PhpParser\Node\Expr\AssignOp\Pow $node)
+	{
+		return null;
+	}
 	public function enterShiftLeftAssignOpExpr(\PhpParser\Node\Expr\AssignOp\ShiftLeft $node)
 	{
 		return null;
 	}
 	public function enterShiftRightAssignOpExpr(\PhpParser\Node\Expr\AssignOp\ShiftRight $node)
-	{
-		return null;
-	}
-	public function enterAssignOpExpr(\PhpParser\Node\Expr\AssignOp $node)
 	{
 		return null;
 	}
@@ -96,6 +96,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterBooleanOrBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\BooleanOr $node)
+	{
+		return null;
+	}
+	public function enterCoalesceBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Coalesce $node)
 	{
 		return null;
 	}
@@ -159,6 +163,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterPowBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Pow $node)
+	{
+		return null;
+	}
 	public function enterShiftLeftBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\ShiftLeft $node)
 	{
 		return null;
@@ -175,7 +183,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp $node)
+	public function enterSpaceshipBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Spaceship $node)
 	{
 		return null;
 	}
@@ -191,7 +199,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool $node)
+	public function enterBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool_ $node)
 	{
 		return null;
 	}
@@ -199,23 +207,19 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterIntCastExpr(\PhpParser\Node\Expr\Cast\Int $node)
+	public function enterIntCastExpr(\PhpParser\Node\Expr\Cast\Int_ $node)
 	{
 		return null;
 	}
-	public function enterObjectCastExpr(\PhpParser\Node\Expr\Cast\Object $node)
+	public function enterObjectCastExpr(\PhpParser\Node\Expr\Cast\Object_ $node)
 	{
 		return null;
 	}
-	public function enterStringCastExpr(\PhpParser\Node\Expr\Cast\String $node)
+	public function enterStringCastExpr(\PhpParser\Node\Expr\Cast\String_ $node)
 	{
 		return null;
 	}
 	public function enterUnsetCastExpr(\PhpParser\Node\Expr\Cast\Unset_ $node)
-	{
-		return null;
-	}
-	public function enterCastExpr(\PhpParser\Node\Expr\Cast $node)
 	{
 		return null;
 	}
@@ -339,6 +343,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node)
+	{
+		return null;
+	}
 	public function enterFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
 	{
 		return null;
@@ -360,6 +368,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node)
+	{
+		return null;
+	}
+	public function enterEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
 	{
 		return null;
 	}
@@ -399,15 +411,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterMagicConstScalar(\PhpParser\Node\Scalar\MagicConst $node)
-	{
-		return null;
-	}
-	public function enterStringScalar(\PhpParser\Node\Scalar\String $node)
-	{
-		return null;
-	}
-	public function enterScalar(\PhpParser\Node\Scalar $node)
+	public function enterStringScalar(\PhpParser\Node\Scalar\String_ $node)
 	{
 		return null;
 	}
@@ -491,6 +495,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterGroupUseStmt(\PhpParser\Node\Stmt\GroupUse $node)
+	{
+		return null;
+	}
 	public function enterHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node)
 	{
 		return null;
@@ -512,6 +520,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node)
+	{
+		return null;
+	}
+	public function enterNopStmt(\PhpParser\Node\Stmt\Nop $node)
 	{
 		return null;
 	}
@@ -559,10 +571,6 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation $node)
-	{
-		return null;
-	}
 	public function enterTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node)
 	{
 		return null;
@@ -580,14 +588,6 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterWhileStmt(\PhpParser\Node\Stmt\While_ $node)
-	{
-		return null;
-	}
-	public function enterStmt(\PhpParser\Node\Stmt $node)
-	{
-		return null;
-	}
-	public function enterExpr(\PhpParser\Node\Expr $node)
 	{
 		return null;
 	}
@@ -652,15 +652,15 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leavePowAssignOpExpr(\PhpParser\Node\Expr\AssignOp\Pow $node)
+	{
+		return null;
+	}
 	public function leaveShiftLeftAssignOpExpr(\PhpParser\Node\Expr\AssignOp\ShiftLeft $node)
 	{
 		return null;
 	}
 	public function leaveShiftRightAssignOpExpr(\PhpParser\Node\Expr\AssignOp\ShiftRight $node)
-	{
-		return null;
-	}
-	public function leaveAssignOpExpr(\PhpParser\Node\Expr\AssignOp $node)
 	{
 		return null;
 	}
@@ -685,6 +685,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveBooleanOrBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\BooleanOr $node)
+	{
+		return null;
+	}
+	public function leaveCoalesceBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Coalesce $node)
 	{
 		return null;
 	}
@@ -748,6 +752,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leavePowBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Pow $node)
+	{
+		return null;
+	}
 	public function leaveShiftLeftBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\ShiftLeft $node)
 	{
 		return null;
@@ -764,7 +772,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp $node)
+	public function leaveSpaceshipBinaryOpExpr(\PhpParser\Node\Expr\BinaryOp\Spaceship $node)
 	{
 		return null;
 	}
@@ -780,7 +788,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool $node)
+	public function leaveBoolCastExpr(\PhpParser\Node\Expr\Cast\Bool_ $node)
 	{
 		return null;
 	}
@@ -788,23 +796,19 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveIntCastExpr(\PhpParser\Node\Expr\Cast\Int $node)
+	public function leaveIntCastExpr(\PhpParser\Node\Expr\Cast\Int_ $node)
 	{
 		return null;
 	}
-	public function leaveObjectCastExpr(\PhpParser\Node\Expr\Cast\Object $node)
+	public function leaveObjectCastExpr(\PhpParser\Node\Expr\Cast\Object_ $node)
 	{
 		return null;
 	}
-	public function leaveStringCastExpr(\PhpParser\Node\Expr\Cast\String $node)
+	public function leaveStringCastExpr(\PhpParser\Node\Expr\Cast\String_ $node)
 	{
 		return null;
 	}
 	public function leaveUnsetCastExpr(\PhpParser\Node\Expr\Cast\Unset_ $node)
-	{
-		return null;
-	}
-	public function leaveCastExpr(\PhpParser\Node\Expr\Cast $node)
 	{
 		return null;
 	}
@@ -928,6 +932,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node)
+	{
+		return null;
+	}
 	public function leaveFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
 	{
 		return null;
@@ -949,6 +957,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node)
+	{
+		return null;
+	}
+	public function leaveEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
 	{
 		return null;
 	}
@@ -988,15 +1000,7 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveMagicConstScalar(\PhpParser\Node\Scalar\MagicConst $node)
-	{
-		return null;
-	}
-	public function leaveStringScalar(\PhpParser\Node\Scalar\String $node)
-	{
-		return null;
-	}
-	public function leaveScalar(\PhpParser\Node\Scalar $node)
+	public function leaveStringScalar(\PhpParser\Node\Scalar\String_ $node)
 	{
 		return null;
 	}
@@ -1080,6 +1084,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveGroupUseStmt(\PhpParser\Node\Stmt\GroupUse $node)
+	{
+		return null;
+	}
 	public function leaveHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node)
 	{
 		return null;
@@ -1101,6 +1109,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node)
+	{
+		return null;
+	}
+	public function leaveNopStmt(\PhpParser\Node\Stmt\Nop $node)
 	{
 		return null;
 	}
@@ -1148,10 +1160,6 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation $node)
-	{
-		return null;
-	}
 	public function leaveTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node)
 	{
 		return null;
@@ -1169,14 +1177,6 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveWhileStmt(\PhpParser\Node\Stmt\While_ $node)
-	{
-		return null;
-	}
-	public function leaveStmt(\PhpParser\Node\Stmt $node)
-	{
-		return null;
-	}
-	public function leaveExpr(\PhpParser\Node\Expr $node)
 	{
 		return null;
 	}
