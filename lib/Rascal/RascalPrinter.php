@@ -48,9 +48,9 @@ class RascalPrinter extends BasePrinter
      * @param string $prefix
      * @param bool $docs
      */
-    public function __construct($str, $locs, $rel, $ids, $prefix, $projectName, $docs = false, $addDecl = false)
+    public function __construct($file, $locs, $rel, $ids, $prefix, $projectName, $docs = false, $addDecl = false)
     {
-        $this->filename = $str;
+        $this->filename = str_replace(' ', '%20', $file);
         $this->addLocations = $locs;
         $this->addDeclarations = $addDecl;
         $this->relativeLocations = $rel;
