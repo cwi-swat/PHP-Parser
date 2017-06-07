@@ -1137,7 +1137,7 @@ class RascalPrinter extends BasePrinter
         } else {
             $ns = $this->currentNamespace;
             $currentClass = strlen($ns) > 0 ? $ns . "\\" . $this->currentClass : $this->currentClass;
-            $fragment = "classConstant()[@actualValue=\"{$currentClass}\"]";
+            $fragment = "classConstant()[@actualValue=\"{$this->rascalizeString($currentClass)}\"]";
         }
         $fragment = "scalar(" . $fragment . ")";
         $fragment .= $this->annotateASTNode($node);
@@ -1189,7 +1189,7 @@ class RascalPrinter extends BasePrinter
      */
     private function handleMagicConstExpression(\PhpParser\Node\Scalar\MagicConst $node, $name, $value)
     {
-        $fragment = "{$name}()[@actualValue=\"{$value}\"]";
+        $fragment = "{$name}()[@actualValue=\"{$this->rascalizeString($value)}\"]";
         $fragment = "scalar(" . $fragment . ")";
         $fragment .= $this->annotateASTNode($node);
 
@@ -1840,17 +1840,17 @@ class RascalPrinter extends BasePrinter
 
         if (null != $node->newModifier) {
             $modifiers = array();
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC)
                 $modifiers[] = "\\public()";
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_PROTECTED)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_PROTECTED)
                 $modifiers[] = "protected()";
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_PRIVATE)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_PRIVATE)
                 $modifiers[] = "\\private()";
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_ABSTRACT)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_ABSTRACT)
                 $modifiers[] = "abstract()";
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_FINAL)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_FINAL)
                 $modifiers[] = "final()";
-            if ($node->type & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
+            if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
                 $modifiers[] = "static()";
             $newModifier = "{ " . implode(",", $modifiers) . " }";
         } else {
