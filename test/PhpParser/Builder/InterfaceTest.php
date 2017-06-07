@@ -2,12 +2,13 @@
 
 namespace PhpParser\Builder;
 
-use PhpParser\Node;
-use PhpParser\Node\Stmt;
-use PhpParser\Node\Scalar\DNumber;
 use PhpParser\Comment;
+use PhpParser\Node;
+use PhpParser\Node\Scalar\DNumber;
+use PhpParser\Node\Stmt;
+use PHPUnit\Framework\TestCase;
 
-class InterfaceTest extends \PHPUnit_Framework_TestCase
+class InterfaceTest extends TestCase
 {
     /** @var Interface_ */
     protected $builder;
@@ -24,7 +25,7 @@ class InterfaceTest extends \PHPUnit_Framework_TestCase
     public function testEmpty() {
         $contract = $this->builder->getNode();
         $this->assertInstanceOf('PhpParser\Node\Stmt\Interface_', $contract);
-        $this->assertSame('Contract', $contract->name);
+        $this->assertEquals(new Node\Identifier('Contract'), $contract->name);
     }
 
     public function testExtending() {

@@ -2,13 +2,14 @@
 
 namespace PhpParser\Builder;
 
-use PhpParser\Node\Name;
-use PhpParser\Node\Stmt;
-use PhpParser\Node\Expr;
-use PhpParser\Node\Scalar;
 use PhpParser\Comment;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar;
+use PhpParser\Node\Stmt;
+use PHPUnit\Framework\TestCase;
 
-class PropertyTest extends \PHPUnit_Framework_TestCase
+class PropertyTest extends TestCase
 {
     public function createPropertyBuilder($name) {
         return new Property($name);

@@ -14,7 +14,7 @@ class Error extends \RuntimeException
      * @param array|int $attributes Attributes of node/token where error occurred
      *                              (or start line of error -- deprecated)
      */
-    public function __construct($message, $attributes = array()) {
+    public function __construct(string $message, $attributes = array()) {
         $this->rawMessage = (string) $message;
         if (is_array($attributes)) {
             $this->attributes = $attributes;
@@ -29,7 +29,7 @@ class Error extends \RuntimeException
      *
      * @return string Error message
      */
-    public function getRawMessage() {
+    public function getRawMessage() : string {
         return $this->rawMessage;
     }
 
@@ -38,8 +38,8 @@ class Error extends \RuntimeException
      *
      * @return int Error start line
      */
-    public function getStartLine() {
-        return isset($this->attributes['startLine']) ? $this->attributes['startLine'] : -1;
+    public function getStartLine() : int {
+        return $this->attributes['startLine'] ?? -1;
     }
 
     /**
@@ -47,8 +47,8 @@ class Error extends \RuntimeException
      *
      * @return int Error end line
      */
-    public function getEndLine() {
-        return isset($this->attributes['endLine']) ? $this->attributes['endLine'] : -1;
+    public function getEndLine() : int {
+        return $this->attributes['endLine'] ?? -1;
     }
 
 
@@ -57,8 +57,18 @@ class Error extends \RuntimeException
      *
      * @return array
      */
-    public function getAttributes() {
+    public function getAttributes() : array {
         return $this->attributes;
+    }
+
+    /**
+     * Sets the attributes of the node/token the error occured at.
+     *
+     * @param array $attributes
+     */
+    public function setAttributes(array $attributes) {
+        $this->attributes = $attributes;
+        $this->updateMessage();
     }
 
     /**
@@ -66,7 +76,7 @@ class Error extends \RuntimeException
      *
      * @param string $message Error message
      */
-    public function setRawMessage($message) {
+    public function setRawMessage(string $message) {
         $this->rawMessage = (string) $message;
         $this->updateMessage();
     }
@@ -76,7 +86,7 @@ class Error extends \RuntimeException
      *
      * @param int $line Error start line
      */
-    public function setStartLine($line) {
+    public function setStartLine(int $line) {
         $this->attributes['startLine'] = (int) $line;
         $this->updateMessage();
     }
@@ -88,7 +98,7 @@ class Error extends \RuntimeException
      *
      * @return bool
      */
-    public function hasColumnInfo() {
+    public function hasColumnInfo() : bool {
         return isset($this->attributes['startFilePos']) && isset($this->attributes['endFilePos']);
     }
 
@@ -98,7 +108,7 @@ class Error extends \RuntimeException
      * @param string $code Source code of the file
      * @return int
      */
-    public function getStartColumn($code) {
+    public function getStartColumn(string $code) : int {
         if (!$this->hasColumnInfo()) {
             throw new \RuntimeException('Error does not have column information');
         }
@@ -112,7 +122,7 @@ class Error extends \RuntimeException
      * @param string $code Source code of the file
      * @return int
      */
-    public function getEndColumn($code) {
+    public function getEndColumn(string $code) : int {
         if (!$this->hasColumnInfo()) {
             throw new \RuntimeException('Error does not have column information');
         }
@@ -120,7 +130,30 @@ class Error extends \RuntimeException
         return $this->toColumn($code, $this->attributes['endFilePos']);
     }
 
-    private function toColumn($code, $pos) {
+    /**
+     * Formats message including line and column information.
+     *
+     * @param string $code Source code associated with the error, for calculation of the columns
+     *
+     * @return string Formatted message
+     */
+    public function getMessageWithColumnInfo(string $code) : string {
+        return sprintf(
+            '%s from %d:%d to %d:%d', $this->getRawMessage(),
+            $this->getStartLine(), $this->getStartColumn($code),
+            $this->getEndLine(), $this->getEndColumn($code)
+        );
+    }
+
+    /**
+     * Converts a file offset into a column.
+     *
+     * @param string $code Source code that $pos indexes into
+     * @param int    $pos  0-based position in $code
+     *
+     * @return int 1-based column (relative to start of line)
+     */
+    private function toColumn(string $code, int $pos) : int {
         if ($pos > strlen($code)) {
             throw new \RuntimeException('Invalid position information');
         }
@@ -144,15 +177,5 @@ class Error extends \RuntimeException
         } else {
             $this->message .= ' on line ' . $this->getStartLine();
         }
-    }
-
-    /** @deprecated Use getStartLine() instead */
-    public function getRawLine() {
-        return $this->getStartLine();
-    }
-
-    /** @deprecated Use setStartLine() instead */
-    public function setRawLine($line) {
-        $this->setStartLine($line);
     }
 }

@@ -3,6 +3,10 @@
 namespace PhpParser;
 
 use PhpParser\Builder;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Use_;
 
 /**
@@ -25,7 +29,7 @@ class BuilderFactory
      *
      * @return Builder\Namespace_ The created namespace builder
      */
-    protected function _namespace($name) {
+    protected function _namespace($name) : Builder\Namespace_ {
         return new Builder\Namespace_($name);
     }
 
@@ -36,7 +40,7 @@ class BuilderFactory
      *
      * @return Builder\Class_ The created class builder
      */
-    protected function _class($name) {
+    protected function _class(string $name) : Builder\Class_ {
         return new Builder\Class_($name);
     }
 
@@ -47,7 +51,7 @@ class BuilderFactory
      *
      * @return Builder\Interface_ The created interface builder
      */
-    protected function _interface($name) {
+    protected function _interface(string $name) : Builder\Interface_ {
         return new Builder\Interface_($name);
     }
 
@@ -58,7 +62,7 @@ class BuilderFactory
      *
      * @return Builder\Trait_ The created trait builder
      */
-    protected function _trait($name) {
+    protected function _trait(string $name) : Builder\Trait_ {
         return new Builder\Trait_($name);
     }
 
@@ -69,7 +73,7 @@ class BuilderFactory
      *
      * @return Builder\Method The created method builder
      */
-    public function method($name) {
+    public function method(string $name) : Builder\Method {
         return new Builder\Method($name);
     }
 
@@ -80,7 +84,7 @@ class BuilderFactory
      *
      * @return Builder\Param The created parameter builder
      */
-    public function param($name) {
+    public function param(string $name) : Builder\Param {
         return new Builder\Param($name);
     }
 
@@ -91,7 +95,7 @@ class BuilderFactory
      *
      * @return Builder\Property The created property builder
      */
-    public function property($name) {
+    public function property(string $name) : Builder\Property {
         return new Builder\Property($name);
     }
 
@@ -102,7 +106,7 @@ class BuilderFactory
      *
      * @return Builder\Function_ The created function builder
      */
-    protected function _function($name) {
+    protected function _function(string $name) : Builder\Function_ {
         return new Builder\Function_($name);
     }
 
@@ -113,15 +117,79 @@ class BuilderFactory
      *
      * @return Builder\Use_ The create use builder
      */
-    protected function _use($name) {
+    protected function _use($name) : Builder\Use_ {
         return new Builder\Use_($name, Use_::TYPE_NORMAL);
+    }
+
+    /**
+     * Creates node a for a literal value.
+     *
+     * @param Expr|bool|null|int|float|string|array $value $value
+     *
+     * @return Expr
+     */
+    public function val($value) : Expr {
+        return BuilderHelpers::normalizeValue($value);
+    }
+
+    /**
+     * Normalizes an argument list.
+     *
+     * Creates Arg nodes for all arguments and converts literal values to expressions.
+     *
+     * @param array $args List of arguments to normalize
+     *
+     * @return Arg[]
+     */
+    public function args(array $args) : array {
+        $normalizedArgs = [];
+        foreach ($args as $arg) {
+            if ($arg instanceof Arg) {
+                $normalizedArgs[] = $arg;
+            } else {
+                $normalizedArgs[] = new Arg(BuilderHelpers::normalizeValue($arg));
+            }
+        }
+        return $normalizedArgs;
+    }
+
+    /**
+     * Creates nested Concat nodes from a list of expressions.
+     *
+     * @param Expr|string ...$exprs Expressions or literal strings
+     *
+     * @return Concat
+     */
+    public function concat(...$exprs) : Concat {
+        $numExprs = count($exprs);
+        if ($numExprs < 2) {
+            throw new \LogicException('Expected at least two expressions');
+        }
+
+        $lastConcat = $this->normalizeStringExpr($exprs[0]);
+        for ($i = 1; $i < $numExprs; $i++) {
+            $lastConcat = new Concat($lastConcat, $this->normalizeStringExpr($exprs[$i]));
+        }
+        return $lastConcat;
     }
 
     public function __call($name, array $args) {
         if (method_exists($this, '_' . $name)) {
-            return call_user_func_array(array($this, '_' . $name), $args);
+            return $this->{'_' . $name}(...$args);
         }
 
         throw new \LogicException(sprintf('Method "%s" does not exist', $name));
+    }
+
+    private function normalizeStringExpr($expr) {
+        if ($expr instanceof Expr) {
+            return $expr;
+        }
+
+        if (is_string($expr)) {
+            return new String_($expr);
+        }
+
+        throw new \LogicException('Expected string or Expr');
     }
 }

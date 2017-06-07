@@ -2,7 +2,7 @@
 
 namespace PhpParser;
 
-abstract class NodeAbstract implements Node
+abstract class NodeAbstract implements Node, \JsonSerializable
 {
     protected $attributes;
 
@@ -20,7 +20,7 @@ abstract class NodeAbstract implements Node
      *
      * @return string Type of the node
      */
-    public function getType() {
+    public function getType() : string {
         return strtr(substr(rtrim(get_class($this), '_'), 15), '\\', '_');
     }
 
@@ -29,7 +29,7 @@ abstract class NodeAbstract implements Node
      *
      * @return int Line
      */
-    public function getLine() {
+    public function getLine() : int {
         return $this->getAttribute('startLine', -1);
     }
 
@@ -103,15 +103,37 @@ abstract class NodeAbstract implements Node
         return $lastComment;
     }
 
-    public function setAttribute($key, $value) {
+    /**
+     * Sets the doc comment of the node.
+     *
+     * This will either replace an existing doc comment or add it to the comments array.
+     *
+     * @param Comment\Doc $docComment Doc comment to set
+     */
+    public function setDocComment(Comment\Doc $docComment) {
+        $comments = $this->getAttribute('comments', []);
+
+        $numComments = count($comments);
+        if ($numComments > 0 && $comments[$numComments - 1] instanceof Comment\Doc) {
+            // Replace existing doc comment
+            $comments[$numComments - 1] = $docComment;
+        } else {
+            // Append new comment
+            $comments[] = $docComment;
+        }
+
+        $this->setAttribute('comments', $comments);
+    }
+
+    public function setAttribute(string $key, $value) {
         $this->attributes[$key] = $value;
     }
 
-    public function hasAttribute($key) {
+    public function hasAttribute(string $key) : bool {
         return array_key_exists($key, $this->attributes);
     }
 
-    public function &getAttribute($key, $default = null) {
+    public function &getAttribute(string $key, $default = null) {
         if (!array_key_exists($key, $this->attributes)) {
             return $default;
         } else {
@@ -119,7 +141,18 @@ abstract class NodeAbstract implements Node
         }
     }
 
-    public function getAttributes() {
+    public function getAttributes() : array {
         return $this->attributes;
+    }
+
+    public function setAttributes(array $attributes) {
+        $this->attributes = $attributes;
+    }
+
+    /**
+     * @return array
+     */
+    public function jsonSerialize() : array {
+        return ['nodeType' => $this->getType()] + get_object_vars($this);
     }
 }

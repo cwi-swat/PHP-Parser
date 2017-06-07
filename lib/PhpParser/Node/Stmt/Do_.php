@@ -6,17 +6,17 @@ use PhpParser\Node;
 
 class Do_ extends Node\Stmt
 {
+    /** @var Node\Stmt[] Statements */
+    public $stmts;
     /** @var Node\Expr Condition */
     public $cond;
-    /** @var Node[] Statements */
-    public $stmts;
 
     /**
      * Constructs a do while node.
      *
-     * @param Node\Expr $cond       Condition
-     * @param Node[]    $stmts      Statements
-     * @param array     $attributes Additional attributes
+     * @param Node\Expr   $cond       Condition
+     * @param Node\Stmt[] $stmts      Statements
+     * @param array       $attributes Additional attributes
      */
     public function __construct(Node\Expr $cond, array $stmts = array(), array $attributes = array()) {
         parent::__construct($attributes);
@@ -24,7 +24,7 @@ class Do_ extends Node\Stmt
         $this->stmts = $stmts;
     }
 
-    public function getSubNodeNames() {
-        return array('cond', 'stmts');
+    public function getSubNodeNames() : array {
+        return array('stmts', 'cond');
     }
 }

@@ -3,18 +3,19 @@
 namespace PhpParser\Node\Stmt;
 
 use PhpParser\Node;
+
 class Declare_ extends Node\Stmt
 {
     /** @var DeclareDeclare[] List of declares */
     public $declares;
-    /** @var Node[] Statements */
+    /** @var Node\Stmt[]|null Statements */
     public $stmts;
 
     /**
      * Constructs a declare node.
      *
      * @param DeclareDeclare[] $declares   List of declares
-     * @param Node[]|null      $stmts      Statements
+     * @param Node\Stmt[]|null $stmts      Statements
      * @param array            $attributes Additional attributes
      */
     public function __construct(array $declares, array $stmts = null, array $attributes = array()) {
@@ -23,7 +24,7 @@ class Declare_ extends Node\Stmt
         $this->stmts = $stmts;
     }
 
-    public function getSubNodeNames() {
+    public function getSubNodeNames() : array {
         return array('declares', 'stmts');
     }
 }

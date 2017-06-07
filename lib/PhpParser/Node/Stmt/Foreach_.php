@@ -14,7 +14,7 @@ class Foreach_ extends Node\Stmt
     public $byRef;
     /** @var Node\Expr Variable to assign value to */
     public $valueVar;
-    /** @var Node[] Statements */
+    /** @var Node\Stmt[] Statements */
     public $stmts;
 
     /**
@@ -31,13 +31,13 @@ class Foreach_ extends Node\Stmt
     public function __construct(Node\Expr $expr, Node\Expr $valueVar, array $subNodes = array(), array $attributes = array()) {
         parent::__construct($attributes);
         $this->expr = $expr;
-        $this->keyVar = isset($subNodes['keyVar']) ? $subNodes['keyVar'] : null;
-        $this->byRef = isset($subNodes['byRef']) ? $subNodes['byRef'] : false;
+        $this->keyVar = $subNodes['keyVar'] ?? null;
+        $this->byRef = $subNodes['byRef'] ?? false;
         $this->valueVar = $valueVar;
-        $this->stmts = isset($subNodes['stmts']) ? $subNodes['stmts'] : array();
+        $this->stmts = $subNodes['stmts'] ?? array();
     }
 
-    public function getSubNodeNames() {
+    public function getSubNodeNames() : array {
         return array('expr', 'keyVar', 'byRef', 'valueVar', 'stmts');
     }
 }

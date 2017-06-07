@@ -2,9 +2,13 @@
 
 namespace PhpParser;
 
+use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Scalar\String_;
+use PHPUnit\Framework\TestCase;
 
-class BuilderFactoryTest extends \PHPUnit_Framework_TestCase
+class BuilderFactoryTest extends TestCase
 {
     /**
      * @dataProvider provideTestFactory
@@ -29,9 +33,69 @@ class BuilderFactoryTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testNonExistingMethod() {
-        $this->setExpectedException('LogicException', 'Method "foo" does not exist');
+        $this->expectException('LogicException');
+        $this->expectExceptionMessage('Method "foo" does not exist');
         $factory = new BuilderFactory();
         $factory->foo();
+    }
+
+    public function testVal() {
+        // This method is a wrapper around BuilderHelpers::normalizeValue(),
+        // which is already tested elsewhere
+        $factory = new BuilderFactory();
+        $this->assertEquals(
+            new String_("foo"),
+            $factory->val("foo")
+        );
+    }
+
+    public function testConcat() {
+        $factory = new BuilderFactory();
+        $varA = new Expr\Variable('a');
+        $varB = new Expr\Variable('b');
+        $varC = new Expr\Variable('c');
+
+        $this->assertEquals(
+            new Concat($varA, $varB),
+            $factory->concat($varA, $varB)
+        );
+        $this->assertEquals(
+            new Concat(new Concat($varA, $varB), $varC),
+            $factory->concat($varA, $varB, $varC)
+        );
+        $this->assertEquals(
+            new Concat(new Concat(new String_("a"), $varB), new String_("c")),
+            $factory->concat("a", $varB, "c")
+        );
+    }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage Expected at least two expressions
+     */
+    public function testConcatOneError() {
+        (new BuilderFactory())->concat("a");
+    }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage Expected string or Expr
+     */
+    public function testConcatInvalidExpr() {
+        (new BuilderFactory())->concat("a", 42);
+    }
+
+    public function testArgs() {
+        $factory = new BuilderFactory();
+        $unpack = new Arg(new Expr\Variable('c'), false, true);
+        $this->assertEquals(
+            [
+                new Arg(new Expr\Variable('a')),
+                new Arg(new String_('b')),
+                $unpack
+            ],
+            $factory->args([new Expr\Variable('a'), 'b', $unpack])
+        );
     }
 
     public function testIntegration() {

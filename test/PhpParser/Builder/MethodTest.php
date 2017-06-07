@@ -2,13 +2,15 @@
 
 namespace PhpParser\Builder;
 
+use PhpParser\Comment;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Print_;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
-use PhpParser\Comment;
+use PHPUnit\Framework\TestCase;
 
-class MethodTest extends \PHPUnit_Framework_TestCase
+class MethodTest extends TestCase
 {
     public function createMethodBuilder($name) {
         return new Method($name);
@@ -24,9 +26,9 @@ class MethodTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             new Stmt\ClassMethod('test', array(
-                'type' => Stmt\Class_::MODIFIER_PUBLIC
-                        | Stmt\Class_::MODIFIER_ABSTRACT
-                        | Stmt\Class_::MODIFIER_STATIC,
+                'flags' => Stmt\Class_::MODIFIER_PUBLIC
+                         | Stmt\Class_::MODIFIER_ABSTRACT
+                         | Stmt\Class_::MODIFIER_STATIC,
                 'stmts' => null,
             )),
             $node
@@ -40,8 +42,8 @@ class MethodTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             new Stmt\ClassMethod('test', array(
-                'type' => Stmt\Class_::MODIFIER_PROTECTED
-                        | Stmt\Class_::MODIFIER_FINAL
+                'flags' => Stmt\Class_::MODIFIER_PROTECTED
+                         | Stmt\Class_::MODIFIER_FINAL
             )),
             $node
         );
@@ -74,9 +76,9 @@ class MethodTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testParams() {
-        $param1 = new Node\Param('test1');
-        $param2 = new Node\Param('test2');
-        $param3 = new Node\Param('test3');
+        $param1 = new Node\Param(new Variable('test1'));
+        $param2 = new Node\Param(new Variable('test2'));
+        $param3 = new Node\Param(new Variable('test3'));
 
         $node = $this->createMethodBuilder('test')
             ->addParam($param1)
@@ -105,7 +107,11 @@ class MethodTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             new Stmt\ClassMethod('test', array(
-                'stmts' => array($stmt1, $stmt2, $stmt3)
+                'stmts' => array(
+                    new Stmt\Expression($stmt1),
+                    new Stmt\Expression($stmt2),
+                    new Stmt\Expression($stmt3),
+                )
             )),
             $node
         );

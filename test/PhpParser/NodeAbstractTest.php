@@ -2,6 +2,8 @@
 
 namespace PhpParser;
 
+use PHPUnit\Framework\TestCase;
+
 class DummyNode extends NodeAbstract {
     public $subNode1;
     public $subNode2;
@@ -12,17 +14,17 @@ class DummyNode extends NodeAbstract {
         $this->subNode2 = $subNode2;
     }
 
-    public function getSubNodeNames() {
+    public function getSubNodeNames() : array {
         return array('subNode1', 'subNode2');
     }
 
     // This method is only overwritten because the node is located in an unusual namespace
-    public function getType() {
+    public function getType() : string {
         return 'Dummy';
     }
 }
 
-class NodeAbstractTest extends \PHPUnit_Framework_TestCase
+class NodeAbstractTest extends TestCase
 {
     public function provideNodes() {
         $attributes = array(
@@ -70,14 +72,32 @@ class NodeAbstractTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($node->getDocComment());
     }
 
+    public function testSetDocComment() {
+        $node = new DummyNode(null, null, []);
+
+        // Add doc comment to node without comments
+        $docComment = new Comment\Doc('/** doc */');
+        $node->setDocComment($docComment);
+        $this->assertSame($docComment, $node->getDocComment());
+
+        // Replace it
+        $docComment = new Comment\Doc('/** doc 2 */');
+        $node->setDocComment($docComment);
+        $this->assertSame($docComment, $node->getDocComment());
+
+        // Add docmment to node with other comments
+        $c1 = new Comment('/* foo */');
+        $c2 = new Comment('/* bar */');
+        $docComment = new Comment\Doc('/** baz */');
+        $node->setAttribute('comments', [$c1, $c2]);
+        $node->setDocComment($docComment);
+        $this->assertSame([$c1, $c2, $docComment], $node->getAttribute('comments'));
+    }
+
     /**
      * @dataProvider provideNodes
      */
     public function testChange(array $attributes, Node $node) {
-        // change of line
-        $node->setLine(15);
-        $this->assertSame(15, $node->getLine());
-
         // direct modification
         $node->subNode = 'newValue';
         $this->assertSame('newValue', $node->subNode);
@@ -143,5 +163,145 @@ class NodeAbstractTest extends \PHPUnit_Framework_TestCase
             ),
             $node->getAttributes()
         );
+
+        $node->setAttributes(
+            array(
+                'a' => 'b',
+                'c' => null,
+            )
+        );
+        $this->assertSame(
+            array(
+                'a' => 'b',
+                'c' => null,
+            ),
+            $node->getAttributes()
+        );
+    }
+
+    public function testJsonSerialization() {
+        $code = <<<'PHP'
+<?php
+// comment
+/** doc comment */
+function functionName(&$a = 0, $b = 1.0) {
+    echo 'Foo';
+}
+PHP;
+        $expected = <<<'JSON'
+[
+    {
+        "nodeType": "Stmt_Function",
+        "byRef": false,
+        "name": {
+            "nodeType": "Identifier",
+            "name": "functionName",
+            "attributes": {
+                "startLine": 4,
+                "endLine": 4
+            }
+        },
+        "params": [
+            {
+                "nodeType": "Param",
+                "type": null,
+                "byRef": true,
+                "variadic": false,
+                "var": {
+                    "nodeType": "Expr_Variable",
+                    "name": "a",
+                    "attributes": {
+                        "startLine": 4,
+                        "endLine": 4
+                    }
+                },
+                "default": {
+                    "nodeType": "Scalar_LNumber",
+                    "value": 0,
+                    "attributes": {
+                        "startLine": 4,
+                        "endLine": 4,
+                        "kind": 10
+                    }
+                },
+                "attributes": {
+                    "startLine": 4,
+                    "endLine": 4
+                }
+            },
+            {
+                "nodeType": "Param",
+                "type": null,
+                "byRef": false,
+                "variadic": false,
+                "var": {
+                    "nodeType": "Expr_Variable",
+                    "name": "b",
+                    "attributes": {
+                        "startLine": 4,
+                        "endLine": 4
+                    }
+                },
+                "default": {
+                    "nodeType": "Scalar_DNumber",
+                    "value": 1,
+                    "attributes": {
+                        "startLine": 4,
+                        "endLine": 4
+                    }
+                },
+                "attributes": {
+                    "startLine": 4,
+                    "endLine": 4
+                }
+            }
+        ],
+        "returnType": null,
+        "stmts": [
+            {
+                "nodeType": "Stmt_Echo",
+                "exprs": [
+                    {
+                        "nodeType": "Scalar_String",
+                        "value": "Foo",
+                        "attributes": {
+                            "startLine": 5,
+                            "endLine": 5,
+                            "kind": 1
+                        }
+                    }
+                ],
+                "attributes": {
+                    "startLine": 5,
+                    "endLine": 5
+                }
+            }
+        ],
+        "attributes": {
+            "startLine": 4,
+            "comments": [
+                {
+                    "nodeType": "Comment",
+                    "text": "\/\/ comment\n",
+                    "line": 2,
+                    "filePos": 6
+                },
+                {
+                    "nodeType": "Comment_Doc",
+                    "text": "\/** doc comment *\/",
+                    "line": 3,
+                    "filePos": 17
+                }
+            ],
+            "endLine": 6
+        }
+    }
+]
+JSON;
+
+        $parser = new Parser\Php7(new Lexer());
+        $stmts = $parser->parse(canonicalize($code));
+        $json = json_encode($stmts, JSON_PRETTY_PRINT);
+        $this->assertEquals(canonicalize($expected), canonicalize($json));
     }
 }

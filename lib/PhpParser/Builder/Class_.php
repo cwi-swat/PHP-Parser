@@ -3,6 +3,7 @@
 namespace PhpParser\Builder;
 
 use PhpParser;
+use PhpParser\BuilderHelpers;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt;
 
@@ -12,7 +13,7 @@ class Class_ extends Declaration
 
     protected $extends = null;
     protected $implements = array();
-    protected $type = 0;
+    protected $flags = 0;
 
     protected $uses = array();
     protected $constants = array();
@@ -24,7 +25,7 @@ class Class_ extends Declaration
      *
      * @param string $name Name of the class
      */
-    public function __construct($name) {
+    public function __construct(string $name) {
         $this->name = $name;
     }
 
@@ -36,7 +37,7 @@ class Class_ extends Declaration
      * @return $this The builder instance (for fluid interface)
      */
     public function extend($class) {
-        $this->extends = $this->normalizeName($class);
+        $this->extends = BuilderHelpers::normalizeName($class);
 
         return $this;
     }
@@ -48,9 +49,9 @@ class Class_ extends Declaration
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function implement() {
-        foreach (func_get_args() as $interface) {
-            $this->implements[] = $this->normalizeName($interface);
+    public function implement(...$interfaces) {
+        foreach ($interfaces as $interface) {
+            $this->implements[] = BuilderHelpers::normalizeName($interface);
         }
 
         return $this;
@@ -62,7 +63,7 @@ class Class_ extends Declaration
      * @return $this The builder instance (for fluid interface)
      */
     public function makeAbstract() {
-        $this->setModifier(Stmt\Class_::MODIFIER_ABSTRACT);
+        $this->flags = BuilderHelpers::addModifier($this->flags, Stmt\Class_::MODIFIER_ABSTRACT);
 
         return $this;
     }
@@ -73,7 +74,7 @@ class Class_ extends Declaration
      * @return $this The builder instance (for fluid interface)
      */
     public function makeFinal() {
-        $this->setModifier(Stmt\Class_::MODIFIER_FINAL);
+        $this->flags = BuilderHelpers::addModifier($this->flags, Stmt\Class_::MODIFIER_FINAL);
 
         return $this;
     }
@@ -86,7 +87,7 @@ class Class_ extends Declaration
      * @return $this The builder instance (for fluid interface)
      */
     public function addStmt($stmt) {
-        $stmt = $this->normalizeNode($stmt);
+        $stmt = BuilderHelpers::normalizeNode($stmt);
 
         $targets = array(
             'Stmt_TraitUse'    => &$this->uses,
@@ -110,9 +111,9 @@ class Class_ extends Declaration
      *
      * @return Stmt\Class_ The built class node
      */
-    public function getNode() {
+    public function getNode() : PhpParser\Node {
         return new Stmt\Class_($this->name, array(
-            'type' => $this->type,
+            'flags' => $this->flags,
             'extends' => $this->extends,
             'implements' => $this->implements,
             'stmts' => array_merge($this->uses, $this->constants, $this->properties, $this->methods),

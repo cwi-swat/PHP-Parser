@@ -6,8 +6,9 @@ use PhpParser\Comment;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\Node\Scalar\String_;
+use PHPUnit\Framework\TestCase;
 
-abstract class ParserTest extends \PHPUnit_Framework_TestCase
+abstract class ParserTest extends TestCase
 {
     /** @returns Parser */
     abstract protected function getParser(Lexer $lexer);
@@ -28,6 +29,15 @@ abstract class ParserTest extends \PHPUnit_Framework_TestCase
     public function testParserThrowsSpecialError() {
         $parser = $this->getParser(new Lexer());
         $parser->parse('<?php use foo as self;');
+    }
+
+    /**
+     * @expectedException \PhpParser\Error
+     * @expectedExceptionMessage Unterminated comment on line 1
+     */
+    public function testParserThrowsLexerError() {
+        $parser = $this->getParser(new Lexer());
+        $parser->parse('<?php /*');
     }
 
     public function testAttributeAssignment() {
@@ -110,18 +120,19 @@ EOC;
     }
 
     /**
-     * @dataProvider provideTestKindAttributes
+     * @dataProvider provideTestExtraAttributes
      */
-    public function testKindAttributes($code, $expectedAttributes) {
+    public function testExtraAttributes($code, $expectedAttributes) {
         $parser = $this->getParser(new Lexer);
         $stmts = $parser->parse("<?php $code;");
-        $attributes = $stmts[0]->getAttributes();
+        $node = $stmts[0] instanceof Node\Stmt\Expression ? $stmts[0]->expr : $stmts[0];
+        $attributes = $node->getAttributes();
         foreach ($expectedAttributes as $name => $value) {
             $this->assertSame($value, $attributes[$name]);
         }
     }
 
-    public function provideTestKindAttributes() {
+    public function provideTestExtraAttributes() {
         return array(
             array('0', ['kind' => Scalar\LNumber::KIND_DEC]),
             array('9', ['kind' => Scalar\LNumber::KIND_DEC]),
@@ -158,12 +169,14 @@ EOC;
             array("die('done')", ['kind' => Expr\Exit_::KIND_DIE]),
             array("exit", ['kind' => Expr\Exit_::KIND_EXIT]),
             array("exit(1)", ['kind' => Expr\Exit_::KIND_EXIT]),
+            array("?>Foo", ['hasLeadingNewline' => false]),
+            array("?>\nFoo", ['hasLeadingNewline' => true]),
         );
     }
 }
 
 class InvalidTokenLexer extends Lexer {
-    public function getNextToken(&$value = null, &$startAttributes = null, &$endAttributes = null) {
+    public function getNextToken(&$value = null, &$startAttributes = null, &$endAttributes = null) : int {
         $value = 'foobar';
         return 999;
     }

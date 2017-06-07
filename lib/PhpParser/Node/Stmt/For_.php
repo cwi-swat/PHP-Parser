@@ -12,7 +12,7 @@ class For_ extends Node\Stmt
     public $cond;
     /** @var Node\Expr[] Loop expressions */
     public $loop;
-    /** @var Node[] Statements */
+    /** @var Node\Stmt[] Statements */
     public $stmts;
 
     /**
@@ -27,13 +27,13 @@ class For_ extends Node\Stmt
      */
     public function __construct(array $subNodes = array(), array $attributes = array()) {
         parent::__construct($attributes);
-        $this->init = isset($subNodes['init']) ? $subNodes['init'] : array();
-        $this->cond = isset($subNodes['cond']) ? $subNodes['cond'] : array();
-        $this->loop = isset($subNodes['loop']) ? $subNodes['loop'] : array();
-        $this->stmts = isset($subNodes['stmts']) ? $subNodes['stmts'] : array();
+        $this->init = $subNodes['init'] ?? array();
+        $this->cond = $subNodes['cond'] ?? array();
+        $this->loop = $subNodes['loop'] ?? array();
+        $this->stmts = $subNodes['stmts'] ?? array();
     }
 
-    public function getSubNodeNames() {
+    public function getSubNodeNames() : array {
         return array('init', 'cond', 'loop', 'stmts');
     }
 }

@@ -24,7 +24,7 @@ class ArrayDimFetch extends Expr
         $this->dim = $dim;
     }
 
-    public function getSubnodeNames() {
+    public function getSubNodeNames() : array {
         return array('var', 'dim');
     }
 }

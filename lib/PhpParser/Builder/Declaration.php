@@ -3,10 +3,9 @@
 namespace PhpParser\Builder;
 
 use PhpParser;
-use PhpParser\Node;
-use PhpParser\Node\Stmt;
+use PhpParser\BuilderHelpers;
 
-abstract class Declaration extends PhpParser\BuilderAbstract
+abstract class Declaration implements PhpParser\Builder
 {
     protected $attributes = array();
 
@@ -36,7 +35,7 @@ abstract class Declaration extends PhpParser\BuilderAbstract
      */
     public function setDocComment($docComment) {
         $this->attributes['comments'] = array(
-            $this->normalizeDocComment($docComment)
+            BuilderHelpers::normalizeDocComment($docComment)
         );
 
         return $this;

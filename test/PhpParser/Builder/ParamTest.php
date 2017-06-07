@@ -5,8 +5,9 @@ namespace PhpParser\Builder;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
+use PHPUnit\Framework\TestCase;
 
-class ParamTest extends \PHPUnit_Framework_TestCase
+class ParamTest extends TestCase
 {
     public function createParamBuilder($name) {
         return new Param($name);
@@ -78,36 +79,69 @@ class ParamTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testTypeHints() {
+    /**
+     * @dataProvider provideTestTypeHints
+     */
+    public function testTypeHints($typeHint, $expectedType) {
         $node = $this->createParamBuilder('test')
-            ->setTypeHint('array')
+            ->setTypeHint($typeHint)
             ->getNode()
         ;
+        $type = $node->type;
 
-        $this->assertEquals(
-            new Node\Param('test', null, 'array'),
-            $node
+        /* Manually implement comparison to avoid __toString stupidity */
+        if ($expectedType instanceof Node\NullableType) {
+            $this->assertInstanceOf(get_class($expectedType), $type);
+            $expectedType = $expectedType->type;
+            $type = $type->type;
+        }
+
+        $this->assertInstanceOf(get_class($expectedType), $type);
+        $this->assertEquals($expectedType, $type);
+    }
+
+    public function provideTestTypeHints() {
+        return array(
+            array('array', new Node\Identifier('array')),
+            array('callable', new Node\Identifier('callable')),
+            array('bool', new Node\Identifier('bool')),
+            array('int', new Node\Identifier('int')),
+            array('float', new Node\Identifier('float')),
+            array('string', new Node\Identifier('string')),
+            array('iterable', new Node\Identifier('iterable')),
+            array('Array', new Node\Identifier('array')),
+            array('CALLABLE', new Node\Identifier('callable')),
+            array('Some\Class', new Node\Name('Some\Class')),
+            array('\Foo', new Node\Name\FullyQualified('Foo')),
+            array('self', new Node\Name('self')),
+            array('?array', new Node\NullableType(new Node\Identifier('array'))),
+            array('?Some\Class', new Node\NullableType(new Node\Name('Some\Class'))),
+            array(new Node\Name('Some\Class'), new Node\Name('Some\Class')),
+            array(
+                new Node\NullableType(new Node\Identifier('int')),
+                new Node\NullableType(new Node\Identifier('int'))
+            ),
+            array(
+                new Node\NullableType(new Node\Name('Some\Class')),
+                new Node\NullableType(new Node\Name('Some\Class'))
+            ),
         );
+    }
 
-        $node = $this->createParamBuilder('test')
-            ->setTypeHint('callable')
-            ->getNode()
-        ;
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage Parameter type cannot be void
+     */
+    public function testVoidTypeError() {
+        $this->createParamBuilder('test')->setTypeHint('void');
+    }
 
-        $this->assertEquals(
-            new Node\Param('test', null, 'callable'),
-            $node
-        );
-
-        $node = $this->createParamBuilder('test')
-            ->setTypeHint('Some\Class')
-            ->getNode()
-        ;
-
-        $this->assertEquals(
-            new Node\Param('test', null, new Node\Name('Some\Class')),
-            $node
-        );
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage Type must be a string, or an instance of Name, Identifier or NullableType
+     */
+    public function testInvalidTypeError() {
+        $this->createParamBuilder('test')->setTypeHint(new \stdClass);
     }
 
     public function testByRef() {
@@ -117,7 +151,19 @@ class ParamTest extends \PHPUnit_Framework_TestCase
         ;
 
         $this->assertEquals(
-            new Node\Param('test', null, null, true),
+            new Node\Param(new Expr\Variable('test'), null, null, true),
+            $node
+        );
+    }
+
+    public function testVariadic() {
+        $node = $this->createParamBuilder('test')
+            ->makeVariadic()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, true),
             $node
         );
     }

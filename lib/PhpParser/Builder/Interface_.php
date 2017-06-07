@@ -3,6 +3,7 @@
 namespace PhpParser\Builder;
 
 use PhpParser;
+use PhpParser\BuilderHelpers;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt;
 
@@ -18,7 +19,7 @@ class Interface_ extends Declaration
      *
      * @param string $name Name of the interface
      */
-    public function __construct($name) {
+    public function __construct(string $name) {
         $this->name = $name;
     }
 
@@ -29,9 +30,9 @@ class Interface_ extends Declaration
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function extend() {
-        foreach (func_get_args() as $interface) {
-            $this->extends[] = $this->normalizeName($interface);
+    public function extend(...$interfaces) {
+        foreach ($interfaces as $interface) {
+            $this->extends[] = BuilderHelpers::normalizeName($interface);
         }
 
         return $this;
@@ -45,7 +46,7 @@ class Interface_ extends Declaration
      * @return $this The builder instance (for fluid interface)
      */
     public function addStmt($stmt) {
-        $stmt = $this->normalizeNode($stmt);
+        $stmt = BuilderHelpers::normalizeNode($stmt);
 
         $type = $stmt->getType();
         switch ($type) {
@@ -71,7 +72,7 @@ class Interface_ extends Declaration
      *
      * @return Stmt\Interface_ The built interface node
      */
-    public function getNode() {
+    public function getNode() : PhpParser\Node {
         return new Stmt\Interface_($this->name, array(
             'extends' => $this->extends,
             'stmts' => array_merge($this->constants, $this->methods),

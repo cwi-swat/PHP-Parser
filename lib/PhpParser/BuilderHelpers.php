@@ -2,13 +2,20 @@
 
 namespace PhpParser;
 
-use PhpParser\Node\Name;
-use PhpParser\Node\Expr;
-use PhpParser\Node\Stmt;
-use PhpParser\Node\Scalar;
 use PhpParser\Comment;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Scalar;
+use PhpParser\Node\Stmt;
 
-abstract class BuilderAbstract implements Builder {
+/**
+ * This class defines helpers used in the implementation of builders. Don't use it directly.
+ *
+ * @internal
+ */
+final class BuilderHelpers {
     /**
      * Normalizes a node: Converts builder objects to nodes.
      *
@@ -16,7 +23,7 @@ abstract class BuilderAbstract implements Builder {
      *
      * @return Node The normalized node
      */
-    protected function normalizeNode($node) {
+    public static function normalizeNode($node) : Node {
         if ($node instanceof Builder) {
             return $node->getNode();
         } elseif ($node instanceof Node) {
@@ -27,13 +34,35 @@ abstract class BuilderAbstract implements Builder {
     }
 
     /**
+     * Normalizes a node to a statement.
+     *
+     * Expressions are wrapped in a Stmt\Expression node.
+     *
+     * @param Node|Builder $node The node to normalize
+     *
+     * @return Stmt The normalized statement node
+     */
+    public static function normalizeStmt($node) : Stmt {
+        $node = self::normalizeNode($node);
+        if ($node instanceof Stmt) {
+            return $node;
+        }
+
+        if ($node instanceof Expr) {
+            return new Stmt\Expression($node);
+        }
+
+        throw new \LogicException('Expected statement or expression node');
+    }
+
+    /**
      * Normalizes a name: Converts plain string names to PhpParser\Node\Name.
      *
      * @param Name|string $name The name to normalize
      *
      * @return Name The normalized name
      */
-    protected function normalizeName($name) {
+    public static function normalizeName($name) : Name {
         if ($name instanceof Name) {
             return $name;
         } elseif (is_string($name)) {
@@ -54,15 +83,59 @@ abstract class BuilderAbstract implements Builder {
     }
 
     /**
+     * Normalizes a type: Converts plain-text type names into proper AST representation.
+     *
+     * In particular, builtin types become Identifiers, custom types become Names and nullables
+     * are wrapped in NullableType nodes.
+     *
+     * @param string|Name|Identifier|NullableType $type The type to normalize
+     *
+     * @return Name|Identifier|NullableType The normalized type
+     */
+    public static function normalizeType($type) {
+        if (!is_string($type)) {
+            if (!$type instanceof Name && !$type instanceof Identifier
+                    && !$type instanceof NullableType) {
+                throw new \LogicException(
+                    'Type must be a string, or an instance of Name, Identifier or NullableType');
+            }
+            return $type;
+        }
+
+        $nullable = false;
+        if (strlen($type) > 0 && $type[0] === '?') {
+            $nullable = true;
+            $type = substr($type, 1);
+        }
+
+        $builtinTypes = array(
+            'array', 'callable', 'string', 'int', 'float', 'bool', 'iterable', 'void'
+        );
+
+        $lowerType = strtolower($type);
+        if (in_array($lowerType, $builtinTypes)) {
+            $type = new Identifier($lowerType);
+        } else {
+            $type = self::normalizeName($type);
+        }
+
+        if ($nullable && (string) $type === 'void') {
+            throw new \LogicException('void type cannot be nullable');
+        }
+
+        return $nullable ? new Node\NullableType($type) : $type;
+    }
+
+    /**
      * Normalizes a value: Converts nulls, booleans, integers,
      * floats, strings and arrays into their respective nodes
      *
-     * @param mixed $value The value to normalize
+     * @param Node\Expr|bool|null|int|float|string|array $value The value to normalize
      *
      * @return Expr The normalized value
      */
-    protected function normalizeValue($value) {
-        if ($value instanceof Node) {
+    public static function normalizeValue($value) : Expr {
+        if ($value instanceof Node\Expr) {
             return $value;
         } elseif (is_null($value)) {
             return new Expr\ConstFetch(
@@ -85,13 +158,13 @@ abstract class BuilderAbstract implements Builder {
                 // for consecutive, numeric keys don't generate keys
                 if (null !== $lastKey && ++$lastKey === $itemKey) {
                     $items[] = new Expr\ArrayItem(
-                        $this->normalizeValue($itemValue)
+                        self::normalizeValue($itemValue)
                     );
                 } else {
                     $lastKey = null;
                     $items[] = new Expr\ArrayItem(
-                        $this->normalizeValue($itemValue),
-                        $this->normalizeValue($itemKey)
+                        self::normalizeValue($itemValue),
+                        self::normalizeValue($itemKey)
                     );
                 }
             }
@@ -109,7 +182,7 @@ abstract class BuilderAbstract implements Builder {
      *
      * @return Comment\Doc The normalized doc comment
      */
-    protected function normalizeDocComment($docComment) {
+    public static function normalizeDocComment($docComment) : Comment\Doc {
         if ($docComment instanceof Comment\Doc) {
             return $docComment;
         } else if (is_string($docComment)) {
@@ -120,12 +193,15 @@ abstract class BuilderAbstract implements Builder {
     }
 
     /**
-     * Sets a modifier in the $this->type property.
+     * Adds a modifier and returns new modifier bitmask.
      *
-     * @param int $modifier Modifier to set
+     * @param int $modifiers Existing modifiers
+     * @param int $modifier  Modifier to set
+     *
+     * @return int New modifiers
      */
-    protected function setModifier($modifier) {
-        Stmt\Class_::verifyModifier($this->type, $modifier);
-        $this->type |= $modifier;
+    public static function addModifier(int $modifiers, int $modifier) : int {
+        Stmt\Class_::verifyModifier($modifiers, $modifier);
+        return $modifiers | $modifier;
     }
 }
