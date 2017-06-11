@@ -247,6 +247,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterErrorExpr(\PhpParser\Node\Expr\Error $node)
+	{
+		return null;
+	}
 	public function enterErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node)
 	{
 		return null;
@@ -347,6 +351,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return null;
+	}
 	public function enterFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
 	{
 		return null;
@@ -356,6 +364,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterName(\PhpParser\Node\Name $node)
+	{
+		return null;
+	}
+	public function enterNullableType(\PhpParser\Node\NullableType $node)
 	{
 		return null;
 	}
@@ -475,6 +487,14 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterExpressionStmt(\PhpParser\Node\Stmt\Expression $node)
+	{
+		return null;
+	}
+	public function enterFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node)
+	{
+		return null;
+	}
 	public function enterForStmt(\PhpParser\Node\Stmt\For_ $node)
 	{
 		return null;
@@ -588,6 +608,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterWhileStmt(\PhpParser\Node\Stmt\While_ $node)
+	{
+		return null;
+	}
+	public function enterVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node)
 	{
 		return null;
 	}
@@ -836,6 +860,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveErrorExpr(\PhpParser\Node\Expr\Error $node)
+	{
+		return null;
+	}
 	public function leaveErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node)
 	{
 		return null;
@@ -936,6 +964,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return null;
+	}
 	public function leaveFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
 	{
 		return null;
@@ -945,6 +977,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveName(\PhpParser\Node\Name $node)
+	{
+		return null;
+	}
+	public function leaveNullableType(\PhpParser\Node\NullableType $node)
 	{
 		return null;
 	}
@@ -1064,6 +1100,14 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveExpressionStmt(\PhpParser\Node\Stmt\Expression $node)
+	{
+		return null;
+	}
+	public function leaveFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node)
+	{
+		return null;
+	}
 	public function leaveForStmt(\PhpParser\Node\Stmt\For_ $node)
 	{
 		return null;
@@ -1177,6 +1221,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveWhileStmt(\PhpParser\Node\Stmt\While_ $node)
+	{
+		return null;
+	}
+	public function leaveVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node)
 	{
 		return null;
 	}

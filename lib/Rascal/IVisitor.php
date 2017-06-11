@@ -64,6 +64,7 @@ interface IVisitor
 	public function enterClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function enterConstFetchExpr(\PhpParser\Node\Expr\ConstFetch $node);
 	public function enterEmptyExpr(\PhpParser\Node\Expr\Empty_ $node);
+	public function enterErrorExpr(\PhpParser\Node\Expr\Error $node);
 	public function enterErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node);
 	public function enterEvalExpr(\PhpParser\Node\Expr\Eval_ $node);
 	public function enterExitExpr(\PhpParser\Node\Expr\Exit_ $node);
@@ -89,9 +90,11 @@ interface IVisitor
 	public function enterVariableExpr(\PhpParser\Node\Expr\Variable $node);
 	public function enterYieldExpr(\PhpParser\Node\Expr\Yield_ $node);
 	public function enterYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node);
+	public function enterIdentifier(\PhpParser\Node\Identifier $node);
 	public function enterFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node);
 	public function enterRelativeName(\PhpParser\Node\Name\Relative $node);
 	public function enterName(\PhpParser\Node\Name $node);
+	public function enterNullableType(\PhpParser\Node\NullableType $node);
 	public function enterParam(\PhpParser\Node\Param $node);
 	public function enterDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function enterEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
@@ -121,6 +124,8 @@ interface IVisitor
 	public function enterElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function enterElseIfStmt(\PhpParser\Node\Stmt\ElseIf_ $node);
 	public function enterExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function enterExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function enterFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node);
 	public function enterForStmt(\PhpParser\Node\Stmt\For_ $node);
 	public function enterForeachStmt(\PhpParser\Node\Stmt\Foreach_ $node);
 	public function enterFunctionStmt(\PhpParser\Node\Stmt\Function_ $node);
@@ -150,6 +155,7 @@ interface IVisitor
 	public function enterUseStmt(\PhpParser\Node\Stmt\Use_ $node);
 	public function enterUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function enterWhileStmt(\PhpParser\Node\Stmt\While_ $node);
+	public function enterVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node);
 
 	public function leaveArg(\PhpParser\Node\Arg $node);
 	public function leaveConst(\PhpParser\Node\Const_ $node);
@@ -212,6 +218,7 @@ interface IVisitor
 	public function leaveClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function leaveConstFetchExpr(\PhpParser\Node\Expr\ConstFetch $node);
 	public function leaveEmptyExpr(\PhpParser\Node\Expr\Empty_ $node);
+	public function leaveErrorExpr(\PhpParser\Node\Expr\Error $node);
 	public function leaveErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node);
 	public function leaveEvalExpr(\PhpParser\Node\Expr\Eval_ $node);
 	public function leaveExitExpr(\PhpParser\Node\Expr\Exit_ $node);
@@ -237,9 +244,11 @@ interface IVisitor
 	public function leaveVariableExpr(\PhpParser\Node\Expr\Variable $node);
 	public function leaveYieldExpr(\PhpParser\Node\Expr\Yield_ $node);
 	public function leaveYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node);
+	public function leaveIdentifier(\PhpParser\Node\Identifier $node);
 	public function leaveFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node);
 	public function leaveRelativeName(\PhpParser\Node\Name\Relative $node);
 	public function leaveName(\PhpParser\Node\Name $node);
+	public function leaveNullableType(\PhpParser\Node\NullableType $node);
 	public function leaveParam(\PhpParser\Node\Param $node);
 	public function leaveDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function leaveEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
@@ -269,6 +278,8 @@ interface IVisitor
 	public function leaveElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function leaveElseIfStmt(\PhpParser\Node\Stmt\ElseIf_ $node);
 	public function leaveExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function leaveExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function leaveFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node);
 	public function leaveForStmt(\PhpParser\Node\Stmt\For_ $node);
 	public function leaveForeachStmt(\PhpParser\Node\Stmt\Foreach_ $node);
 	public function leaveFunctionStmt(\PhpParser\Node\Stmt\Function_ $node);
@@ -298,6 +309,7 @@ interface IVisitor
 	public function leaveUseStmt(\PhpParser\Node\Stmt\Use_ $node);
 	public function leaveUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function leaveWhileStmt(\PhpParser\Node\Stmt\While_ $node);
+	public function leaveVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node);
 
 }
 ?>

@@ -65,6 +65,7 @@ interface IPrinter
 	public function pprintClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function pprintConstFetchExpr(\PhpParser\Node\Expr\ConstFetch $node);
 	public function pprintEmptyExpr(\PhpParser\Node\Expr\Empty_ $node);
+	public function pprintErrorExpr(\PhpParser\Node\Expr\Error $node);
 	public function pprintErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node);
 	public function pprintEvalExpr(\PhpParser\Node\Expr\Eval_ $node);
 	public function pprintExitExpr(\PhpParser\Node\Expr\Exit_ $node);
@@ -90,9 +91,11 @@ interface IPrinter
 	public function pprintVariableExpr(\PhpParser\Node\Expr\Variable $node);
 	public function pprintYieldExpr(\PhpParser\Node\Expr\Yield_ $node);
 	public function pprintYieldFromExpr(\PhpParser\Node\Expr\YieldFrom $node);
+	public function pprintIdentifier(\PhpParser\Node\Identifier $node);
 	public function pprintFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node);
 	public function pprintRelativeName(\PhpParser\Node\Name\Relative $node);
 	public function pprintName(\PhpParser\Node\Name $node);
+	public function pprintNullableType(\PhpParser\Node\NullableType $node);
 	public function pprintParam(\PhpParser\Node\Param $node);
 	public function pprintDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function pprintEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
@@ -122,6 +125,8 @@ interface IPrinter
 	public function pprintElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function pprintElseIfStmt(\PhpParser\Node\Stmt\ElseIf_ $node);
 	public function pprintExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function pprintExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function pprintFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node);
 	public function pprintForStmt(\PhpParser\Node\Stmt\For_ $node);
 	public function pprintForeachStmt(\PhpParser\Node\Stmt\Foreach_ $node);
 	public function pprintFunctionStmt(\PhpParser\Node\Stmt\Function_ $node);
@@ -151,6 +156,7 @@ interface IPrinter
 	public function pprintUseStmt(\PhpParser\Node\Stmt\Use_ $node);
 	public function pprintUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function pprintWhileStmt(\PhpParser\Node\Stmt\While_ $node);
+	public function pprintVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node);
 
 }
 ?>

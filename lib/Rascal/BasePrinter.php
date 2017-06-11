@@ -127,6 +127,8 @@ class BasePrinter implements IPrinter
 			return $this->pprintConstFetchExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Empty_) {
 			return $this->pprintEmptyExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\Error) {
+			return $this->pprintErrorExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\ErrorSuppress) {
 			return $this->pprintErrorSuppressExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Eval_) {
@@ -177,12 +179,16 @@ class BasePrinter implements IPrinter
 			return $this->pprintYieldExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\YieldFrom) {
 			return $this->pprintYieldFromExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Identifier) {
+			return $this->pprintIdentifier($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\FullyQualified) {
 			return $this->pprintFullyQualifiedName($node);
 		} elseif ($node instanceof \PhpParser\Node\Name\Relative) {
 			return $this->pprintRelativeName($node);
 		} elseif ($node instanceof \PhpParser\Node\Name) {
 			return $this->pprintName($node);
+		} elseif ($node instanceof \PhpParser\Node\NullableType) {
+			return $this->pprintNullableType($node);
 		} elseif ($node instanceof \PhpParser\Node\Param) {
 			return $this->pprintParam($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\DNumber) {
@@ -241,6 +247,10 @@ class BasePrinter implements IPrinter
 			return $this->pprintElseIfStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Expr) {
 			return $this->pprintExprStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\Expression) {
+			return $this->pprintExpressionStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\Finally_) {
+			return $this->pprintFinallyStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\For_) {
 			return $this->pprintForStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Foreach_) {
@@ -299,6 +309,8 @@ class BasePrinter implements IPrinter
 			return $this->pprintUseUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\While_) {
 			return $this->pprintWhileStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\VarLikeIdentifier) {
+			return $this->pprintVarLikeIdentifier($node);
 		}
 	}
 	public function pprintArg(\PhpParser\Node\Arg $node)
@@ -545,6 +557,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintErrorExpr(\PhpParser\Node\Expr\Error $node)
+	{
+		return "";
+	}
 	public function pprintErrorSuppressExpr(\PhpParser\Node\Expr\ErrorSuppress $node)
 	{
 		return "";
@@ -645,6 +661,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return "";
+	}
 	public function pprintFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
 	{
 		return "";
@@ -654,6 +674,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintName(\PhpParser\Node\Name $node)
+	{
+		return "";
+	}
+	public function pprintNullableType(\PhpParser\Node\NullableType $node)
 	{
 		return "";
 	}
@@ -773,6 +797,14 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintExpressionStmt(\PhpParser\Node\Stmt\Expression $node)
+	{
+		return "";
+	}
+	public function pprintFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node)
+	{
+		return "";
+	}
 	public function pprintForStmt(\PhpParser\Node\Stmt\For_ $node)
 	{
 		return "";
@@ -886,6 +918,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintWhileStmt(\PhpParser\Node\Stmt\While_ $node)
+	{
+		return "";
+	}
+	public function pprintVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node)
 	{
 		return "";
 	}
