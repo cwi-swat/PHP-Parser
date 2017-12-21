@@ -154,20 +154,20 @@ class RascalPrinter extends BasePrinter
     private function addLocationTag(\PhpParser\Node $node)
     {
         if ($this->projectName != "") {
-            if ($node->getOffset() >= 0) {
-                return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
+                return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
                 return "@at=|project://{$this->projectName}/{$this->filename}|";
             }
         } elseif ($this->relativeLocations) {
-            if ($node->getOffset() >= 0) {
-                return "@at=|home://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
+                return "@at=|home://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
                 return "@at=|home://{$this->filename}|";
             }
         } else {
-            if ($node->getOffset() >= 0) {
-                return "@at=|file://{$this->filename}|({$node->getOffset()},{$node->getLength()},<{$node->getLine()},0>,<{$node->getLine()},0>)";
+            if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
+                return "@at=|file://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
                 return "@at=|file://{$this->filename}|";
             }
@@ -798,9 +798,9 @@ class RascalPrinter extends BasePrinter
         $exprs = array();
         foreach ($node->items as $item)
             if (null != $item)
-                $exprs[] = "someExpr(" . $this->pprint($item) . ")";
+                $exprs[] = $this->pprint($item);
             else
-                $exprs[] = "noExpr()";
+                $exprs[] = "emptyElement()";
 
         $fragment = "listExpr([" . implode(",", $exprs) . "])";
         $fragment .= $this->annotateASTNode($node);

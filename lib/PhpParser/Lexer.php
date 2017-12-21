@@ -10,15 +10,12 @@ class Lexer
     protected $tokens;
     protected $pos;
     protected $line;
-    protected $offset;
-    protected $length;
     protected $filePos;
     protected $prevCloseTagHasNewline;
 
     protected $tokenMap;
     protected $dropTokens;
 
-    protected $priorComments;
     protected $usedAttributes;
 
     /**
@@ -43,7 +40,7 @@ class Lexer
         // the usedAttributes member is a map of the used attribute names to a dummy
         // value (here "true")
         $options += [
-            'usedAttributes' => ['comments', 'startLine', 'endLine'],
+            'usedAttributes' => ['comments', 'startLine', 'endLine', 'startFilePos', 'endFilePos'],
         ];
         $this->usedAttributes = array_fill_keys($options['usedAttributes'], true);
     }
@@ -67,8 +64,6 @@ class Lexer
         $this->pos  = -1;
         $this->line =  1;
         $this->filePos = 0;
-        $this->offset = 0;
-        $this->length = 0;
 
         // If inline HTML occurs without preceding code, treat it as if it had a leading newline.
         // This ensures proper composability, because having a newline is the "safe" assumption.
@@ -227,17 +222,9 @@ class Lexer
         $startAttributes = [];
         $endAttributes   = [];
 
-        if (isset($this->priorComments)) {
-            $startAttributes['comments'] = $this->priorComments;
-            unset($this->priorComments);
-        }
-
         while (1) {
-            $startingOffset = $this->offset;
             if (isset($this->tokens[++$this->pos])) {
                 $token = $this->tokens[$this->pos];
-                $this->length = (is_string($token)) ? 1 : strlen($token[1]);
-                $this->offset += $this->length;
             } else {
                 // EOF token with ID 0
                 $token = "\0";
@@ -245,11 +232,6 @@ class Lexer
 
             if (isset($this->usedAttributes['startLine'])) {
                 $startAttributes['startLine'] = $this->line;
-                $endAttributes['endLine']     = $this->line;
-                $startAttributes['startOffset'] = $startingOffset;
-                $startAttributes['startLength'] = $this->length; 
-                $endAttributes['endOffset'] = $startingOffset;
-                $endAttributes['endLength'] = $this->length; 
             }
             if (isset($this->usedAttributes['startTokenPos'])) {
                 $startAttributes['startTokenPos'] = $this->pos;
@@ -289,26 +271,6 @@ class Lexer
                     }
                 }
 
-                if (T_COMMENT === $token[0]) {
-                    $startAttributes['comments'][] = new Comment($token[1], $token[2]);
-                } elseif (T_DOC_COMMENT === $token[0]) {
-                    $startAttributes['comments'][] = new Comment\Doc($token[1], $token[2]);
-                } elseif (!isset($this->dropTokens[$token[0]])) {
-                    $value = $token[1];
-                    $startAttributes['startLine'] = $token[2];
-                    $endAttributes['endLine']     = $this->line;
-	                $startAttributes['startOffset'] = $startingOffset;
-	                $startAttributes['startLength'] = $this->length; 
-    	            $endAttributes['endOffset'] = $startingOffset;
-        	        $endAttributes['endLength'] = $this->length; 
-
-                    // If we end with a close tag and we have doc comments, this means the block
-                    // ended with the comment and no actual construct, so the comment will be lost.
-                    // We preserve it for the next time around.
-                    if ($token[0] == T_CLOSE_TAG && isset($startAttributes['comments'])) {
-                        $this->priorComments = $startAttributes['comments'];
-                    }
-                }
                 $this->line += substr_count($token[1], "\n");
                 $this->filePos += \strlen($token[1]);
                 continue;
