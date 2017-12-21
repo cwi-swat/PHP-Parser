@@ -65,7 +65,7 @@ class RascalPrinter extends BasePrinter
         return addcslashes($str, "<>'\n\t\r\\\"");
     }
 
-    public function formatType(\PhpParser\Node $node) {
+    public function formatType(\PhpParser\Node $node = null) {
         if (null != $node) {
             if ($node instanceof \PhpParser\Node\NullableType)
                 return "nullableType(" . $this->pprint($node->type) . ")";
@@ -125,9 +125,9 @@ class RascalPrinter extends BasePrinter
         else if ($node instanceof \PhpParser\Node\Stmt\Trait_)
             return $this->rascalizeString(sprintf($decl, "trait", $ns . $class));
         else if ($node instanceof \PhpParser\Node\Stmt\PropertyProperty)
-            return $this->rascalizeString(sprintf($decl, "field", $ns . $class . "/" . $this->pprint($node->name));
+            return $this->rascalizeString(sprintf($decl, "field", $ns . $class . "/" . $this->pprint($node->name)));
         else if ($node instanceof \PhpParser\Node\Const_)
-            return $this->rascalizeString(sprintf($decl, "constant", $ns . $class . "/" . $this->pprint($node->name));
+            return $this->rascalizeString(sprintf($decl, "constant", $ns . $class . "/" . $this->pprint($node->name)));
         else if ($node instanceof \PhpParser\Node\Stmt\ClassMethod)
             return $this->rascalizeString(sprintf($decl, "method", $ns . $class . "/" . $method));
         else if ($node instanceof \PhpParser\Node\Stmt\Function_)
@@ -137,17 +137,17 @@ class RascalPrinter extends BasePrinter
             // only declare variables that are inside an assign expression, and the name must not be an expression
             // (we are not able to handle this, atleast for now)
             if ($this->insideFunction) // function variable
-                return $this->rascalizeString(sprintf($decl, "variable", $ns . $function . "/" . $this->pprint($node->var));
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $function . "/" . $this->pprint($node->var)));
             else if ($this->currentMethod) // method variable
-                return $this->rascalizeString(sprintf($decl, "variable", $ns . $class . "/" . $method . "/" . $this->pprint($node->var));
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $class . "/" . $method . "/" . $this->pprint($node->var)));
             else // global var
-                return $this->rascalizeString(sprintf($decl, "variable", $ns . $this->pprint($node->var));
+                return $this->rascalizeString(sprintf($decl, "variable", $ns . $this->pprint($node->var)));
         }
         else if ($node instanceof \PhpParser\Node\Param) {
             if ($this->insideFunction) // function parameter
-                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $function . "/" . $this->pprint($node->var));
+                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $function . "/" . $this->pprint($node->var)));
             if ($this->currentMethod) // method parameter
-                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $class . "/" . $method . "/" . $this->pprint($node->var));
+                return $this->rascalizeString(sprintf($decl, "parameter", $ns . $class . "/" . $method . "/" . $this->pprint($node->var)));
         }
     }
 
@@ -244,13 +244,16 @@ class RascalPrinter extends BasePrinter
     {
         $items = array();
         foreach ($node->items as $item)
+        {
             $items[] = $this->pprint($item);
+        }
 
         // NOTE: If, for some reason, a third KIND is introduced, this will
         // need to instead use an enum type
-        if (\PhpParser\Node\Expr\Array_::KIND_LONG == $node->kind) {
+        if (\PhpParser\Node\Expr\Array_::KIND_LONG == $node->getAttributes('kind', \PhpParser\Node\Expr\Array_::KIND_LONG))
+        {
             $usesBrackets = "false";
-        }  else {
+        } else {
             $usesBrackets = "true";
         }
 
@@ -716,7 +719,8 @@ class RascalPrinter extends BasePrinter
             $exitExpr = "noExpr()";
         }
 
-        if (\PhpParser\Node\Expr\Exit_::KIND_EXIT == $node->kind) {
+        if (\PhpParser\Node\Expr\Exit_::KIND_EXIT == $node->getAttribute('kind', \PhpParser\Node\Expr\Exit_::KIND_EXIT)) 
+        {
             $isExit = "true";
         }  else {
             $isExit = "false";
@@ -792,9 +796,9 @@ class RascalPrinter extends BasePrinter
     public function pprintListExpr(\PhpParser\Node\Expr\List_ $node)
     {
         $exprs = array();
-        foreach ($node->vars as $var)
-            if (null != $var)
-                $exprs[] = "someExpr(" . $this->pprint($var) . ")";
+        foreach ($node->items as $item)
+            if (null != $item)
+                $exprs[] = "someExpr(" . $this->pprint($item) . ")";
             else
                 $exprs[] = "noExpr()";
 
@@ -834,9 +838,9 @@ class RascalPrinter extends BasePrinter
         $name = $this->pprint($node->class);
 
         if ($node->class instanceof \PhpParser\Node\Name) {
-            $name = "explicitName({$name})";
+            $name = "explicitClassName({$name})";
         } elseif ($node->class instanceof \PhpParser\Node\Expr) {
-            $name = "computedName({$name})";
+            $name = "computedClassName({$name})";
         } elseif ($node->class instanceof \PhpParser\Node\Stmt\Class_) {
             $name = "anonymousClass({$name})";
         } else {
@@ -1342,7 +1346,7 @@ class RascalPrinter extends BasePrinter
         if ($node->flags & \PhpParser\Node\Stmt\Class_::VISIBILITY_MODIFIER_MASK == 0)
             $modifiers[] = "\\public()";
 
-        $fragment = sprintf("constCI([%s],{%s})", implode(",", $consts), implode(",", $modifiers);
+        $fragment = sprintf("constCI([%s],{%s})", implode(",", $consts), implode(",", $modifiers));
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
@@ -1502,7 +1506,7 @@ class RascalPrinter extends BasePrinter
         return $fragment;
     }
 
-    public function pprintFinallyStmt(\PhpParser\Node\Stmt\Finally $node)
+    public function pprintFinallyStmt(\PhpParser\Node\Stmt\Finally_ $node)
     {
         throw new Exception("ERROR: Finally nodes should not be handled directly");
     }
@@ -2013,7 +2017,7 @@ class RascalPrinter extends BasePrinter
         } elseif (\PhpParser\Node\Stmt\Use_::TYPE_FUNCTION == $type) {
             $usetype = "useTypeFunction()";
         } elseif (\PhpParser\Node\Stmt\Use_::TYPE_CONSTANT == $type) {
-            $usetype = "useTypeConstant()";
+            $usetype = "useTypeConst()";
         } else {
             throw new \Exception("Unknown use type encountered: " . $type);
         }
@@ -2043,7 +2047,7 @@ class RascalPrinter extends BasePrinter
         } elseif (\PhpParser\Node\Stmt\Use_::TYPE_FUNCTION == $type) {
             $usetype = "useTypeFunction()";
         } elseif (\PhpParser\Node\Stmt\Use_::TYPE_CONSTANT == $type) {
-            $usetype = "useTypeConstant()";
+            $usetype = "useTypeConst()";
         } else {
             throw new \Exception("Unknown use type encountered: " . $type);
         }
