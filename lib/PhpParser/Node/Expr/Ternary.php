@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Expr;
 
@@ -21,7 +21,7 @@ class Ternary extends Expr
      * @param Expr      $else       Expression for false
      * @param array                    $attributes Additional attributes
      */
-    public function __construct(Expr $cond, $if, Expr $else, array $attributes = array()) {
+    public function __construct(Expr $cond, $if, Expr $else, array $attributes = []) {
         parent::__construct($attributes);
         $this->cond = $cond;
         $this->if = $if;
@@ -29,6 +29,10 @@ class Ternary extends Expr
     }
 
     public function getSubNodeNames() : array {
-        return array('cond', 'if', 'else');
+        return ['cond', 'if', 'else'];
+    }
+    
+    function getType() : string {
+        return 'Expr_Ternary';
     }
 }

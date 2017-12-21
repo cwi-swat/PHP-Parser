@@ -44,6 +44,10 @@ identifier:
       T_STRING                                              { $$ = Node\Identifier[$1]; }
 ;
 
+reserved_non_modifiers_identifier:
+      reserved_non_modifiers                                { $$ = Node\Identifier[$1]; }
+;
+
 namespace_name_parts:
       T_STRING                                              { init($1); }
     | namespace_name_parts T_NS_SEPARATOR T_STRING          { push($1, $3); }
@@ -67,6 +71,10 @@ no_comma:
     | ',' { $this->emitError(new Error('A trailing comma is not allowed here', attributes())); }
 ;
 
+optional_comma:
+      /* empty */
+    | ','
+
 top_statement:
       statement                                             { $$ = $1; }
     | function_declaration_statement                        { $$ = $1; }
@@ -74,11 +82,17 @@ top_statement:
     | T_HALT_COMPILER
           { $$ = Stmt\HaltCompiler[$this->lexer->handleHaltCompiler()]; }
     | T_NAMESPACE namespace_name semi
-          { $$ = Stmt\Namespace_[$2, null]; $this->checkNamespace($$); }
+          { $$ = Stmt\Namespace_[$2, null];
+            $$->setAttribute('kind', Stmt\Namespace_::KIND_SEMICOLON);
+            $this->checkNamespace($$); }
     | T_NAMESPACE namespace_name '{' top_statement_list '}'
-          { $$ = Stmt\Namespace_[$2, $4]; $this->checkNamespace($$); }
+          { $$ = Stmt\Namespace_[$2, $4];
+            $$->setAttribute('kind', Stmt\Namespace_::KIND_BRACED);
+            $this->checkNamespace($$); }
     | T_NAMESPACE '{' top_statement_list '}'
-          { $$ = Stmt\Namespace_[null, $3]; $this->checkNamespace($$); }
+          { $$ = Stmt\Namespace_[null, $3];
+            $$->setAttribute('kind', Stmt\Namespace_::KIND_BRACED);
+            $this->checkNamespace($$); }
     | T_USE use_declarations semi                           { $$ = Stmt\Use_[$2, Stmt\Use_::TYPE_NORMAL]; }
     | T_USE use_type use_declarations semi                  { $$ = Stmt\Use_[$3, $2]; }
     | group_use_declaration semi                            { $$ = $1; }
@@ -103,7 +117,7 @@ group_use_declaration:
 ;
 
 unprefixed_use_declarations:
-      non_empty_unprefixed_use_declarations no_comma        { $$ = $1; }
+      non_empty_unprefixed_use_declarations optional_comma  { $$ = $1; }
 ;
 
 non_empty_unprefixed_use_declarations:
@@ -122,7 +136,7 @@ non_empty_use_declarations:
 ;
 
 inline_use_declarations:
-      non_empty_inline_use_declarations no_comma            { $$ = $1; }
+      non_empty_inline_use_declarations optional_comma      { $$ = $1; }
 ;
 
 non_empty_inline_use_declarations:
@@ -195,7 +209,15 @@ inner_statement:
 ;
 
 non_empty_statement:
-      '{' inner_statement_list '}'                          { $$ = $2; prependLeadingComments($$); }
+      '{' inner_statement_list '}'
+    {
+        if ($2) {
+            $$ = $2; prependLeadingComments($$);
+        } else {
+            makeNop($$, $this->startAttributeStack[#1], $this->endAttributes);
+            if (null === $$) { $$ = array(); }
+        }
+    }
     | T_IF '(' expr ')' statement elseif_list else_single
           { $$ = Stmt\If_[$3, ['stmts' => toArray($5), 'elseifs' => $6, 'else' => $7]]; }
     | T_IF '(' expr ')' ':' inner_statement_list new_elseif_list new_else_single T_ENDIF ';'
@@ -526,7 +548,7 @@ trait_adaptation:
           { $$ = Stmt\TraitUseAdaptation\Alias[$1[0], $1[1], $3, null]; }
     | trait_method_reference T_AS identifier ';'
           { $$ = Stmt\TraitUseAdaptation\Alias[$1[0], $1[1], null, $3]; }
-    | trait_method_reference T_AS reserved_non_modifiers ';'
+    | trait_method_reference T_AS reserved_non_modifiers_identifier ';'
           { $$ = Stmt\TraitUseAdaptation\Alias[$1[0], $1[1], null, $3]; }
 ;
 
@@ -697,6 +719,7 @@ anonymous_class:
       T_CLASS ctor_arguments extends_from implements_list '{' class_statement_list '}'
           { $$ = array(Stmt\Class_[null, ['type' => 0, 'extends' => $3, 'implements' => $4, 'stmts' => $6]], $2);
             $this->checkClass($$[0], -1); }
+;
 
 new_expr:
       T_NEW class_name_reference ctor_arguments             { $$ = Expr\New_[$2, $3]; }

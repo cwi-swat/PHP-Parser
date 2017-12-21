@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser;
 
@@ -20,7 +20,7 @@ class Autoloader
             return;
         }
 
-        spl_autoload_register(array(__CLASS__, 'autoload'), true, $prepend);
+        spl_autoload_register([__CLASS__, 'autoload'], true, $prepend);
         self::$registered = true;
     }
 

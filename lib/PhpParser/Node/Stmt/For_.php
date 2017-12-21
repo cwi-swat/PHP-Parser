@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -25,15 +25,19 @@ class For_ extends Node\Stmt
      *                          'stmts' => array(): Statements
      * @param array $attributes Additional attributes
      */
-    public function __construct(array $subNodes = array(), array $attributes = array()) {
+    public function __construct(array $subNodes = [], array $attributes = []) {
         parent::__construct($attributes);
-        $this->init = $subNodes['init'] ?? array();
-        $this->cond = $subNodes['cond'] ?? array();
-        $this->loop = $subNodes['loop'] ?? array();
-        $this->stmts = $subNodes['stmts'] ?? array();
+        $this->init = $subNodes['init'] ?? [];
+        $this->cond = $subNodes['cond'] ?? [];
+        $this->loop = $subNodes['loop'] ?? [];
+        $this->stmts = $subNodes['stmts'] ?? [];
     }
 
     public function getSubNodeNames() : array {
-        return array('init', 'cond', 'loop', 'stmts');
+        return ['init', 'cond', 'loop', 'stmts'];
+    }
+    
+    function getType() : string {
+        return 'Stmt_For';
     }
 }

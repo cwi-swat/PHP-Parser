@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -19,13 +19,17 @@ class TraitUse extends Node\Stmt
      * @param TraitUseAdaptation[] $adaptations Adaptations
      * @param array                $attributes  Additional attributes
      */
-    public function __construct(array $traits, array $adaptations = array(), array $attributes = array()) {
+    public function __construct(array $traits, array $adaptations = [], array $attributes = []) {
         parent::__construct($attributes);
         $this->traits = $traits;
         $this->adaptations = $adaptations;
     }
 
     public function getSubNodeNames() : array {
-        return array('traits', 'adaptations');
+        return ['traits', 'adaptations'];
+    }
+    
+    function getType() : string {
+        return 'Stmt_TraitUse';
     }
 }

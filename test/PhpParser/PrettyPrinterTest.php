@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser;
 
-use PhpParser\Comment;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\DNumber;
@@ -87,9 +86,9 @@ class PrettyPrinterTest extends CodeTestAbstract
         );
         $this->assertEquals('($a + $b) * $c', $prettyPrinter->prettyPrintExpr($expr));
 
-        $expr = new Expr\Closure(array(
-            'stmts' => array(new Stmt\Return_(new String_("a\nb")))
-        ));
+        $expr = new Expr\Closure([
+            'stmts' => [new Stmt\Return_(new String_("a\nb"))]
+        ]);
         $this->assertEquals("function () {\n    return 'a\nb';\n}", $prettyPrinter->prettyPrintExpr($expr));
     }
 
@@ -102,8 +101,8 @@ class PrettyPrinterTest extends CodeTestAbstract
     }
 
     private function parseModeLine($modeLine) {
-        $parts = explode(' ', $modeLine, 2);
-        $version = isset($parts[0]) ? $parts[0] : 'both';
+        $parts = explode(' ', (string) $modeLine, 2);
+        $version = $parts[0] ?? 'both';
         $options = isset($parts[1]) ? json_decode($parts[1], true) : [];
         return [$version, $options];
     }
@@ -235,6 +234,7 @@ class PrettyPrinterTest extends CodeTestAbstract
 
         /** @var callable $fn */
         eval(<<<CODE
+use PhpParser\Comment;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
@@ -261,10 +261,6 @@ CODE
          * This test makes sure that the format-preserving pretty printer round-trips for all
          * the pretty printer tests (i.e. returns the input if no changes occurred).
          */
-        if (false !== strpos($code, 'new class')) {
-            // Can't preserve formatting on anon classes for now
-            return;
-        }
 
         list($version) = $this->parseModeLine($modeLine);
 

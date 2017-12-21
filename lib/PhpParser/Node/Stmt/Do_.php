@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -18,13 +18,17 @@ class Do_ extends Node\Stmt
      * @param Node\Stmt[] $stmts      Statements
      * @param array       $attributes Additional attributes
      */
-    public function __construct(Node\Expr $cond, array $stmts = array(), array $attributes = array()) {
+    public function __construct(Node\Expr $cond, array $stmts = [], array $attributes = []) {
         parent::__construct($attributes);
         $this->cond = $cond;
         $this->stmts = $stmts;
     }
 
     public function getSubNodeNames() : array {
-        return array('stmts', 'cond');
+        return ['stmts', 'cond'];
+    }
+    
+    function getType() : string {
+        return 'Stmt_Do';
     }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Expr;
 
@@ -23,7 +23,7 @@ class StaticCall extends Expr
      * @param Node\Arg[]             $args       Arguments
      * @param array                  $attributes Additional attributes
      */
-    public function __construct($class, $name, array $args = array(), array $attributes = array()) {
+    public function __construct($class, $name, array $args = [], array $attributes = []) {
         parent::__construct($attributes);
         $this->class = $class;
         $this->name = \is_string($name) ? new Identifier($name) : $name;
@@ -31,6 +31,10 @@ class StaticCall extends Expr
     }
 
     public function getSubNodeNames() : array {
-        return array('class', 'name', 'args');
+        return ['class', 'name', 'args'];
+    }
+    
+    function getType() : string {
+        return 'Expr_StaticCall';
     }
 }

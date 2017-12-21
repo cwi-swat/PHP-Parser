@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser;
 
@@ -15,7 +15,7 @@ class DummyNode extends NodeAbstract {
     }
 
     public function getSubNodeNames() : array {
-        return array('subNode1', 'subNode2');
+        return ['subNode1', 'subNode2'];
     }
 
     // This method is only overwritten because the node is located in an unusual namespace
@@ -27,20 +27,25 @@ class DummyNode extends NodeAbstract {
 class NodeAbstractTest extends TestCase
 {
     public function provideNodes() {
-        $attributes = array(
+        $attributes = [
             'startLine' => 10,
-            'comments'  => array(
+            'endLine' => 11,
+            'startTokenPos' => 12,
+            'endTokenPos' => 13,
+            'startFilePos' => 14,
+            'endFilePos' => 15,
+            'comments'  => [
                 new Comment('// Comment' . "\n"),
                 new Comment\Doc('/** doc comment */'),
-            ),
-        );
+            ],
+        ];
 
         $node = new DummyNode('value1', 'value2', $attributes);
         $node->notSubNode = 'value3';
 
-        return array(
-            array($attributes, $node),
-        );
+        return [
+            [$attributes, $node],
+        ];
     }
 
     /**
@@ -48,15 +53,22 @@ class NodeAbstractTest extends TestCase
      */
     public function testConstruct(array $attributes, Node $node) {
         $this->assertSame('Dummy', $node->getType());
-        $this->assertSame(array('subNode1', 'subNode2'), $node->getSubNodeNames());
+        $this->assertSame(['subNode1', 'subNode2'], $node->getSubNodeNames());
         $this->assertSame(10, $node->getLine());
+        $this->assertSame(10, $node->getStartLine());
+        $this->assertSame(11, $node->getEndLine());
+        $this->assertSame(12, $node->getStartTokenPos());
+        $this->assertSame(13, $node->getEndTokenPos());
+        $this->assertSame(14, $node->getStartFilePos());
+        $this->assertSame(15, $node->getEndFilePos());
         $this->assertSame('/** doc comment */', $node->getDocComment()->getText());
         $this->assertSame('value1', $node->subNode1);
         $this->assertSame('value2', $node->subNode2);
-        $this->assertTrue(isset($node->subNode1));
-        $this->assertTrue(isset($node->subNode2));
-        $this->assertFalse(isset($node->subNode3));
+        $this->assertObjectHasAttribute('subNode1', $node);
+        $this->assertObjectHasAttribute('subNode2', $node);
+        $this->assertObjectNotHasAttribute('subNode3', $node);
         $this->assertSame($attributes, $node->getAttributes());
+        $this->assertSame($attributes['comments'], $node->getComments());
 
         return $node;
     }
@@ -66,9 +78,14 @@ class NodeAbstractTest extends TestCase
      */
     public function testGetDocComment(array $attributes, Node $node) {
         $this->assertSame('/** doc comment */', $node->getDocComment()->getText());
-        array_pop($node->getAttribute('comments')); // remove doc comment
+        $comments = $node->getComments();
+
+        array_pop($comments); // remove doc comment
+        $node->setAttribute('comments', $comments);
         $this->assertNull($node->getDocComment());
-        array_pop($node->getAttribute('comments')); // remove comment
+
+        array_pop($comments); // remove comment
+        $node->setAttribute('comments', $comments);
         $this->assertNull($node->getDocComment());
     }
 
@@ -109,7 +126,7 @@ class NodeAbstractTest extends TestCase
 
         // removal
         unset($node->subNode);
-        $this->assertFalse(isset($node->subNode));
+        $this->assertObjectNotHasAttribute('subNode', $node);
     }
 
     /**
@@ -157,24 +174,24 @@ class NodeAbstractTest extends TestCase
         $this->assertNull($node->getAttribute('null', 'default'));
 
         $this->assertSame(
-            array(
+            [
                 'key'  => 'value',
                 'null' => null,
-            ),
+            ],
             $node->getAttributes()
         );
 
         $node->setAttributes(
-            array(
+            [
                 'a' => 'b',
                 'c' => null,
-            )
+            ]
         );
         $this->assertSame(
-            array(
+            [
                 'a' => 'b',
                 'c' => null,
-            ),
+            ],
             $node->getAttributes()
         );
     }
@@ -284,13 +301,15 @@ PHP;
                     "nodeType": "Comment",
                     "text": "\/\/ comment\n",
                     "line": 2,
-                    "filePos": 6
+                    "filePos": 6,
+                    "tokenPos": 1
                 },
                 {
                     "nodeType": "Comment_Doc",
                     "text": "\/** doc comment *\/",
                     "line": 3,
-                    "filePos": 17
+                    "filePos": 17,
+                    "tokenPos": 2
                 }
             ],
             "endLine": 6

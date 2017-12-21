@@ -1,9 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Lexer;
 
-use PhpParser\ErrorHandler;
-use PhpParser\Parser\Tokens;
 
 class Emulative extends \PhpParser\Lexer
 {

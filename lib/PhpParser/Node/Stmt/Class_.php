@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -23,12 +23,6 @@ class Class_ extends ClassLike
     /** @var Node\Name[] Names of implemented interfaces */
     public $implements;
 
-    protected static $specialNames = array(
-        'self'   => true,
-        'parent' => true,
-        'static' => true,
-    );
-
     /**
      * Constructs a class node.
      *
@@ -40,17 +34,17 @@ class Class_ extends ClassLike
      *                                'stmts'      => array(): Statements
      * @param array       $attributes Additional attributes
      */
-    public function __construct($name, array $subNodes = array(), array $attributes = array()) {
+    public function __construct($name, array $subNodes = [], array $attributes = []) {
         parent::__construct($attributes);
         $this->flags = $subNodes['flags'] ?? $subNodes['type'] ?? 0;
         $this->name = \is_string($name) ? new Node\Identifier($name) : $name;
         $this->extends = $subNodes['extends'] ?? null;
-        $this->implements = $subNodes['implements'] ?? array();
-        $this->stmts = $subNodes['stmts'] ?? array();
+        $this->implements = $subNodes['implements'] ?? [];
+        $this->stmts = $subNodes['stmts'] ?? [];
     }
 
     public function getSubNodeNames() : array {
-        return array('flags', 'name', 'extends', 'implements', 'stmts');
+        return ['flags', 'name', 'extends', 'implements', 'stmts'];
     }
 
     /**
@@ -103,5 +97,9 @@ class Class_ extends ClassLike
         if ($a & 48 && $b & 48) {
             throw new Error('Cannot use the final modifier on an abstract class member');
         }
+    }
+    
+    function getType() : string {
+        return 'Stmt_Class';
     }
 }

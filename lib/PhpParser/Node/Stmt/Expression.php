@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -18,12 +18,16 @@ class Expression extends Node\Stmt
      * @param Node\Expr $expr       Expression
      * @param array     $attributes Additional attributes
      */
-    public function __construct(Node\Expr $expr, array $attributes = array()) {
+    public function __construct(Node\Expr $expr, array $attributes = []) {
         parent::__construct($attributes);
         $this->expr = $expr;
     }
 
     public function getSubNodeNames() : array {
-        return array('expr');
+        return ['expr'];
+    }
+    
+    function getType() : string {
+        return 'Stmt_Expression';
     }
 }

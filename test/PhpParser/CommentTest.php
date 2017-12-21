@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser;
 
@@ -7,12 +7,13 @@ use PHPUnit\Framework\TestCase;
 class CommentTest extends TestCase
 {
     public function testGetSet() {
-        $comment = new Comment('/* Some comment */', 1, 10);
+        $comment = new Comment('/* Some comment */', 1, 10, 2);
 
         $this->assertSame('/* Some comment */', $comment->getText());
         $this->assertSame('/* Some comment */', (string) $comment);
         $this->assertSame(1, $comment->getLine());
         $this->assertSame(10, $comment->getFilePos());
+        $this->assertSame(2, $comment->getTokenPos());
     }
 
     /**
@@ -24,10 +25,10 @@ class CommentTest extends TestCase
     }
 
     public function provideTestReformatting() {
-        return array(
-            array('// Some text' . "\n", '// Some text'),
-            array('/* Some text */', '/* Some text */'),
-            array(
+        return [
+            ['// Some text' . "\n", '// Some text'],
+            ['/* Some text */', '/* Some text */'],
+            [
                 '/**
      * Some text.
      * Some more text.
@@ -36,8 +37,8 @@ class CommentTest extends TestCase
  * Some text.
  * Some more text.
  */'
-            ),
-            array(
+            ],
+            [
                 '/*
         Some text.
         Some more text.
@@ -46,30 +47,30 @@ class CommentTest extends TestCase
     Some text.
     Some more text.
 */'
-            ),
-            array(
+            ],
+            [
                 '/* Some text.
        More text.
        Even more text. */',
                 '/* Some text.
    More text.
    Even more text. */'
-            ),
-            array(
+            ],
+            [
                 '/* Some text.
        More text.
          Indented text. */',
                 '/* Some text.
    More text.
      Indented text. */',
-            ),
+            ],
             // invalid comment -> no reformatting
-            array(
+            [
                 'hallo
     world',
                 'hallo
     world',
-            ),
-        );
+            ],
+        ];
     }
 }

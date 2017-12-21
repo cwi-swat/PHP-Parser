@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -22,7 +22,7 @@ class UseUse extends Node\Stmt
      * @param int                    $type       Type of the use element (for mixed group use only)
      * @param array                  $attributes Additional attributes
      */
-    public function __construct(Node\Name $name, $alias = null, int $type = Use_::TYPE_UNKNOWN, array $attributes = array()) {
+    public function __construct(Node\Name $name, $alias = null, int $type = Use_::TYPE_UNKNOWN, array $attributes = []) {
         parent::__construct($attributes);
         $this->type = $type;
         $this->name = $name;
@@ -30,7 +30,7 @@ class UseUse extends Node\Stmt
     }
 
     public function getSubNodeNames() : array {
-        return array('type', 'name', 'alias');
+        return ['type', 'name', 'alias'];
     }
 
     /**
@@ -44,5 +44,9 @@ class UseUse extends Node\Stmt
         }
 
         return new Identifier($this->name->getLast());
+    }
+    
+    function getType() : string {
+        return 'Stmt_UseUse';
     }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node;
 
@@ -8,9 +8,14 @@ class Name extends NodeAbstract
 {
     /**
      * @var string[] Parts of the name
-     * @deprecated Avoid directly accessing $parts, use methods instead.
      */
     public $parts;
+
+    private static $specialClassNames = [
+        'self'   => true,
+        'parent' => true,
+        'static' => true,
+    ];
 
     /**
      * Constructs a name node.
@@ -18,13 +23,13 @@ class Name extends NodeAbstract
      * @param string|string[]|self $name       Name as string, part array or Name instance (copy ctor)
      * @param array                $attributes Additional attributes
      */
-    public function __construct($name, array $attributes = array()) {
+    public function __construct($name, array $attributes = []) {
         parent::__construct($attributes);
         $this->parts = self::prepareName($name);
     }
 
     public function getSubNodeNames() : array {
-        return array('parts');
+        return ['parts'];
     }
 
     /**
@@ -51,7 +56,7 @@ class Name extends NodeAbstract
      * @return bool Whether the name is unqualified
      */
     public function isUnqualified() : bool {
-        return 1 == count($this->parts);
+        return 1 === count($this->parts);
     }
 
     /**
@@ -99,6 +104,26 @@ class Name extends NodeAbstract
      */
     public function toCodeString() : string {
         return $this->toString();
+    }
+
+    /**
+     * Returns lowercased string representation of the name, without taking the name type into
+     * account (e.g., no leading backslash for fully qualified names).
+     *
+     * @return string Lowercased string representation
+     */
+    public function toLowerString() : string {
+        return strtolower(implode('\\', $this->parts));
+    }
+
+    /**
+     * Checks whether the identifier is a special class name (self, parent or static).
+     *
+     * @return bool Whether identifier is a special class name
+     */
+    public function isSpecialClassName() : bool {
+        return count($this->parts) === 1
+            && isset(self::$specialClassNames[strtolower($this->parts[0])]);
     }
 
     /**
@@ -193,8 +218,16 @@ class Name extends NodeAbstract
      */
     private static function prepareName($name) : array {
         if (\is_string($name)) {
+            if ('' === $name) {
+                throw new \InvalidArgumentException('Name cannot be empty');
+            }
+
             return explode('\\', $name);
         } elseif (\is_array($name)) {
+            if (empty($name)) {
+                throw new \InvalidArgumentException('Name cannot be empty');
+            }
+
             return $name;
         } elseif ($name instanceof self) {
             return $name->parts;
@@ -203,5 +236,9 @@ class Name extends NodeAbstract
         throw new \InvalidArgumentException(
             'Expected string, array of parts or Name instance'
         );
+    }
+    
+    function getType() : string {
+        return 'Name';
     }
 }

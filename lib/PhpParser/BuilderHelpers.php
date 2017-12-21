@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser;
 
-use PhpParser\Comment;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
@@ -70,7 +69,7 @@ final class BuilderHelpers {
                 throw new \LogicException('Name cannot be empty');
             }
 
-            if ($name[0] == '\\') {
+            if ($name[0] === '\\') {
                 return new Name\FullyQualified(substr($name, 1));
             } elseif (0 === strpos($name, 'namespace\\')) {
                 return new Name\Relative(substr($name, strlen('namespace\\')));
@@ -108,9 +107,9 @@ final class BuilderHelpers {
             $type = substr($type, 1);
         }
 
-        $builtinTypes = array(
-            'array', 'callable', 'string', 'int', 'float', 'bool', 'iterable', 'void'
-        );
+        $builtinTypes = [
+            'array', 'callable', 'string', 'int', 'float', 'bool', 'iterable', 'void', 'object'
+        ];
 
         $lowerType = strtolower($type);
         if (in_array($lowerType, $builtinTypes)) {
@@ -152,7 +151,7 @@ final class BuilderHelpers {
         } elseif (is_string($value)) {
             return new Scalar\String_($value);
         } elseif (is_array($value)) {
-            $items = array();
+            $items = [];
             $lastKey = -1;
             foreach ($value as $itemKey => $itemValue) {
                 // for consecutive, numeric keys don't generate keys

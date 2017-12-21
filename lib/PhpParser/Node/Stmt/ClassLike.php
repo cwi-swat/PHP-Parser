@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -19,7 +19,7 @@ abstract class ClassLike extends Node\Stmt {
      * @return ClassMethod[]
      */
     public function getMethods() : array {
-        $methods = array();
+        $methods = [];
         foreach ($this->stmts as $stmt) {
             if ($stmt instanceof ClassMethod) {
                 $methods[] = $stmt;
@@ -38,7 +38,7 @@ abstract class ClassLike extends Node\Stmt {
     public function getMethod(string $name) {
         $lowerName = strtolower($name);
         foreach ($this->stmts as $stmt) {
-            if ($stmt instanceof ClassMethod && $lowerName === strtolower($stmt->name)) {
+            if ($stmt instanceof ClassMethod && $lowerName === $stmt->name->toLowerString()) {
                 return $stmt;
             }
         }

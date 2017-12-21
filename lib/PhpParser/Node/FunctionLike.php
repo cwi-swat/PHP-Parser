@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node;
 
@@ -22,7 +22,7 @@ interface FunctionLike extends Node
 
     /**
      * Get the declared return type or null
-     * 
+     *
      * @return null|Identifier|Node\Name|Node\NullableType
      */
     public function getReturnType();

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -18,14 +18,14 @@ class Property extends Node\Stmt
      * @param PropertyProperty[] $props      Properties
      * @param array              $attributes Additional attributes
      */
-    public function __construct(int $flags, array $props, array $attributes = array()) {
+    public function __construct(int $flags, array $props, array $attributes = []) {
         parent::__construct($attributes);
         $this->flags = $flags;
         $this->props = $props;
     }
 
     public function getSubNodeNames() : array {
-        return array('flags', 'props');
+        return ['flags', 'props'];
     }
 
     /**
@@ -63,5 +63,9 @@ class Property extends Node\Stmt
      */
     public function isStatic() : bool {
         return (bool) ($this->flags & Class_::MODIFIER_STATIC);
+    }
+    
+    function getType() : string {
+        return 'Stmt_Property';
     }
 }

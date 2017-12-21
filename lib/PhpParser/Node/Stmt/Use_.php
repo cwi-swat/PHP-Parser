@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Stmt;
 
@@ -31,13 +31,17 @@ class Use_ extends Stmt
      * @param int      $type       Type of alias
      * @param array    $attributes Additional attributes
      */
-    public function __construct(array $uses, int $type = self::TYPE_NORMAL, array $attributes = array()) {
+    public function __construct(array $uses, int $type = self::TYPE_NORMAL, array $attributes = []) {
         parent::__construct($attributes);
         $this->type = $type;
         $this->uses = $uses;
     }
 
     public function getSubNodeNames() : array {
-        return array('type', 'uses');
+        return ['type', 'uses'];
+    }
+    
+    function getType() : string {
+        return 'Stmt_Use';
     }
 }

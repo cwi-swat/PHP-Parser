@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Scalar;
 
@@ -16,7 +16,7 @@ class String_ extends Scalar
     /** @var string String value */
     public $value;
 
-    protected static $replacements = array(
+    protected static $replacements = [
         '\\' => '\\',
         '$'  =>  '$',
         'n'  => "\n",
@@ -25,7 +25,7 @@ class String_ extends Scalar
         'f'  => "\f",
         'v'  => "\v",
         'e'  => "\x1B",
-    );
+    ];
 
     /**
      * Constructs a string scalar node.
@@ -33,13 +33,13 @@ class String_ extends Scalar
      * @param string $value      Value of the string
      * @param array  $attributes Additional attributes
      */
-    public function __construct(string $value, array $attributes = array()) {
+    public function __construct(string $value, array $attributes = []) {
         parent::__construct($attributes);
         $this->value = $value;
     }
 
     public function getSubNodeNames() : array {
-        return array('value');
+        return ['value'];
     }
 
     /**
@@ -60,8 +60,8 @@ class String_ extends Scalar
 
         if ('\'' === $str[$bLength]) {
             return str_replace(
-                array('\\\\', '\\\''),
-                array(  '\\',   '\''),
+                ['\\\\', '\\\''],
+                [  '\\',   '\''],
                 substr($str, $bLength + 1, -1)
             );
         } else {
@@ -156,5 +156,9 @@ class String_ extends Scalar
         }
 
         return self::parseEscapeSequences($str, null, $parseUnicodeEscape);
+    }
+    
+    function getType() : string {
+        return 'Scalar_String';
     }
 }

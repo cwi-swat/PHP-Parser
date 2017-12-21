@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PhpParser\Node\Expr;
 
@@ -20,13 +20,17 @@ class ClassConstFetch extends Expr
      * @param string|Identifier|Error $name       Constant name
      * @param array                   $attributes Additional attributes
      */
-    public function __construct($class, $name, array $attributes = array()) {
+    public function __construct($class, $name, array $attributes = []) {
         parent::__construct($attributes);
         $this->class = $class;
         $this->name = \is_string($name) ? new Identifier($name) : $name;
     }
 
     public function getSubNodeNames() : array {
-        return array('class', 'name');
+        return ['class', 'name'];
+    }
+    
+    function getType() : string {
+        return 'Expr_ClassConstFetch';
     }
 }
