@@ -65,12 +65,19 @@ class RascalPrinter extends BasePrinter
         return addcslashes($str, "<>'\n\t\r\\\"");
     }
 
-    public function formatType(\PhpParser\Node $node = null) {
+    public function formatType(\PhpParser\Node $node = null) {        
         if (null != $node) {
-            if ($node instanceof \PhpParser\Node\NullableType)
-                return "nullableType(" . $this->pprint($node->type) . ")";
-            else
-                return "regularType(" . $this->pprint($node->type) . ")";
+            if ($node instanceof \PhpParser\Node\NullableType) {
+                if ($node->type instanceof \PhpParser\Node\Identifier) {
+                    return 'nullableType(name("' . $node->type . '"))';
+                } else {
+                    return "nullableType(" . $this->formatType($node->type) . ")";
+                }
+            } elseif ($node instanceof \PhpParser\Node\Identifier) {
+                return 'regularType(name("' . $node . '"))';
+            } else {
+                return "regularType(" . $this->pprint($node) . ")";
+            }
         } else {
             return "noType()";
         }
@@ -1628,7 +1635,9 @@ class RascalPrinter extends BasePrinter
         } else {
             throw new \Exception("Unknown use type encountered: " . $type);
         }
-        $fragment = sprintf("use([%s],%s,%s)",implode(",", $uses),$prefix,$usetype);
+
+        $usesToPrint = implode(',', $uses);
+        $fragment = sprintf("use([%s],%s,%s)",implode(",", $usesToPrint),$prefix,$usetype);
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
@@ -1716,14 +1725,16 @@ class RascalPrinter extends BasePrinter
         // don't, this is a global namespace declaration, like
         // namespace { global stuff }
         $priorNamespace = $this->currentNamespace;
-        if (null != $node->name)
+        if (null != $node->name) {
             $this->currentNamespace = $this->implodeName($node->name);
-        else
+        } else {
             $this->currentNamespace = "";
+        }
 
         $body = array();
-        foreach ($node->stmts as $stmt)
+        foreach ($node->stmts as $stmt) {
             $body[] = $this->pprint($stmt);
+        }
 
         // Again check the name -- since it is optional, we return an OptionName
         // here, which could be noName() if this is a global namespace
@@ -1734,16 +1745,18 @@ class RascalPrinter extends BasePrinter
             $name = "noName()";
         }
 
-        // The third option shouldn't occur, but is put in just in case; the first
-        // option is the case where we have a body, the second is where we have
-        // a namespace header, like namespace DB; that opens a new block but doesn't
-        // enclose it in braces
-        if (null != $node->stmts)
+        // The first case covers namespaces which include the namespace body between
+        // curly braces. The second case covers namespaces given as just the name
+        // with no brackets, which means the following statements are implicitly
+        // included in the namespace until the end of file or another namespace
+        // declaration is encountered.
+        if (null != $node->stmts) {
             $fragment = "namespace(" . $name . ",[" . implode(",", $body) . "])";
-        elseif (null != $node->name)
+        } elseif (null != $node->name) {
             $fragment = "namespaceHeader({$this->pprint($node->name)})";
-        else
-            $fragment = "namespaceHeader(noName())";
+        } else {
+            throw new \Exception("Unknown namespace variant encountered");
+        }
 
         $fragment .= $this->annotateASTNode($node);
 
@@ -1751,8 +1764,9 @@ class RascalPrinter extends BasePrinter
         // we didn't, it means that we just had a namespace declaration like
         // namespace DB; which had no body, but then is still active at the end
         // in which case we don't want to reset it
-        if (null != $node->stmts)
+        if (null != $node->stmts) {
             $this->currentNamespace = $priorNamespace;
+        }
 
         return $fragment;
     }
@@ -2004,27 +2018,26 @@ class RascalPrinter extends BasePrinter
 
     public function pprintUseStmt(\PhpParser\Node\Stmt\Use_ $node)
     {
-        // TODO: Verify this, the syntax for use has changed in PHP 7
         $uses = array();
-        foreach ($node->uses as $use)
+        foreach ($node->uses as $use) {
             $uses[] = $this->pprint($use);
+        }
 
         $type = $node->type;
-        if (\PhpParser\Node\Stmt\Use_::TYPE_UNKNOWN == $type) {
+        if (\PhpParser\Node\Stmt\Use_::TYPE_UNKNOWN === $type) {
             $usetype = "useTypeUnknown()";
-        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_NORMAL == $type) {
+        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_NORMAL === $type) {
             $usetype = "useTypeNormal()";
-        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_FUNCTION == $type) {
+        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_FUNCTION === $type) {
             $usetype = "useTypeFunction()";
-        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_CONSTANT == $type) {
+        } elseif (\PhpParser\Node\Stmt\Use_::TYPE_CONSTANT === $type) {
             $usetype = "useTypeConst()";
         } else {
             throw new \Exception("Unknown use type encountered: " . $type);
         }
 
-        $prefix = "noName()";
-
-        $fragment = sprintf("use([%s],%s,%s)", $uses, $prefix, $type);
+        $usesToPrint = implode(',', $uses);
+        $fragment = sprintf("useStmt([%s],%s)", $usesToPrint, $usetype);
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
@@ -2034,8 +2047,9 @@ class RascalPrinter extends BasePrinter
     public function pprintUseUseStmt(\PhpParser\Node\Stmt\UseUse $node)
     {
         $name = $this->pprint($node->name);
+
         if (null != $node->alias)
-            $alias = "someName(name(\"" . $this->pprint($node->alias) . "\"))";
+            $alias = sprintf('someName(name("%s"))', $this->pprint($node->alias));
         else
             $alias = "noName()";
 
@@ -2052,7 +2066,7 @@ class RascalPrinter extends BasePrinter
             throw new \Exception("Unknown use type encountered: " . $type);
         }
 
-        $fragment = sprintf("useItem(%s,%s,%s", $name, $alias, $type);
+        $fragment = sprintf("use(%s,%s,%s)", $name, $alias, $usetype);
         $fragment .= $this->annotateASTNode($node);
 
         return $fragment;
