@@ -145,6 +145,7 @@ abstract class NodeAbstract implements Node, \JsonSerializable
 
         if ( $this->hasAttribute('startFilePos') && $this->hasAttribute('endFilePos')) {
             $totalLength = $this->getAttribute('endFilePos', -1) - $this->getAttribute('startFilePos', -1) + 1;
+            if ($totalLength < 0) $totalLength = -1;
             return $totalLength;
         }
 	    return -1;
