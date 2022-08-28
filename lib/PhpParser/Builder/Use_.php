@@ -7,7 +7,8 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class Use_ implements Builder {
+class Use_ implements Builder
+{
     protected $name;
     protected $type;
     protected $alias = null;
@@ -38,7 +39,7 @@ class Use_ implements Builder {
     /**
      * Returns the built node.
      *
-     * @return Node The built node
+     * @return Stmt\Use_ The built node
      */
     public function getNode() : Node {
         return new Stmt\Use_([

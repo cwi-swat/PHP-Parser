@@ -3,11 +3,16 @@
 namespace PhpParser\Builder;
 
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
+use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
 use PhpParser\Node\Scalar;
-use PHPUnit\Framework\TestCase;
+use PhpParser\Node\Scalar\LNumber;
 
-class ParamTest extends TestCase
+class ParamTest extends \PHPUnit\Framework\TestCase
 {
     public function createParamBuilder($name) {
         return new Param($name);
@@ -80,11 +85,13 @@ class ParamTest extends TestCase
     }
 
     /**
-     * @dataProvider provideTestTypeHints
+     * @dataProvider provideTestTypes
+     * @dataProvider provideTestNullableTypes
+     * @dataProvider provideTestUnionTypes
      */
-    public function testTypeHints($typeHint, $expectedType) {
+    public function testTypes($typeHint, $expectedType) {
         $node = $this->createParamBuilder('test')
-            ->setTypeHint($typeHint)
+            ->setType($typeHint)
             ->getNode()
         ;
         $type = $node->type;
@@ -100,7 +107,7 @@ class ParamTest extends TestCase
         $this->assertEquals($expectedType, $type);
     }
 
-    public function provideTestTypeHints() {
+    public function provideTestTypes() {
         return [
             ['array', new Node\Identifier('array')],
             ['callable', new Node\Identifier('callable')],
@@ -112,12 +119,18 @@ class ParamTest extends TestCase
             ['object', new Node\Identifier('object')],
             ['Array', new Node\Identifier('array')],
             ['CALLABLE', new Node\Identifier('callable')],
+            ['mixed', new Node\Identifier('mixed')],
             ['Some\Class', new Node\Name('Some\Class')],
             ['\Foo', new Node\Name\FullyQualified('Foo')],
             ['self', new Node\Name('self')],
+            [new Node\Name('Some\Class'), new Node\Name('Some\Class')],
+        ];
+    }
+
+    public function provideTestNullableTypes() {
+        return [
             ['?array', new Node\NullableType(new Node\Identifier('array'))],
             ['?Some\Class', new Node\NullableType(new Node\Name('Some\Class'))],
-            [new Node\Name('Some\Class'), new Node\Name('Some\Class')],
             [
                 new Node\NullableType(new Node\Identifier('int')),
                 new Node\NullableType(new Node\Identifier('int'))
@@ -129,20 +142,43 @@ class ParamTest extends TestCase
         ];
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Parameter type cannot be void
-     */
-    public function testVoidTypeError() {
-        $this->createParamBuilder('test')->setTypeHint('void');
+    public function provideTestUnionTypes() {
+        return [
+            [
+                new Node\UnionType([
+                    new Node\Name('Some\Class'),
+                    new Node\Identifier('array'),
+                ]),
+                new Node\UnionType([
+                    new Node\Name('Some\Class'),
+                    new Node\Identifier('array'),
+                ]),
+            ],
+            [
+                new Node\UnionType([
+                    new Node\Identifier('self'),
+                    new Node\Identifier('array'),
+                    new Node\Name\FullyQualified('Foo')
+                ]),
+                new Node\UnionType([
+                    new Node\Identifier('self'),
+                    new Node\Identifier('array'),
+                    new Node\Name\FullyQualified('Foo')
+                ]),
+            ],
+        ];
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Type must be a string, or an instance of Name, Identifier or NullableType
-     */
+    public function testVoidTypeError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Parameter type cannot be void');
+        $this->createParamBuilder('test')->setType('void');
+    }
+
     public function testInvalidTypeError() {
-        $this->createParamBuilder('test')->setTypeHint(new \stdClass);
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Type must be a string, or an instance of Name, Identifier or ComplexType');
+        $this->createParamBuilder('test')->setType(new \stdClass);
     }
 
     public function testByRef() {
@@ -165,6 +201,23 @@ class ParamTest extends TestCase
 
         $this->assertEquals(
             new Node\Param(new Expr\Variable('test'), null, null, false, true),
+            $node
+        );
+    }
+
+    public function testAddAttribute() {
+        $attribute = new Attribute(
+            new Name('Attr'),
+            [new Arg(new LNumber(1), false, false, [], new Identifier('name'))]
+        );
+        $attributeGroup = new AttributeGroup([$attribute]);
+
+        $node = $this->createParamBuilder('attributeGroup')
+            ->addAttribute($attributeGroup)
+            ->getNode();
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('attributeGroup'), null, null, false, false, [], 0, [$attributeGroup]),
             $node
         );
     }

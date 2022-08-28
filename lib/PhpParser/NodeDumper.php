@@ -39,7 +39,7 @@ class NodeDumper
      *
      * @return string Dumped value
      */
-    public function dump($node, string $code = null) : string {
+    public function dump($node, ?string $code = null) : string {
         $this->code = $code;
         return $this->dumpRecursive($node);
     }
@@ -65,9 +65,9 @@ class NodeDumper
                 } elseif (is_scalar($value)) {
                     if ('flags' === $key || 'newModifier' === $key) {
                         $r .= $this->dumpFlags($value);
-                    } else if ('type' === $key && $node instanceof Include_) {
+                    } elseif ('type' === $key && $node instanceof Include_) {
                         $r .= $this->dumpIncludeType($value);
-                    } else if ('type' === $key
+                    } elseif ('type' === $key
                             && ($node instanceof Use_ || $node instanceof UseUse || $node instanceof GroupUse)) {
                         $r .= $this->dumpUseType($value);
                     } else {
@@ -128,6 +128,9 @@ class NodeDumper
         if ($flags & Class_::MODIFIER_FINAL) {
             $strs[] = 'MODIFIER_FINAL';
         }
+        if ($flags & Class_::MODIFIER_READONLY) {
+            $strs[] = 'MODIFIER_READONLY';
+        }
 
         if ($strs) {
             return implode(' | ', $strs) . ' (' . $flags . ')';
@@ -171,7 +174,7 @@ class NodeDumper
      *
      * @return string|null Dump of position, or null if position information not available
      */
-    protected function dumpPosition(Node $node) {
+    protected function dumpPosition(Node $node): ?string {
         if (!$node->hasAttribute('startLine') || !$node->hasAttribute('endLine')) {
             return null;
         }

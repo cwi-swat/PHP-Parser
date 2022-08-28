@@ -5,11 +5,28 @@ namespace PhpParser;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Use_;
 
 class BuilderFactory
 {
+    /**
+     * Creates an attribute node.
+     *
+     * @param string|Name $name Name of the attribute
+     * @param array       $args Attribute named arguments
+     *
+     * @return Node\Attribute
+     */
+    public function attribute($name, array $args = []) : Node\Attribute {
+        return new Node\Attribute(
+            BuilderHelpers::normalizeName($name),
+            $this->args($args)
+        );
+    }
+
     /**
      * Creates a namespace builder.
      *
@@ -52,6 +69,45 @@ class BuilderFactory
      */
     public function trait(string $name) : Builder\Trait_ {
         return new Builder\Trait_($name);
+    }
+
+    /**
+     * Creates an enum builder.
+     *
+     * @param string $name Name of the enum
+     *
+     * @return Builder\Enum_ The created enum builder
+     */
+    public function enum(string $name) : Builder\Enum_ {
+        return new Builder\Enum_($name);
+    }
+
+    /**
+     * Creates a trait use builder.
+     *
+     * @param Node\Name|string ...$traits Trait names
+     *
+     * @return Builder\TraitUse The create trait use builder
+     */
+    public function useTrait(...$traits) : Builder\TraitUse {
+        return new Builder\TraitUse(...$traits);
+    }
+
+    /**
+     * Creates a trait use adaptation builder.
+     *
+     * @param Node\Name|string|null  $trait  Trait name
+     * @param Node\Identifier|string $method Method name
+     *
+     * @return Builder\TraitUseAdaptation The create trait use adaptation builder
+     */
+    public function traitUseAdaptation($trait, $method = null) : Builder\TraitUseAdaptation {
+        if ($method === null) {
+            $method = $trait;
+            $trait = null;
+        }
+
+        return new Builder\TraitUseAdaptation($trait, $method);
     }
 
     /**
@@ -101,12 +157,57 @@ class BuilderFactory
     /**
      * Creates a namespace/class use builder.
      *
-     * @param string|Node\Name Name to alias
+     * @param Node\Name|string $name Name of the entity (namespace or class) to alias
      *
-     * @return Builder\Use_ The create use builder
+     * @return Builder\Use_ The created use builder
      */
     public function use($name) : Builder\Use_ {
         return new Builder\Use_($name, Use_::TYPE_NORMAL);
+    }
+
+    /**
+     * Creates a function use builder.
+     *
+     * @param Node\Name|string $name Name of the function to alias
+     *
+     * @return Builder\Use_ The created use function builder
+     */
+    public function useFunction($name) : Builder\Use_ {
+        return new Builder\Use_($name, Use_::TYPE_FUNCTION);
+    }
+
+    /**
+     * Creates a constant use builder.
+     *
+     * @param Node\Name|string $name Name of the const to alias
+     *
+     * @return Builder\Use_ The created use const builder
+     */
+    public function useConst($name) : Builder\Use_ {
+        return new Builder\Use_($name, Use_::TYPE_CONSTANT);
+    }
+
+    /**
+     * Creates a class constant builder.
+     *
+     * @param string|Identifier                          $name  Name
+     * @param Node\Expr|bool|null|int|float|string|array $value Value
+     *
+     * @return Builder\ClassConst The created use const builder
+     */
+    public function classConst($name, $value) : Builder\ClassConst {
+        return new Builder\ClassConst($name, $value);
+    }
+
+    /**
+     * Creates an enum case builder.
+     *
+     * @param string|Identifier $name  Name
+     *
+     * @return Builder\EnumCase The created use const builder
+     */
+    public function enumCase($name) : Builder\EnumCase {
+        return new Builder\EnumCase($name);
     }
 
     /**
@@ -121,6 +222,21 @@ class BuilderFactory
     }
 
     /**
+     * Creates variable node.
+     *
+     * @param string|Expr $name Name
+     *
+     * @return Expr\Variable
+     */
+    public function var($name) : Expr\Variable {
+        if (!\is_string($name) && !$name instanceof Expr) {
+            throw new \LogicException('Variable name must be string or Expr');
+        }
+
+        return new Expr\Variable($name);
+    }
+
+    /**
      * Normalizes an argument list.
      *
      * Creates Arg nodes for all arguments and converts literal values to expressions.
@@ -131,14 +247,118 @@ class BuilderFactory
      */
     public function args(array $args) : array {
         $normalizedArgs = [];
-        foreach ($args as $arg) {
-            if ($arg instanceof Arg) {
-                $normalizedArgs[] = $arg;
-            } else {
-                $normalizedArgs[] = new Arg(BuilderHelpers::normalizeValue($arg));
+        foreach ($args as $key => $arg) {
+            if (!($arg instanceof Arg)) {
+                $arg = new Arg(BuilderHelpers::normalizeValue($arg));
             }
+            if (\is_string($key)) {
+                $arg->name = BuilderHelpers::normalizeIdentifier($key);
+            }
+            $normalizedArgs[] = $arg;
         }
         return $normalizedArgs;
+    }
+
+    /**
+     * Creates a function call node.
+     *
+     * @param string|Name|Expr $name Function name
+     * @param array            $args Function arguments
+     *
+     * @return Expr\FuncCall
+     */
+    public function funcCall($name, array $args = []) : Expr\FuncCall {
+        return new Expr\FuncCall(
+            BuilderHelpers::normalizeNameOrExpr($name),
+            $this->args($args)
+        );
+    }
+
+    /**
+     * Creates a method call node.
+     *
+     * @param Expr                   $var  Variable the method is called on
+     * @param string|Identifier|Expr $name Method name
+     * @param array                  $args Method arguments
+     *
+     * @return Expr\MethodCall
+     */
+    public function methodCall(Expr $var, $name, array $args = []) : Expr\MethodCall {
+        return new Expr\MethodCall(
+            $var,
+            BuilderHelpers::normalizeIdentifierOrExpr($name),
+            $this->args($args)
+        );
+    }
+
+    /**
+     * Creates a static method call node.
+     *
+     * @param string|Name|Expr       $class Class name
+     * @param string|Identifier|Expr $name  Method name
+     * @param array                  $args  Method arguments
+     *
+     * @return Expr\StaticCall
+     */
+    public function staticCall($class, $name, array $args = []) : Expr\StaticCall {
+        return new Expr\StaticCall(
+            BuilderHelpers::normalizeNameOrExpr($class),
+            BuilderHelpers::normalizeIdentifierOrExpr($name),
+            $this->args($args)
+        );
+    }
+
+    /**
+     * Creates an object creation node.
+     *
+     * @param string|Name|Expr $class Class name
+     * @param array            $args  Constructor arguments
+     *
+     * @return Expr\New_
+     */
+    public function new($class, array $args = []) : Expr\New_ {
+        return new Expr\New_(
+            BuilderHelpers::normalizeNameOrExpr($class),
+            $this->args($args)
+        );
+    }
+
+    /**
+     * Creates a constant fetch node.
+     *
+     * @param string|Name $name Constant name
+     *
+     * @return Expr\ConstFetch
+     */
+    public function constFetch($name) : Expr\ConstFetch {
+        return new Expr\ConstFetch(BuilderHelpers::normalizeName($name));
+    }
+
+    /**
+     * Creates a property fetch node.
+     *
+     * @param Expr                   $var  Variable holding object
+     * @param string|Identifier|Expr $name Property name
+     *
+     * @return Expr\PropertyFetch
+     */
+    public function propertyFetch(Expr $var, $name) : Expr\PropertyFetch {
+        return new Expr\PropertyFetch($var, BuilderHelpers::normalizeIdentifierOrExpr($name));
+    }
+
+    /**
+     * Creates a class constant fetch node.
+     *
+     * @param string|Name|Expr  $class Class name
+     * @param string|Identifier $name  Constant name
+     *
+     * @return Expr\ClassConstFetch
+     */
+    public function classConstFetch($class, $name): Expr\ClassConstFetch {
+        return new Expr\ClassConstFetch(
+            BuilderHelpers::normalizeNameOrExpr($class),
+            BuilderHelpers::normalizeIdentifier($name)
+        );
     }
 
     /**
@@ -161,12 +381,16 @@ class BuilderFactory
         return $lastConcat;
     }
 
-    private function normalizeStringExpr($expr) {
+    /**
+     * @param string|Expr $expr
+     * @return Expr
+     */
+    private function normalizeStringExpr($expr) : Expr {
         if ($expr instanceof Expr) {
             return $expr;
         }
 
-        if (is_string($expr)) {
+        if (\is_string($expr)) {
             return new String_($expr);
         }
 

@@ -4,13 +4,18 @@ namespace PhpParser\Builder;
 
 use PhpParser\Comment;
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
+use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Expr\Print_;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
-use PHPUnit\Framework\TestCase;
 
-class FunctionTest extends TestCase
+class FunctionTest extends \PHPUnit\Framework\TestCase
 {
     public function createFunctionBuilder($name) {
         return new Function_($name);
@@ -82,6 +87,22 @@ class FunctionTest extends TestCase
         ]), $node);
     }
 
+    public function testAddAttribute() {
+        $attribute = new Attribute(
+            new Name('Attr'),
+            [new Arg(new LNumber(1), false, false, [], new Identifier('name'))]
+        );
+        $attributeGroup = new AttributeGroup([$attribute]);
+
+        $node = $this->createFunctionBuilder('attrGroup')
+            ->addAttribute($attributeGroup)
+            ->getNode();
+
+        $this->assertEquals(new Stmt\Function_('attrGroup', [
+            'attrGroups' => [$attributeGroup],
+        ], []), $node);
+    }
+
     public function testReturnType() {
         $node = $this->createFunctionBuilder('test')
             ->setReturnType('void')
@@ -92,29 +113,23 @@ class FunctionTest extends TestCase
         ], []), $node);
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage void type cannot be nullable
-     */
     public function testInvalidNullableVoidType() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('void type cannot be nullable');
         $this->createFunctionBuilder('test')->setReturnType('?void');
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Expected parameter node, got "Name"
-     */
     public function testInvalidParamError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Expected parameter node, got "Name"');
         $this->createFunctionBuilder('test')
             ->addParam(new Node\Name('foo'))
         ;
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Expected statement or expression node
-     */
     public function testAddNonStmt() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Expected statement or expression node');
         $this->createFunctionBuilder('test')
             ->addStmt(new Node\Name('Test'));
     }

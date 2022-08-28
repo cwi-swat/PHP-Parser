@@ -1,21 +1,23 @@
 PHP Parser
 ==========
 
-[![Build Status](https://travis-ci.org/nikic/PHP-Parser.svg?branch=master)](https://travis-ci.org/nikic/PHP-Parser) [![Coverage Status](https://coveralls.io/repos/github/nikic/PHP-Parser/badge.svg?branch=master)](https://coveralls.io/github/nikic/PHP-Parser?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/nikic/PHP-Parser/badge.svg?branch=master)](https://coveralls.io/github/nikic/PHP-Parser?branch=master)
 
-This is a PHP 5.2 to PHP 7.2 parser written in PHP. Its purpose is to simplify static code analysis and
+This is a PHP 5.2 to PHP 8.1 parser written in PHP. Its purpose is to simplify static code analysis and
 manipulation.
 
-[**Documentation for version 3.x**][doc_3_x] (stable; for running on PHP >= 5.5; for parsing PHP 5.2 to PHP 7.2).
+[Documentation for version 5.x][doc_master] (in development; for running on PHP >= 7.1; for parsing PHP 7.0 to PHP 8.2, with limited support for parsing PHP 5.x).
 
-[Documentation for version 4.x][doc_master] (development; for running on PHP >= 7.0; for parsing PHP 5.2 to PHP 7.2).
+[**Documentation for version 4.x**][doc_4_x] (stable; for running on PHP >= 7.0; for parsing PHP 5.2 to PHP 8.1).
+
+[Documentation for version 3.x][doc_3_x] (unsupported; for running on PHP >= 5.5; for parsing PHP 5.2 to PHP 7.2).
 
 Features
 --------
 
 The main features provided by this library are:
 
- * Parsing PHP 5 and PHP 7 code into an abstract syntax tree (AST).
+ * Parsing PHP 5, PHP 7, and PHP 8 code into an abstract syntax tree (AST).
    * Invalid code can be parsed into a partial AST.
    * The AST contains accurate location information.
  * Dumping the AST in human-readable form.
@@ -183,12 +185,16 @@ Documentation
 
  1. [Introduction](doc/0_Introduction.markdown)
  2. [Usage of basic components](doc/2_Usage_of_basic_components.markdown)
- 3. [Other node tree representations](doc/3_Other_node_tree_representations.markdown)
- 4. [Code generation](doc/4_Code_generation.markdown)
- 5. [Frequently asked questions](doc/5_FAQ.markdown)
 
 Component documentation:
 
+ * [Walking the AST](doc/component/Walking_the_AST.markdown)
+   * Node visitors
+   * Modifying the AST from a visitor
+   * Short-circuiting traversals
+   * Interleaved visitors
+   * Simple node finding API
+   * Parent and sibling references
  * [Name resolution](doc/component/Name_resolution.markdown)
    * Name resolver options
    * Name resolution context
@@ -196,6 +202,8 @@ Component documentation:
    * Converting AST back to PHP code
    * Customizing formatting
    * Formatting-preserving code transformations
+ * [AST builders](doc/component/AST_builders.markdown)
+   * Fluent builders for AST nodes
  * [Lexer](doc/component/Lexer.markdown)
    * Lexer options
    * Token and file positions for nodes
@@ -203,10 +211,18 @@ Component documentation:
  * [Error handling](doc/component/Error_handling.markdown)
    * Column information for errors
    * Error recovery (parsing of syntactically incorrect code)
+ * [Constant expression evaluation](doc/component/Constant_expression_evaluation.markdown)
+   * Evaluating constant/property/etc initializers
+   * Handling errors and unsupported expressions
+ * [JSON representation](doc/component/JSON_representation.markdown)
+   * JSON encoding and decoding of ASTs
  * [Performance](doc/component/Performance.markdown)
-   * Disabling XDebug
+   * Disabling Xdebug
    * Reusing objects
    * Garbage collection impact
+ * [Frequently asked questions](doc/component/FAQ.markdown)
+   * Parent and sibling references
 
  [doc_3_x]: https://github.com/nikic/PHP-Parser/tree/3.x/doc
+ [doc_4_x]: https://github.com/nikic/PHP-Parser/tree/4.x/doc
  [doc_master]: https://github.com/nikic/PHP-Parser/tree/master/doc

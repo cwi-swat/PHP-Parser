@@ -3,13 +3,17 @@
 namespace PhpParser\Builder;
 
 use PhpParser\Comment;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
+use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Stmt;
-use PHPUnit\Framework\TestCase;
 
-class PropertyTest extends TestCase
+class PropertyTest extends \PHPUnit\Framework\TestCase
 {
     public function createPropertyBuilder($name) {
         return new Property($name);
@@ -62,6 +66,21 @@ class PropertyTest extends TestCase
             ),
             $node
         );
+
+        $node = $this->createPropertyBuilder('test')
+            ->makeReadonly()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Stmt\Property(
+                Stmt\Class_::MODIFIER_READONLY,
+                [
+                    new Stmt\PropertyProperty('test')
+                ]
+            ),
+            $node
+        );
     }
 
     public function testDocComment() {
@@ -90,6 +109,32 @@ class PropertyTest extends TestCase
         ;
 
         $this->assertEquals($expectedValueNode, $node->props[0]->default);
+    }
+
+    public function testAddAttribute() {
+        $attribute = new Attribute(
+            new Name('Attr'),
+            [new Arg(new LNumber(1), false, false, [], new Identifier('name'))]
+        );
+        $attributeGroup = new AttributeGroup([$attribute]);
+
+        $node = $this->createPropertyBuilder('test')
+            ->addAttribute($attributeGroup)
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Stmt\Property(
+                Stmt\Class_::MODIFIER_PUBLIC,
+                [
+                    new Stmt\PropertyProperty('test')
+                ],
+                [],
+                null,
+                [$attributeGroup]
+            ),
+            $node
+        );
     }
 
     public function provideTestDefaultValues() {

@@ -12,12 +12,15 @@ class Param implements PhpParser\Builder
 
     protected $default = null;
 
-    /** @var string|Node\Name|Node\NullableType|null */
+    /** @var Node\Identifier|Node\Name|Node\NullableType|null */
     protected $type = null;
 
     protected $byRef = false;
 
     protected $variadic = false;
+
+    /** @var Node\AttributeGroup[] */
+    protected $attributeGroups = [];
 
     /**
      * Creates a parameter builder.
@@ -42,13 +45,13 @@ class Param implements PhpParser\Builder
     }
 
     /**
-     * Sets type hint for the parameter.
+     * Sets type for the parameter.
      *
-     * @param string|Node\Name|Node\NullableType $type Type hint to use
+     * @param string|Node\Name|Node\Identifier|Node\ComplexType $type Parameter type
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function setTypeHint($type) {
+    public function setType($type) {
         $this->type = BuilderHelpers::normalizeType($type);
         if ($this->type == 'void') {
             throw new \LogicException('Parameter type cannot be void');
@@ -80,6 +83,19 @@ class Param implements PhpParser\Builder
     }
 
     /**
+     * Adds an attribute group.
+     *
+     * @param Node\Attribute|Node\AttributeGroup $attribute
+     *
+     * @return $this The builder instance (for fluid interface)
+     */
+    public function addAttribute($attribute) {
+        $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
+
+        return $this;
+    }
+
+    /**
      * Returns the built parameter node.
      *
      * @return Node\Param The built parameter node
@@ -87,7 +103,7 @@ class Param implements PhpParser\Builder
     public function getNode() : Node {
         return new Node\Param(
             new Node\Expr\Variable($this->name),
-            $this->default, $this->type, $this->byRef, $this->variadic
+            $this->default, $this->type, $this->byRef, $this->variadic, [], 0, $this->attributeGroups
         );
     }
 }

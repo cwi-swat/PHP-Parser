@@ -14,9 +14,10 @@ function gen() {
     var_dump([yield "k1" => (yield "k2") => "a" . "b"]);
 }
 -----
-!!php7
 array(
     0: Stmt_Function(
+        attrGroups: array(
+        )
         byRef: false
         name: Identifier(
             name: gen
@@ -90,6 +91,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Expr_Array(
                                 items: array(
                                     0: Expr_ArrayItem(
@@ -108,6 +110,7 @@ array(
                                             )
                                         )
                                         byRef: false
+                                        unpack: false
                                     )
                                 )
                             )
@@ -172,6 +175,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Expr_Array(
                                 items: array(
                                     0: Expr_ArrayItem(
@@ -195,6 +199,7 @@ array(
                                             )
                                         )
                                         byRef: false
+                                        unpack: false
                                     )
                                 )
                             )
@@ -213,6 +218,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Expr_Array(
                                 items: array(
                                     0: Expr_ArrayItem(
@@ -236,6 +242,7 @@ array(
                                             )
                                         )
                                         byRef: false
+                                        unpack: false
                                     )
                                 )
                             )

@@ -4,7 +4,6 @@ namespace PhpParser\Node\Stmt;
 
 use PhpParser\Node;
 
-
 class TraitUse extends Node\Stmt
 {
     /** @var Node\Name[] Traits */
@@ -20,7 +19,7 @@ class TraitUse extends Node\Stmt
      * @param array                $attributes  Additional attributes
      */
     public function __construct(array $traits, array $adaptations = [], array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->traits = $traits;
         $this->adaptations = $adaptations;
     }
@@ -29,7 +28,7 @@ class TraitUse extends Node\Stmt
         return ['traits', 'adaptations'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_TraitUse';
     }
 }

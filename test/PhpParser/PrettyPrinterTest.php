@@ -10,48 +10,21 @@ use PhpParser\Node\Scalar\EncapsedStringPart;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
+use PhpParser\Parser\Php7;
 use PhpParser\PrettyPrinter\Standard;
-
-require_once __DIR__ . '/CodeTestAbstract.php';
 
 class PrettyPrinterTest extends CodeTestAbstract
 {
     protected function doTestPrettyPrintMethod($method, $name, $code, $expected, $modeLine) {
         $lexer = new Lexer\Emulative;
-        $parser5 = new Parser\Php5($lexer);
-        $parser7 = new Parser\Php7($lexer);
+        $parser = new Parser\Php7($lexer);
 
-        list($version, $options) = $this->parseModeLine($modeLine);
-        $prettyPrinter = new Standard($options);
+        $options = $this->parseModeLine($modeLine);
+        $version = isset($options['version']) ? PhpVersion::fromString($options['version']) : null;
+        $prettyPrinter = new Standard(['phpVersion' => $version]);
 
-        try {
-            $output5 = canonicalize($prettyPrinter->$method($parser5->parse($code)));
-        } catch (Error $e) {
-            $output5 = null;
-            if ('php7' !== $version) {
-                throw $e;
-            }
-        }
-
-        try {
-            $output7 = canonicalize($prettyPrinter->$method($parser7->parse($code)));
-        } catch (Error $e) {
-            $output7 = null;
-            if ('php5' !== $version) {
-                throw $e;
-            }
-        }
-
-        if ('php5' === $version) {
-            $this->assertSame($expected, $output5, $name);
-            $this->assertNotSame($expected, $output7, $name);
-        } else if ('php7' === $version) {
-            $this->assertSame($expected, $output7, $name);
-            $this->assertNotSame($expected, $output5, $name);
-        } else {
-            $this->assertSame($expected, $output5, $name);
-            $this->assertSame($expected, $output7, $name);
-        }
+        $output = canonicalize($prettyPrinter->$method($parser->parse($code)));
+        $this->assertSame($expected, $output, $name);
     }
 
     /**
@@ -98,13 +71,6 @@ class PrettyPrinterTest extends CodeTestAbstract
         $stmts = [new Stmt\InlineHTML('Hello World!', ['comments' => [$comment]])];
         $expected = "<?php\n\n/**\n * This is a comment\n */\n?>\nHello World!";
         $this->assertSame($expected, $prettyPrinter->prettyPrintFile($stmts));
-    }
-
-    private function parseModeLine($modeLine) {
-        $parts = explode(' ', (string) $modeLine, 2);
-        $version = $parts[0] ?? 'both';
-        $options = isset($parts[1]) ? json_decode($parts[1], true) : [];
-        return [$version, $options];
     }
 
     public function testArraySyntaxDefault() {
@@ -184,11 +150,9 @@ class PrettyPrinterTest extends CodeTestAbstract
         ];
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Cannot pretty-print AST with Error nodes
-     */
     public function testPrettyPrintWithError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot pretty-print AST with Error nodes');
         $stmts = [new Stmt\Expression(
             new Expr\PropertyFetch(new Expr\Variable('a'), new Expr\Error())
         )];
@@ -196,16 +160,22 @@ class PrettyPrinterTest extends CodeTestAbstract
         $prettyPrinter->prettyPrint($stmts);
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Cannot pretty-print AST with Error nodes
-     */
     public function testPrettyPrintWithErrorInClassConstFetch() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot pretty-print AST with Error nodes');
         $stmts = [new Stmt\Expression(
             new Expr\ClassConstFetch(new Name('Foo'), new Expr\Error())
         )];
         $prettyPrinter = new PrettyPrinter\Standard;
         $prettyPrinter->prettyPrint($stmts);
+    }
+
+    public function testPrettyPrintEncapsedStringPart() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot directly print EncapsedStringPart');
+        $expr = new Node\Scalar\EncapsedStringPart('foo');
+        $prettyPrinter = new PrettyPrinter\Standard;
+        $prettyPrinter->prettyPrintExpr($expr);
     }
 
     /**
@@ -262,8 +232,6 @@ CODE
          * the pretty printer tests (i.e. returns the input if no changes occurred).
          */
 
-        list($version) = $this->parseModeLine($modeLine);
-
         $lexer = new Lexer\Emulative([
             'usedAttributes' => [
                 'comments',
@@ -272,9 +240,7 @@ CODE
             ],
         ]);
 
-        $parserClass = $version === 'php5' ? Parser\Php5::class : Parser\Php7::class;
-        /** @var Parser $parser */
-        $parser = new $parserClass($lexer);
+        $parser = new Php7($lexer);
 
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new NodeVisitor\CloningVisitor());

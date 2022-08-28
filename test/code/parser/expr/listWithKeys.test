@@ -5,7 +5,6 @@ List destructing with keys
 list('a' => $b) = ['a' => 'b'];
 list('a' => list($b => $c), 'd' => $e) = $x;
 -----
-!!php7
 array(
     0: Stmt_Expression(
         expr: Expr_Assign(
@@ -19,6 +18,7 @@ array(
                             name: b
                         )
                         byRef: false
+                        unpack: false
                     )
                 )
             )
@@ -32,6 +32,7 @@ array(
                             value: b
                         )
                         byRef: false
+                        unpack: false
                     )
                 )
             )
@@ -55,10 +56,12 @@ array(
                                         name: c
                                     )
                                     byRef: false
+                                    unpack: false
                                 )
                             )
                         )
                         byRef: false
+                        unpack: false
                     )
                     1: Expr_ArrayItem(
                         key: Scalar_String(
@@ -68,6 +71,7 @@ array(
                             name: e
                         )
                         byRef: false
+                        unpack: false
                     )
                 )
             )

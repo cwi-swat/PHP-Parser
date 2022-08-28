@@ -16,7 +16,7 @@ class HaltCompiler extends Stmt
      * @param array  $attributes Additional attributes
      */
     public function __construct(string $remaining, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->remaining = $remaining;
     }
 
@@ -24,7 +24,7 @@ class HaltCompiler extends Stmt
         return ['remaining'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_HaltCompiler';
     }
 }

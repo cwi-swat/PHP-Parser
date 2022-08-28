@@ -7,16 +7,15 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt;
-use PHPUnit\Framework\TestCase;
 
-class NameResolverTest extends TestCase
+class NameResolverTest extends \PHPUnit\Framework\TestCase
 {
     private function canonicalize($string) {
         return str_replace("\r\n", "\n", $string);
     }
 
     /**
-     * @covers PhpParser\NodeVisitor\NameResolver
+     * @covers \PhpParser\NodeVisitor\NameResolver
      */
     public function testResolveNames() {
         $code = <<<'EOC'
@@ -166,13 +165,8 @@ namespace Baz {
 }
 EOC;
 
-        $parser        = new PhpParser\Parser\Php7(new PhpParser\Lexer\Emulative);
         $prettyPrinter = new PhpParser\PrettyPrinter\Standard;
-        $traverser     = new PhpParser\NodeTraverser;
-        $traverser->addVisitor(new NameResolver);
-
-        $stmts = $parser->parse($code);
-        $stmts = $traverser->traverse($stmts);
+        $stmts = $this->parseAndResolve($code);
 
         $this->assertSame(
             $this->canonicalize($expectedCode),
@@ -181,31 +175,60 @@ EOC;
     }
 
     /**
-     * @covers PhpParser\NodeVisitor\NameResolver
+     * @covers \PhpParser\NodeVisitor\NameResolver
      */
     public function testResolveLocations() {
         $code = <<<'EOC'
 <?php
 namespace NS;
 
+#[X]
 class A extends B implements C, D {
     use E, F, G {
         f as private g;
         E::h as i;
         E::j insteadof F, G;
     }
+    
+    #[X]
+    public float $php = 7.4;
+    public ?Foo $person;
+    protected static ?bool $probability;
+    public A|B|int $prop;
+
+    #[X]
+    const C = 1;
 }
 
+#[X]
 interface A extends C, D {
     public function a(A $a) : A;
+    public function b(A|B|int $a): A|B|int;
+    public function c(A&B $a): A&B;
 }
 
-function fn(A $a) : A {}
-function fn2(array $a) : array {}
-function(A $a) : A {};
+#[X]
+enum E: int {
+    #[X]
+    case A = 1;
+}
 
+#[X]
+trait A {}
+
+#[X]
+function f(#[X] A $a) : A {}
+function f2(array $a) : array {}
 function fn3(?A $a) : ?A {}
 function fn4(?array $a) : ?array {}
+
+#[X]
+function(A $a) : A {};
+
+#[X]
+fn(array $a): array => $a;
+fn(A $a): A => $a;
+fn(?A $a): ?A => $a;
 
 A::b();
 A::$b;
@@ -225,6 +248,7 @@ EOC;
         $expectedCode = <<<'EOC'
 namespace NS;
 
+#[\NS\X]
 class A extends \NS\B implements \NS\C, \NS\D
 {
     use \NS\E, \NS\F, \NS\G {
@@ -232,25 +256,49 @@ class A extends \NS\B implements \NS\C, \NS\D
         \NS\E::h as i;
         \NS\E::j insteadof \NS\F, \NS\G;
     }
+    #[\NS\X]
+    public float $php = 7.4;
+    public ?\NS\Foo $person;
+    protected static ?bool $probability;
+    public \NS\A|\NS\B|int $prop;
+    #[\NS\X]
+    const C = 1;
 }
+#[\NS\X]
 interface A extends \NS\C, \NS\D
 {
-    public function a(\NS\A $a) : \NS\A;
+    public function a(\NS\A $a): \NS\A;
+    public function b(\NS\A|\NS\B|int $a): \NS\A|\NS\B|int;
+    public function c(\NS\A&\NS\B $a): \NS\A&\NS\B;
 }
-function fn(\NS\A $a) : \NS\A
+#[\NS\X]
+enum E : int
+{
+    #[\NS\X]
+    case A = 1;
+}
+#[\NS\X]
+trait A
 {
 }
-function fn2(array $a) : array
+#[\NS\X]
+function f(#[\NS\X] \NS\A $a): \NS\A
 {
 }
-function (\NS\A $a) : \NS\A {
+function f2(array $a): array
+{
+}
+function fn3(?\NS\A $a): ?\NS\A
+{
+}
+function fn4(?array $a): ?array
+{
+}
+#[\NS\X] function (\NS\A $a): \NS\A {
 };
-function fn3(?\NS\A $a) : ?\NS\A
-{
-}
-function fn4(?array $a) : ?array
-{
-}
+#[\NS\X] fn(array $a): array => $a;
+fn(\NS\A $a): \NS\A => $a;
+fn(?\NS\A $a): ?\NS\A => $a;
 \NS\A::b();
 \NS\A::$b;
 \NS\A::B;
@@ -265,13 +313,8 @@ try {
 }
 EOC;
 
-        $parser        = new PhpParser\Parser\Php7(new PhpParser\Lexer\Emulative);
         $prettyPrinter = new PhpParser\PrettyPrinter\Standard;
-        $traverser     = new PhpParser\NodeTraverser;
-        $traverser->addVisitor(new NameResolver);
-
-        $stmts = $parser->parse($code);
-        $stmts = $traverser->traverse($stmts);
+        $stmts = $this->parseAndResolve($code);
 
         $this->assertSame(
             $this->canonicalize($expectedCode),
@@ -298,6 +341,7 @@ EOC;
             ]),
             new Stmt\Trait_('E'),
             new Expr\New_(new Stmt\Class_(null)),
+            new Stmt\Enum_('F'),
         ];
 
         $traverser = new PhpParser\NodeTraverser;
@@ -309,7 +353,8 @@ EOC;
         $this->assertSame('NS\\C', (string) $stmts[0]->stmts[2]->namespacedName);
         $this->assertSame('NS\\D', (string) $stmts[0]->stmts[3]->consts[0]->namespacedName);
         $this->assertSame('NS\\E', (string) $stmts[0]->stmts[4]->namespacedName);
-        $this->assertObjectNotHasAttribute('namespacedName', $stmts[0]->stmts[5]->class);
+        $this->assertNull($stmts[0]->stmts[5]->class->namespacedName);
+        $this->assertSame('NS\\F', (string) $stmts[0]->stmts[6]->namespacedName);
 
         $stmts = $traverser->traverse([new Stmt\Namespace_(null, $nsStmts)]);
         $this->assertSame('A',     (string) $stmts[0]->stmts[0]->namespacedName);
@@ -317,7 +362,8 @@ EOC;
         $this->assertSame('C',     (string) $stmts[0]->stmts[2]->namespacedName);
         $this->assertSame('D',     (string) $stmts[0]->stmts[3]->consts[0]->namespacedName);
         $this->assertSame('E',     (string) $stmts[0]->stmts[4]->namespacedName);
-        $this->assertObjectNotHasAttribute('namespacedName', $stmts[0]->stmts[5]->class);
+        $this->assertNull($stmts[0]->stmts[5]->class->namespacedName);
+        $this->assertSame('F',     (string) $stmts[0]->stmts[6]->namespacedName);
     }
 
     public function testAddRuntimeResolvedNamespacedName() {
@@ -347,7 +393,7 @@ EOC;
      * @dataProvider provideTestError
      */
     public function testError(Node $stmt, $errorMsg) {
-        $this->expectException('PhpParser\Error');
+        $this->expectException(\PhpParser\Error::class);
         $this->expectExceptionMessage($errorMsg);
 
         $traverser = new PhpParser\NodeTraverser;
@@ -445,9 +491,9 @@ EOC;
         $classStmt = $stmts[0];
         $methodStmt = $classStmt->stmts[0]->stmts[0];
 
-        $this->assertSame('SELF', (string)$methodStmt->stmts[0]->expr->class);
-        $this->assertSame('PARENT', (string)$methodStmt->stmts[1]->expr->class);
-        $this->assertSame('STATIC', (string)$methodStmt->stmts[2]->expr->class);
+        $this->assertSame('SELF', (string) $methodStmt->stmts[0]->expr->class);
+        $this->assertSame('PARENT', (string) $methodStmt->stmts[1]->expr->class);
+        $this->assertSame('STATIC', (string) $methodStmt->stmts[2]->expr->class);
     }
 
     public function testAddOriginalNames() {
@@ -489,5 +535,15 @@ EOC;
         $this->assertFalse($n2->hasAttribute('resolvedName'));
         $this->assertEquals(
             new Name\FullyQualified('Foo\bar'), $n2->getAttribute('namespacedName'));
+    }
+
+    private function parseAndResolve(string $code): array
+    {
+        $parser = new PhpParser\Parser\Php7(new PhpParser\Lexer\Emulative);
+        $traverser = new PhpParser\NodeTraverser;
+        $traverser->addVisitor(new NameResolver);
+
+        $stmts = $parser->parse($code);
+        return $traverser->traverse($stmts);
     }
 }

@@ -4,13 +4,18 @@ namespace PhpParser\Builder;
 
 use PhpParser\Comment;
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
+use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Expr\Print_;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
-use PHPUnit\Framework\TestCase;
 
-class MethodTest extends TestCase
+class MethodTest extends \PHPUnit\Framework\TestCase
 {
     public function createMethodBuilder($name) {
         return new Method($name);
@@ -126,6 +131,22 @@ class MethodTest extends TestCase
         ]), $node);
     }
 
+    public function testAddAttribute() {
+        $attribute = new Attribute(
+            new Name('Attr'),
+            [new Arg(new LNumber(1), false, false, [], new Identifier('name'))]
+        );
+        $attributeGroup = new AttributeGroup([$attribute]);
+
+        $node = $this->createMethodBuilder('attributeGroup')
+            ->addAttribute($attributeGroup)
+            ->getNode();
+
+        $this->assertEquals(new Stmt\ClassMethod('attributeGroup', [
+            'attrGroups' => [$attributeGroup],
+        ], []), $node);
+    }
+
     public function testReturnType() {
         $node = $this->createMethodBuilder('test')
             ->setReturnType('bool')
@@ -135,33 +156,27 @@ class MethodTest extends TestCase
         ], []), $node);
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Cannot add statements to an abstract method
-     */
     public function testAddStmtToAbstractMethodError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot add statements to an abstract method');
         $this->createMethodBuilder('test')
             ->makeAbstract()
             ->addStmt(new Print_(new String_('test')))
         ;
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Cannot make method with statements abstract
-     */
     public function testMakeMethodWithStmtsAbstractError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot make method with statements abstract');
         $this->createMethodBuilder('test')
             ->addStmt(new Print_(new String_('test')))
             ->makeAbstract()
         ;
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Expected parameter node, got "Name"
-     */
     public function testInvalidParamError() {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Expected parameter node, got "Name"');
         $this->createMethodBuilder('test')
             ->addParam(new Node\Name('foo'))
         ;

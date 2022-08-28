@@ -38,11 +38,17 @@ yield from ($a and yield from $b);
 
 print ($a and print $b);
 
+-(-$a);
++(+$a);
+-(--$a);
++(++$a);
+
 // The following will currently add unnecessary parentheses, because the pretty printer is not aware that assignment
-// and incdec only work on variables.
+// only works on variables.
 !$a = $b;
 ++$a ** $b;
 $a ** $b++;
+$a . ($b = $c) . $d;
 -----
 echo 'abc' . 'cde' . 'fgh';
 echo 'abc' . ('cde' . 'fgh');
@@ -54,7 +60,7 @@ $a = $b = $c = $d = $f && true;
 ($a = $b = $c = $d = $f) && true;
 $a = $b = $c = $d = $f and true;
 $a = $b = $c = $d = ($f and true);
-$a ? $b : $c ? $d : $e ? $f : $g;
+(($a ? $b : $c) ? $d : $e) ? $f : $g;
 $a ? $b : ($c ? $d : ($e ? $f : $g));
 $a ? $b ? $c : $d : $f;
 $a ?? $b ?? $c;
@@ -70,8 +76,13 @@ $a ** $b ** $c;
 yield from $a and yield from $b;
 yield from ($a and yield from $b);
 print ($a and print $b);
+-(-$a);
++(+$a);
+-(--$a);
++(++$a);
 // The following will currently add unnecessary parentheses, because the pretty printer is not aware that assignment
-// and incdec only work on variables.
+// only works on variables.
 !($a = $b);
-(++$a) ** $b;
-$a ** ($b++);
+++$a ** $b;
+$a ** $b++;
+$a . ($b = $c) . $d;

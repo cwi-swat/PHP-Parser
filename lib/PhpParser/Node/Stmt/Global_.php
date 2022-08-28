@@ -16,7 +16,7 @@ class Global_ extends Node\Stmt
      * @param array       $attributes Additional attributes
      */
     public function __construct(array $vars, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->vars = $vars;
     }
 
@@ -24,7 +24,7 @@ class Global_ extends Node\Stmt
         return ['vars'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_Global';
     }
 }

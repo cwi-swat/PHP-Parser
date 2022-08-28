@@ -16,7 +16,7 @@ class UnaryMinus extends Expr
      * @param array $attributes Additional attributes
      */
     public function __construct(Expr $expr, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->expr = $expr;
     }
 
@@ -24,7 +24,7 @@ class UnaryMinus extends Expr
         return ['expr'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Expr_UnaryMinus';
     }
 }

@@ -2,9 +2,7 @@
 
 namespace PhpParser\Node\Stmt;
 
-use PHPUnit\Framework\TestCase;
-
-class ClassConstTest extends TestCase
+class ClassConstTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider provideModifiers
@@ -24,6 +22,7 @@ class ClassConstTest extends TestCase
         $this->assertTrue($node->isPublic());
         $this->assertFalse($node->isProtected());
         $this->assertFalse($node->isPrivate());
+        $this->assertFalse($node->isFinal());
     }
 
     public function provideModifiers() {
@@ -31,6 +30,7 @@ class ClassConstTest extends TestCase
             ['public'],
             ['protected'],
             ['private'],
+            ['final'],
         ];
     }
 }

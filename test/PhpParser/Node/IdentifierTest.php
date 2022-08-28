@@ -2,9 +2,8 @@
 
 namespace PhpParser\Node;
 
-use PHPUnit\Framework\TestCase;
-
-class IdentifierTest extends TestCase {
+class IdentifierTest extends \PHPUnit\Framework\TestCase
+{
     public function testToString() {
         $identifier = new Identifier('Foo');
 

@@ -2,7 +2,8 @@
 
 namespace PhpParser;
 
-class CodeTestParser {
+class CodeTestParser
+{
     public function parseTest($code, $chunksPerTest) {
         $code = canonicalize($code);
 
@@ -50,7 +51,7 @@ class CodeTestParser {
         return $result;
     }
 
-    private function extractMode($expected) {
+    private function extractMode(string $expected): array {
         $firstNewLine = strpos($expected, "\n");
         if (false === $firstNewLine) {
             $firstNewLine = strlen($expected);

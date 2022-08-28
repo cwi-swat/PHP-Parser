@@ -16,12 +16,17 @@ function a(
 -----
 array(
     0: Stmt_Function(
+        attrGroups: array(
+        )
         byRef: false
         name: Identifier(
             name: a
         )
         params: array(
             0: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -37,6 +42,9 @@ array(
                 )
             )
             1: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -48,6 +56,9 @@ array(
                 )
             )
             2: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -66,6 +77,9 @@ array(
                 )
             )
             3: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -79,6 +93,9 @@ array(
                 )
             )
             4: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -92,6 +109,9 @@ array(
                 )
             )
             5: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -104,6 +124,9 @@ array(
                 )
             )
             6: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -116,6 +139,9 @@ array(
                 )
             )
             7: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -130,11 +156,15 @@ array(
                                 value: foo
                             )
                             byRef: false
+                            unpack: false
                         )
                     )
                 )
             )
             8: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -149,6 +179,7 @@ array(
                                 value: foo
                             )
                             byRef: false
+                            unpack: false
                         )
                         1: Expr_ArrayItem(
                             key: Scalar_String(
@@ -158,6 +189,7 @@ array(
                                 value: baz
                             )
                             byRef: false
+                            unpack: false
                         )
                     )
                 )

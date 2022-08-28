@@ -20,7 +20,7 @@ class Instanceof_ extends Expr
      * @param array     $attributes Additional attributes
      */
     public function __construct(Expr $expr, $class, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->expr = $expr;
         $this->class = $class;
     }
@@ -29,7 +29,7 @@ class Instanceof_ extends Expr
         return ['expr', 'class'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Expr_Instanceof';
     }
 }

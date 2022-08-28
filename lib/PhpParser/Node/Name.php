@@ -6,9 +6,7 @@ use PhpParser\NodeAbstract;
 
 class Name extends NodeAbstract
 {
-    /**
-     * @var string[] Parts of the name
-     */
+    /** @var string[] Parts of the name */
     public $parts;
 
     private static $specialClassNames = [
@@ -24,7 +22,7 @@ class Name extends NodeAbstract
      * @param array                $attributes Additional attributes
      */
     public function __construct($name, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->parts = self::prepareName($name);
     }
 
@@ -87,7 +85,7 @@ class Name extends NodeAbstract
     }
 
     /**
-     * Returns a string representation of the name itself, without taking taking the name type into
+     * Returns a string representation of the name itself, without taking the name type into
      * account (e.g., not including a leading backslash for fully qualified names).
      *
      * @return string String representation
@@ -152,7 +150,7 @@ class Name extends NodeAbstract
      *
      * @return static|null Sliced name
      */
-    public function slice(int $offset, int $length = null) {
+    public function slice(int $offset, ?int $length = null) {
         $numParts = count($this->parts);
 
         $realOffset = $offset < 0 ? $offset + $numParts : $offset;
@@ -197,9 +195,11 @@ class Name extends NodeAbstract
     public static function concat($name1, $name2, array $attributes = []) {
         if (null === $name1 && null === $name2) {
             return null;
-        } elseif (null === $name1) {
+        }
+        if (null === $name1) {
             return new static(self::prepareName($name2), $attributes);
-        } else if (null === $name2) {
+        }
+        if (null === $name2) {
             return new static(self::prepareName($name1), $attributes);
         } else {
             return new static(
@@ -223,13 +223,15 @@ class Name extends NodeAbstract
             }
 
             return explode('\\', $name);
-        } elseif (\is_array($name)) {
+        }
+        if (\is_array($name)) {
             if (empty($name)) {
                 throw new \InvalidArgumentException('Name cannot be empty');
             }
 
             return $name;
-        } elseif ($name instanceof self) {
+        }
+        if ($name instanceof self) {
             return $name->parts;
         }
 
@@ -237,8 +239,8 @@ class Name extends NodeAbstract
             'Expected string, array of parts or Name instance'
         );
     }
-    
-    function getType() : string {
+
+    public function getType() : string {
         return 'Name';
     }
 }

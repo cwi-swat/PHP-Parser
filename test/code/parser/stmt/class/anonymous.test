@@ -25,6 +25,8 @@ array(
     0: Stmt_Expression(
         expr: Expr_New(
             class: Stmt_Class(
+                attrGroups: array(
+                )
                 flags: 0
                 name: null
                 extends: null
@@ -32,6 +34,8 @@ array(
                 )
                 stmts: array(
                     0: Stmt_ClassMethod(
+                        attrGroups: array(
+                        )
                         flags: MODIFIER_PUBLIC (1)
                         byRef: false
                         name: Identifier(
@@ -52,6 +56,8 @@ array(
     1: Stmt_Expression(
         expr: Expr_New(
             class: Stmt_Class(
+                attrGroups: array(
+                )
                 flags: 0
                 name: null
                 extends: Name(
@@ -81,6 +87,8 @@ array(
     2: Stmt_Expression(
         expr: Expr_New(
             class: Stmt_Class(
+                attrGroups: array(
+                )
                 flags: 0
                 name: null
                 extends: null
@@ -88,7 +96,10 @@ array(
                 )
                 stmts: array(
                     0: Stmt_Property(
+                        attrGroups: array(
+                        )
                         flags: MODIFIER_PUBLIC (1)
+                        type: null
                         props: array(
                             0: Stmt_PropertyProperty(
                                 name: VarLikeIdentifier(
@@ -107,6 +118,8 @@ array(
     3: Stmt_Expression(
         expr: Expr_New(
             class: Stmt_Class(
+                attrGroups: array(
+                )
                 flags: 0
                 name: null
                 extends: Name(
@@ -132,6 +145,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Expr_Variable(
                         name: a
                     )
@@ -139,6 +153,7 @@ array(
                     unpack: false
                 )
                 1: Arg(
+                    name: null
                     value: Expr_Variable(
                         name: b
                     )
@@ -149,6 +164,8 @@ array(
         )
     )
     4: Stmt_Class(
+        attrGroups: array(
+        )
         flags: 0
         name: Identifier(
             name: A
@@ -158,6 +175,8 @@ array(
         )
         stmts: array(
             0: Stmt_ClassMethod(
+                attrGroups: array(
+                )
                 flags: MODIFIER_PUBLIC (1)
                 byRef: false
                 name: Identifier(
@@ -170,6 +189,8 @@ array(
                     0: Stmt_Return(
                         expr: Expr_New(
                             class: Stmt_Class(
+                                attrGroups: array(
+                                )
                                 flags: 0
                                 name: null
                                 extends: Name(
@@ -181,6 +202,8 @@ array(
                                 )
                                 stmts: array(
                                     0: Stmt_ClassConst(
+                                        attrGroups: array(
+                                        )
                                         flags: 0
                                         consts: array(
                                             0: Const(
@@ -197,6 +220,7 @@ array(
                             )
                             args: array(
                                 0: Arg(
+                                    name: null
                                     value: Expr_Variable(
                                         name: this
                                     )

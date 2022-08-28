@@ -73,13 +73,10 @@ function test($param0, Foo     $param1) {}
 function test() {}
 -----
 $stmts[0]->params[] = new Node\Param(new Expr\Variable('param0'));
-/* Insertion into empty list not handled yet */
 -----
 <?php
 
-function test($param0)
-{
-}
+function test($param0) {}
 -----
 <?php
 
@@ -276,4 +273,76 @@ function test()
 {
     $a;
     $b;
+}
+-----
+<?php
+$array = [
+    1,
+    2,
+    3,
+];
+-----
+array_unshift($stmts[0]->expr->expr->items, new Expr\ArrayItem(new Scalar\LNumber(42)));
+$stmts[0]->expr->expr->items[] = new Expr\ArrayItem(new Scalar\LNumber(24));
+-----
+<?php
+$array = [
+    42,
+    1,
+    2,
+    3,
+    24,
+];
+-----
+<?php
+$array = [
+    1, 2,
+    3,
+];
+-----
+$stmts[0]->expr->expr->items[] = new Expr\ArrayItem(new Scalar\LNumber(24));
+-----
+<?php
+$array = [
+    1, 2,
+    3, 24,
+];
+-----
+<?php
+function test(): A
+|B {}
+-----
+$stmts[0]->returnType->types[] = new Node\Name('C');
+-----
+<?php
+function test(): A
+|B|C {}
+-----
+<?php
+function test(): A
+&B {}
+-----
+$stmts[0]->returnType->types[] = new Node\Name('C');
+-----
+<?php
+function test(): A
+&B&C {}
+-----
+<?php
+function test() {
+    if ($x) {
+        $a;
+        $b;
+    }
+    $z;
+}
+-----
+$fnStmts =& $stmts[0]->stmts;
+array_splice($fnStmts, 0, 1, $fnStmts[0]->stmts);
+-----
+<?php
+function test() {
+    $a;
+    $b;
+    $z;
 }

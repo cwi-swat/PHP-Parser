@@ -16,7 +16,7 @@ class List_ extends Expr
      * @param array              $attributes Additional attributes
      */
     public function __construct(array $items, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->items = $items;
     }
 
@@ -24,7 +24,7 @@ class List_ extends Expr
         return ['items'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Expr_List';
     }
 }

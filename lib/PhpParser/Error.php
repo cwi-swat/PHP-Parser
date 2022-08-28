@@ -15,7 +15,7 @@ class Error extends \RuntimeException
      *                              (or start line of error -- deprecated)
      */
     public function __construct(string $message, $attributes = []) {
-        $this->rawMessage = (string) $message;
+        $this->rawMessage = $message;
         if (is_array($attributes)) {
             $this->attributes = $attributes;
         } else {
@@ -51,7 +51,6 @@ class Error extends \RuntimeException
         return $this->attributes['endLine'] ?? -1;
     }
 
-
     /**
      * Gets the attributes of the node/token the error occurred at.
      *
@@ -62,7 +61,7 @@ class Error extends \RuntimeException
     }
 
     /**
-     * Sets the attributes of the node/token the error occured at.
+     * Sets the attributes of the node/token the error occurred at.
      *
      * @param array $attributes
      */
@@ -77,7 +76,7 @@ class Error extends \RuntimeException
      * @param string $message Error message
      */
     public function setRawMessage(string $message) {
-        $this->rawMessage = (string) $message;
+        $this->rawMessage = $message;
         $this->updateMessage();
     }
 
@@ -87,7 +86,7 @@ class Error extends \RuntimeException
      * @param int $line Error start line
      */
     public function setStartLine(int $line) {
-        $this->attributes['startLine'] = (int) $line;
+        $this->attributes['startLine'] = $line;
         $this->updateMessage();
     }
 
@@ -99,7 +98,7 @@ class Error extends \RuntimeException
      * @return bool
      */
     public function hasColumnInfo() : bool {
-        return isset($this->attributes['startFilePos']) && isset($this->attributes['endFilePos']);
+        return isset($this->attributes['startFilePos'], $this->attributes['endFilePos']);
     }
 
     /**

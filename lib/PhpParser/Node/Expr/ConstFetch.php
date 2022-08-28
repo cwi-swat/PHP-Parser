@@ -17,7 +17,7 @@ class ConstFetch extends Expr
      * @param array $attributes Additional attributes
      */
     public function __construct(Name $name, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->name = $name;
     }
 
@@ -25,7 +25,7 @@ class ConstFetch extends Expr
         return ['name'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Expr_ConstFetch';
     }
 }

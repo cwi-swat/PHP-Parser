@@ -4,15 +4,15 @@ namespace PhpParser;
 
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
-use PHPUnit\Framework\TestCase;
 
-class ConstExprEvaluatorTest extends TestCase {
+class ConstExprEvaluatorTest extends \PHPUnit\Framework\TestCase
+{
     /** @dataProvider provideTestEvaluate */
     public function testEvaluate($exprString, $expected) {
         $parser = new Parser\Php7(new Lexer());
         $expr = $parser->parse('<?php ' . $exprString . ';')[0]->expr;
         $evaluator = new ConstExprEvaluator();
-        $this->assertSame($expected, $evaluator->evaluate($expr));
+        $this->assertSame($expected, $evaluator->evaluateDirectly($expr));
     }
 
     public function provideTestEvaluate() {
@@ -22,6 +22,9 @@ class ConstExprEvaluatorTest extends TestCase {
             ['"foo"', "foo"],
             ['[0, 1]', [0, 1]],
             ['["foo" => "bar"]', ["foo" => "bar"]],
+            ['[...["bar"]]', ["bar"]],
+            ['[...["foo" => "bar"]]', ["foo" => "bar"]],
+            ['["a", "b" => "b", ...["b" => "bb", "c"]]', ["a", "b" => "bb", "c"]],
             ['NULL', null],
             ['False', false],
             ['true', true],
@@ -72,13 +75,11 @@ class ConstExprEvaluatorTest extends TestCase {
         ];
     }
 
-    /**
-     * @expectedException \PhpParser\ConstExprEvaluationException
-     * @expectedExceptionMessage Expression of type Expr_Variable cannot be evaluated
-     */
     public function testEvaluateFails() {
+        $this->expectException(ConstExprEvaluationException::class);
+        $this->expectExceptionMessage('Expression of type Expr_Variable cannot be evaluated');
         $evaluator = new ConstExprEvaluator();
-        $evaluator->evaluate(new Expr\Variable('a'));
+        $evaluator->evaluateDirectly(new Expr\Variable('a'));
     }
 
     public function testEvaluateFallback() {
@@ -92,6 +93,43 @@ class ConstExprEvaluatorTest extends TestCase {
             new Scalar\LNumber(8),
             new Scalar\MagicConst\Line()
         );
-        $this->assertSame(50, $evaluator->evaluate($expr));
+        $this->assertSame(50, $evaluator->evaluateDirectly($expr));
+    }
+
+    /**
+     * @dataProvider provideTestEvaluateSilently
+     */
+    public function testEvaluateSilently($expr, $exception, $msg) {
+        $evaluator = new ConstExprEvaluator();
+
+        try {
+            $evaluator->evaluateSilently($expr);
+        } catch (ConstExprEvaluationException $e) {
+            $this->assertSame(
+                'An error occurred during constant expression evaluation',
+                $e->getMessage()
+            );
+
+            $prev = $e->getPrevious();
+            $this->assertInstanceOf($exception, $prev);
+            $this->assertSame($msg, $prev->getMessage());
+        }
+    }
+
+    public function provideTestEvaluateSilently() {
+        return [
+            [
+                new Expr\BinaryOp\Mod(new Scalar\LNumber(42), new Scalar\LNumber(0)),
+                \Error::class,
+                'Modulo by zero'
+            ],
+            [
+                new Expr\BinaryOp\Plus(new Scalar\LNumber(42), new Scalar\String_("1foo")),
+                \ErrorException::class,
+                \PHP_VERSION_ID >= 80000
+                    ? 'A non-numeric value encountered'
+                    : 'A non well formed numeric value encountered'
+            ],
+        ];
     }
 }

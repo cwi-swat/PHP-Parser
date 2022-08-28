@@ -15,7 +15,10 @@ use PhpParser\Node\Expr;
  *
  * @internal
  */
-class PrintableNewAnonClassNode extends Expr  {
+class PrintableNewAnonClassNode extends Expr
+{
+    /** @var Node\AttributeGroup[] PHP attribute groups */
+    public $attrGroups;
     /** @var Node\Arg[] Arguments */
     public $args;
     /** @var null|Node\Name Name of extended class */
@@ -26,9 +29,11 @@ class PrintableNewAnonClassNode extends Expr  {
     public $stmts;
 
     public function __construct(
-        array $args, Node\Name $extends = null, array $implements, array $stmts, array $attributes
+        array $attrGroups, array $args, ?Node\Name $extends, array $implements,
+        array $stmts, array $attributes
     ) {
         parent::__construct($attributes);
+        $this->attrGroups = $attrGroups;
         $this->args = $args;
         $this->extends = $extends;
         $this->implements = $implements;
@@ -38,18 +43,19 @@ class PrintableNewAnonClassNode extends Expr  {
     public static function fromNewNode(Expr\New_ $newNode) {
         $class = $newNode->class;
         assert($class instanceof Node\Stmt\Class_);
-        assert($class->name === null);
+        // We don't assert that $class->name is null here, to allow consumers to assign unique names
+        // to anonymous classes for their own purposes. We simplify ignore the name here.
         return new self(
-            $newNode->args, $class->extends, $class->implements,
+            $class->attrGroups, $newNode->args, $class->extends, $class->implements,
             $class->stmts, $newNode->getAttributes()
         );
     }
 
-    public function getType(): string {
+    public function getType() : string {
         return 'Expr_PrintableNewAnonClass';
     }
 
     public function getSubNodeNames() : array {
-        return ['args', 'extends', 'implements', 'stmts'];
+        return ['attrGroups', 'args', 'extends', 'implements', 'stmts'];
     }
 }

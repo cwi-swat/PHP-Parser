@@ -118,16 +118,14 @@ interface Node
      *
      * @return Comment[]
      */
-    public function getComments(): array;
+    public function getComments() : array;
 
     /**
      * Gets the doc comment of the node.
      *
-     * The doc comment has to be the last comment associated with the node.
-     *
      * @return null|Comment\Doc Doc comment object or null
      */
-    public function getDocComment();
+    public function getDocComment(): ?Comment\Doc;
 
     /**
      * Sets the doc comment of the node.

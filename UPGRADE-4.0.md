@@ -6,7 +6,7 @@ Upgrading from PHP-Parser 3.x to 4.0
 PHP-Parser now requires PHP 7.0 or newer to run. It is however still possible to *parse* PHP 5.2-5.6
 source code, while running on a newer version.
 
-Because HHVM does not support PHP 7, HHVM is no longer supported.
+HHVM is no longer actively supported.
 
 ### Changes to the node structure
 
@@ -17,7 +17,7 @@ Because HHVM does not support PHP 7, HHVM is no longer supported.
   comparisons or strict-mode may require adjustment. The following is an exhaustive list of all
   affected subnodes:
 
-   * `Const::$name`
+   * `Const_::$name`
    * `NullableType::$type` (for simple types)
    * `Param::$type` (for simple types)
    * `Expr\ClassConstFetch::$name`
@@ -29,8 +29,8 @@ Because HHVM does not support PHP 7, HHVM is no longer supported.
    * `Stmt\Class_::$name`
    * `Stmt\ClassMethod::$name`
    * `Stmt\ClassMethod::$returnType` (for simple types)
-   * `Stmt\Function::$name`
-   * `Stmt\Function::$returnType` (for simple types)
+   * `Stmt\Function_::$name`
+   * `Stmt\Function_::$returnType` (for simple types)
    * `Stmt\Goto_::$name`
    * `Stmt\Interface_::$name`
    * `Stmt\Label::$name`
@@ -48,11 +48,11 @@ Because HHVM does not support PHP 7, HHVM is no longer supported.
 * The `name` subnode of `StaticVar` has been renamed to `var` and now contains a `Variable` rather
   than a plain string.
 * The `var` subnode of `ClosureUse` now contains a `Variable` rather than a plain string.
-* The `var` subnode of `Catch` now contains a `Variable` rather than a plain string.
+* The `var` subnode of `Catch_` now contains a `Variable` rather than a plain string.
 * The `alias` subnode of `UseUse` is now `null` if no explicit alias is given. As such,
   `use Foo\Bar` and `use Foo\Bar as Bar` are now represented differently. The `getAlias()` method
   can be used to get the effective alias, even if it is not explicitly given.
-  
+
 ### Miscellaneous
 
 * The indentation handling in the pretty printer has been changed (this is only relevant if you
@@ -62,7 +62,7 @@ Because HHVM does not support PHP 7, HHVM is no longer supported.
 
 ### Removed functionality
 
-* Removed `type` subnode on `Class`, `ClassMethod` and `Property` nodes. Use `flags` instead.
+* Removed `type` subnode on `Class_`, `ClassMethod` and `Property` nodes. Use `flags` instead.
 * The `ClassConst::isStatic()` method has been removed. Constants cannot have a static modifier.
 * The `NodeTraverser` no longer accepts `false` as a return value from a `leaveNode()` method.
   `NodeTraverser::REMOVE_NODE` should be returned instead.
@@ -74,3 +74,4 @@ Because HHVM does not support PHP 7, HHVM is no longer supported.
   `Unserializer\XML`, as well as the interfaces `Serializer` and `Unserializer` no longer exist.
 * The `BuilderAbstract` class has been removed. It's functionality is moved into `BuilderHelpers`.
   However, this is an internal class and should not be used directly.
+* The `Autoloader` class has been removed in favor of relying on the Composer autoloader.

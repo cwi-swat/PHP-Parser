@@ -15,7 +15,6 @@ id(['udef', 'id'])[1]()('var_dump')(5);
 ('i' . 'd')()('var_dump')(13);
 '\id'('var_dump')(14);
 -----
-!!php7
 array(
     0: Stmt_Expression(
         expr: Expr_FuncCall(
@@ -27,6 +26,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -37,6 +37,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 1
                     )
@@ -57,6 +58,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Scalar_String(
                                 value: id
                             )
@@ -67,6 +69,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -77,6 +80,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 2
                     )
@@ -104,6 +108,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -114,6 +119,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 4
                     )
@@ -136,6 +142,7 @@ array(
                             )
                             args: array(
                                 0: Arg(
+                                    name: null
                                     value: Expr_Array(
                                         items: array(
                                             0: Expr_ArrayItem(
@@ -144,6 +151,7 @@ array(
                                                     value: udef
                                                 )
                                                 byRef: false
+                                                unpack: false
                                             )
                                             1: Expr_ArrayItem(
                                                 key: null
@@ -151,6 +159,7 @@ array(
                                                     value: id
                                                 )
                                                 byRef: false
+                                                unpack: false
                                             )
                                         )
                                     )
@@ -168,6 +177,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -178,6 +188,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 5
                     )
@@ -192,10 +203,15 @@ array(
             name: Expr_FuncCall(
                 name: Expr_FuncCall(
                     name: Expr_Closure(
+                        attrGroups: array(
+                        )
                         static: false
                         byRef: false
                         params: array(
                             0: Param(
+                                attrGroups: array(
+                                )
+                                flags: 0
                                 type: null
                                 byRef: false
                                 variadic: false
@@ -218,6 +234,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Scalar_String(
                                 value: id
                             )
@@ -228,6 +245,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -238,6 +256,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 8
                     )
@@ -258,10 +277,15 @@ array(
                                     name: f
                                 )
                                 expr: Expr_Closure(
+                                    attrGroups: array(
+                                    )
                                     static: false
                                     byRef: false
                                     params: array(
                                         0: Param(
+                                            attrGroups: array(
+                                            )
+                                            flags: 0
                                             type: null
                                             byRef: false
                                             variadic: false
@@ -278,7 +302,7 @@ array(
                                         )
                                     )
                                     uses: array(
-                                        0: Expr_ClosureUse(
+                                        0: ClosureUse(
                                             var: Expr_Variable(
                                                 name: f
                                             )
@@ -312,6 +336,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -322,6 +347,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 9
                     )
@@ -345,6 +371,7 @@ array(
                                             name: obj
                                         )
                                         byRef: false
+                                        unpack: false
                                     )
                                     1: Expr_ArrayItem(
                                         key: null
@@ -352,6 +379,7 @@ array(
                                             value: id
                                         )
                                         byRef: false
+                                        unpack: false
                                     )
                                 )
                             )
@@ -360,6 +388,7 @@ array(
                         )
                         args: array(
                             0: Arg(
+                                name: null
                                 value: Scalar_String(
                                     value: id
                                 )
@@ -370,6 +399,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Expr_Variable(
                                 name: id
                             )
@@ -380,6 +410,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -390,6 +421,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 10
                     )
@@ -412,6 +444,7 @@ array(
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Scalar_String(
                                 value: id
                             )
@@ -422,6 +455,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -432,6 +466,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 12
                     )
@@ -458,6 +493,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -468,6 +504,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 13
                     )
@@ -485,6 +522,7 @@ array(
                 )
                 args: array(
                     0: Arg(
+                        name: null
                         value: Scalar_String(
                             value: var_dump
                         )
@@ -495,6 +533,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 14
                     )

@@ -7,11 +7,13 @@ class Foo {
     public const B = 2;
     protected const C = 3;
     private const D = 4;
+    final const E = 5;
 }
 -----
-!!php7
 array(
     0: Stmt_Class(
+        attrGroups: array(
+        )
         flags: 0
         name: Identifier(
             name: Foo
@@ -21,6 +23,8 @@ array(
         )
         stmts: array(
             0: Stmt_ClassConst(
+                attrGroups: array(
+                )
                 flags: 0
                 consts: array(
                     0: Const(
@@ -34,6 +38,8 @@ array(
                 )
             )
             1: Stmt_ClassConst(
+                attrGroups: array(
+                )
                 flags: MODIFIER_PUBLIC (1)
                 consts: array(
                     0: Const(
@@ -47,6 +53,8 @@ array(
                 )
             )
             2: Stmt_ClassConst(
+                attrGroups: array(
+                )
                 flags: MODIFIER_PROTECTED (2)
                 consts: array(
                     0: Const(
@@ -60,6 +68,8 @@ array(
                 )
             )
             3: Stmt_ClassConst(
+                attrGroups: array(
+                )
                 flags: MODIFIER_PRIVATE (4)
                 consts: array(
                     0: Const(
@@ -68,6 +78,21 @@ array(
                         )
                         value: Scalar_LNumber(
                             value: 4
+                        )
+                    )
+                )
+            )
+            4: Stmt_ClassConst(
+                attrGroups: array(
+                )
+                flags: MODIFIER_FINAL (32)
+                consts: array(
+                    0: Const(
+                        name: Identifier(
+                            name: E
+                        )
+                        value: Scalar_LNumber(
+                            value: 5
                         )
                     )
                 )

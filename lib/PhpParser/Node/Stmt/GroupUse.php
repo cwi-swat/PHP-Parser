@@ -23,7 +23,7 @@ class GroupUse extends Stmt
      * @param array    $attributes Additional attributes
      */
     public function __construct(Name $prefix, array $uses, int $type = Use_::TYPE_NORMAL, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->type = $type;
         $this->prefix = $prefix;
         $this->uses = $uses;
@@ -33,7 +33,7 @@ class GroupUse extends Stmt
         return ['type', 'prefix', 'uses'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_GroupUse';
     }
 }

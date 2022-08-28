@@ -99,7 +99,7 @@ function
 foo(
 int $x,
 array &$y = null
-) : Foo
+): Foo
 {}
 
 $foo
@@ -111,7 +111,7 @@ $foo
 ];
 
 function
-() : Bar
+(): Bar
 {};
 
 $x
@@ -134,7 +134,7 @@ class
 X extends \Bar
 {
     public
-    function y() : Y
+    function y(): Y
     {}
 
     private
@@ -174,3 +174,21 @@ $stmts[0]->name = new Node\Name('Foo');
 
 namespace Foo
 { echo 42; }
+-----
+<?php
+try
+{
+}
+catch (Exception)
+{
+}
+-----
+$stmts[0]->catches[0]->var = new Expr\Variable('e');
+-----
+<?php
+try
+{
+}
+catch (Exception $e)
+{
+}

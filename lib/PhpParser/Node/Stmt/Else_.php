@@ -16,7 +16,7 @@ class Else_ extends Node\Stmt
      * @param array       $attributes Additional attributes
      */
     public function __construct(array $stmts = [], array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->stmts = $stmts;
     }
 
@@ -24,7 +24,7 @@ class Else_ extends Node\Stmt
         return ['stmts'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_Else';
     }
 }

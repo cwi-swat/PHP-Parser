@@ -2,9 +2,8 @@
 
 namespace PhpParser;
 
-use PHPUnit\Framework\TestCase;
-
-class JsonDecoderTest extends TestCase {
+class JsonDecoderTest extends \PHPUnit\Framework\TestCase
+{
     public function testRoundTrip() {
         $code = <<<'PHP'
 <?php

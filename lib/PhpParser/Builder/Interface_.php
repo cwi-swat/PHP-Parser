@@ -4,6 +4,7 @@ namespace PhpParser\Builder;
 
 use PhpParser;
 use PhpParser\BuilderHelpers;
+use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt;
 
@@ -13,6 +14,9 @@ class Interface_ extends Declaration
     protected $extends = [];
     protected $constants = [];
     protected $methods = [];
+
+    /** @var Node\AttributeGroup[] */
+    protected $attributeGroups = [];
 
     /**
      * Creates an interface builder.
@@ -50,13 +54,26 @@ class Interface_ extends Declaration
 
         if ($stmt instanceof Stmt\ClassConst) {
             $this->constants[] = $stmt;
-        } else if ($stmt instanceof Stmt\ClassMethod) {
+        } elseif ($stmt instanceof Stmt\ClassMethod) {
             // we erase all statements in the body of an interface method
             $stmt->stmts = null;
             $this->methods[] = $stmt;
         } else {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
+
+        return $this;
+    }
+
+    /**
+     * Adds an attribute group.
+     *
+     * @param Node\Attribute|Node\AttributeGroup $attribute
+     *
+     * @return $this The builder instance (for fluid interface)
+     */
+    public function addAttribute($attribute) {
+        $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
     }
@@ -70,6 +87,7 @@ class Interface_ extends Declaration
         return new Stmt\Interface_($this->name, [
             'extends' => $this->extends,
             'stmts' => array_merge($this->constants, $this->methods),
+            'attrGroups' => $this->attributeGroups,
         ], $this->attributes);
     }
 }

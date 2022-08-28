@@ -16,7 +16,7 @@ class Const_ extends Node\Stmt
      * @param array         $attributes Additional attributes
      */
     public function __construct(array $consts, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->consts = $consts;
     }
 
@@ -24,7 +24,7 @@ class Const_ extends Node\Stmt
         return ['consts'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Stmt_Const';
     }
 }

@@ -2,7 +2,8 @@
 
 namespace PhpParser;
 
-class JsonDecoder {
+class JsonDecoder
+{
     /** @var \ReflectionClass[] Node type to reflection class map */
     private $reflectionClassCache;
 
@@ -72,7 +73,9 @@ class JsonDecoder {
         }
 
         return new $className(
-            $value['text'], $value['line'] ?? -1, $value['filePos'] ?? -1, $value['tokenPos'] ?? -1
+            $value['text'],
+            $value['line'] ?? -1, $value['filePos'] ?? -1, $value['tokenPos'] ?? -1,
+            $value['endLine'] ?? -1, $value['endFilePos'] ?? -1, $value['endTokenPos'] ?? -1
         );
     }
 

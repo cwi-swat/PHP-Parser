@@ -16,7 +16,7 @@ class PreInc extends Expr
      * @param array $attributes Additional attributes
      */
     public function __construct(Expr $var, array $attributes = []) {
-        parent::__construct($attributes);
+        $this->attributes = $attributes;
         $this->var = $var;
     }
 
@@ -24,7 +24,7 @@ class PreInc extends Expr
         return ['var'];
     }
     
-    function getType() : string {
+    public function getType() : string {
         return 'Expr_PreInc';
     }
 }

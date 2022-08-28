@@ -2,9 +2,8 @@
 
 namespace PhpParser\Internal;
 
-use PHPUnit\Framework\TestCase;
-
-class DifferTest extends TestCase {
+class DifferTest extends \PHPUnit\Framework\TestCase
+{
     private function formatDiffString(array $diff) {
         $diffStr = '';
         foreach ($diff as $diffElem) {

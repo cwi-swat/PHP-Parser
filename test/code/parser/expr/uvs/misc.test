@@ -2,24 +2,35 @@ Uniform variable syntax in PHP 7 (misc)
 -----
 <?php
 
-A::A[0];
-A::A[0][1][2];
 "string"->length();
+"foo$bar"[0];
+"foo$bar"->length();
 (clone $obj)->b[0](1);
 [0, 1][0] = 1;
 -----
-!!php7
 array(
     0: Stmt_Expression(
+        expr: Expr_MethodCall(
+            var: Scalar_String(
+                value: string
+            )
+            name: Identifier(
+                name: length
+            )
+            args: array(
+            )
+        )
+    )
+    1: Stmt_Expression(
         expr: Expr_ArrayDimFetch(
-            var: Expr_ClassConstFetch(
-                class: Name(
-                    parts: array(
-                        0: A
+            var: Scalar_Encapsed(
+                parts: array(
+                    0: Scalar_EncapsedStringPart(
+                        value: foo
                     )
-                )
-                name: Identifier(
-                    name: A
+                    1: Expr_Variable(
+                        name: bar
+                    )
                 )
             )
             dim: Scalar_LNumber(
@@ -27,37 +38,17 @@ array(
             )
         )
     )
-    1: Stmt_Expression(
-        expr: Expr_ArrayDimFetch(
-            var: Expr_ArrayDimFetch(
-                var: Expr_ArrayDimFetch(
-                    var: Expr_ClassConstFetch(
-                        class: Name(
-                            parts: array(
-                                0: A
-                            )
-                        )
-                        name: Identifier(
-                            name: A
-                        )
-                    )
-                    dim: Scalar_LNumber(
-                        value: 0
-                    )
-                )
-                dim: Scalar_LNumber(
-                    value: 1
-                )
-            )
-            dim: Scalar_LNumber(
-                value: 2
-            )
-        )
-    )
     2: Stmt_Expression(
         expr: Expr_MethodCall(
-            var: Scalar_String(
-                value: string
+            var: Scalar_Encapsed(
+                parts: array(
+                    0: Scalar_EncapsedStringPart(
+                        value: foo
+                    )
+                    1: Expr_Variable(
+                        name: bar
+                    )
+                )
             )
             name: Identifier(
                 name: length
@@ -85,6 +76,7 @@ array(
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_LNumber(
                         value: 1
                     )
@@ -105,6 +97,7 @@ array(
                                 value: 0
                             )
                             byRef: false
+                            unpack: false
                         )
                         1: Expr_ArrayItem(
                             key: null
@@ -112,6 +105,7 @@ array(
                                 value: 1
                             )
                             byRef: false
+                            unpack: false
                         )
                     )
                 )

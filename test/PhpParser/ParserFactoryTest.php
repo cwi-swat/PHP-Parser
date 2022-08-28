@@ -4,9 +4,8 @@ namespace PhpParser;
 
 /* This test is very weak, because PHPUnit's assertEquals assertion is way too slow dealing with the
  * large objects involved here. So we just do some basic instanceof tests instead. */
-use PHPUnit\Framework\TestCase;
 
-class ParserFactoryTest extends TestCase
+class ParserFactoryTest extends \PHPUnit\Framework\TestCase
 {
     /** @dataProvider provideTestCreate */
     public function testCreate($kind, $lexer, $expected) {
@@ -18,20 +17,12 @@ class ParserFactoryTest extends TestCase
         return [
             [
                 ParserFactory::PREFER_PHP7, $lexer,
-                'PhpParser\Parser\Multiple'
-            ],
-            [
-                ParserFactory::PREFER_PHP5, null,
-                'PhpParser\Parser\Multiple'
+                Parser\Php7::class
             ],
             [
                 ParserFactory::ONLY_PHP7, null,
-                'PhpParser\Parser\Php7'
+                Parser\Php7::class
             ],
-            [
-                ParserFactory::ONLY_PHP5, $lexer,
-                'PhpParser\Parser\Php5'
-            ]
         ];
     }
 }
