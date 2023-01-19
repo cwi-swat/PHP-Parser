@@ -61,13 +61,48 @@ $parser = $factory->create(ParserFactory::ONLY_PHP5);
 $parser = $factory->createForVersion(PhpVersion::fromString("5.6"));
 ```
 
+### Changes to the array destructuring representation
+
+Previously, the `list($x) = $y` destructuring syntax was represented using a `Node\Expr\List_`
+node, while `[$x] = $y` used a `Node\Expr\Array_` node, the same used for the creation (rather than
+destructuring) of arrays.
+
+Now, destructuring is always represented using `Node\Expr\List_`. The `kind` attribute with value
+`Node\Expr\List_::KIND_LIST` or `Node\Expr\List_::KIND_ARRAY` specifies which syntax was actually
+used.
+
 ### Renamed nodes
 
 A number of AST nodes have been renamed or moved in the AST hierarchy:
 
- * `Node\Expr\ClosureUse` is now `Node\ClosureUse` and no longer extends `Node\Expr`. The `ClosureUse` node can only occur inside closure use lists, not as a general expression.
+ * `Node\Scalar\LNumber` is now `Node\Scalar\Int_`.
+ * `Node\Scalar\DNumber` is now `Node\Scalar\Float_`.
+ * `Node\Scalar\Encapsed` is now `Node\Scalar\InterpolatedString`.
+ * `Node\Scalar\EncapsedStringPart` is now `Node\InterpolatedStringPart` and no longer extends
+   `Node\Scalar` or `Node\Expr`.
+ * `Node\Expr\ArrayItem` is now `Node\ArrayItem` and no longer extends `Node\Expr`.
+ * `Node\Expr\ClosureUse` is now `Node\ClosureUse` and no longer extends `Node\Expr`.
+ * `Node\Stmt\DeclareDeclare` is now `Node\DeclareItem` and no longer extends `Node\Stmt`.
+ * `Node\Stmt\PropertyProperty` is now `Node\PropertyItem` and no longer extends `Node\Stmt`.
+ * `Node\Stmt\StaticVar` is now `Node\StaticVar` and no longer extends `Node\Stmt`.
+ * `Node\Stmt\UseUse` is now `Node\UseItem` and no longer extends `Node\Stmt`.
 
 The old class names have been retained as aliases for backwards compatibility. However, the `Node::getType()` method will now always return the new name (e.g. `ClosureUse` instead of `Expr_ClosureUse`).
+
+### Modifiers
+
+Modifier flags (as used by the `$flags` subnode of `Class_`, `ClassMethod`, `Property`, etc.) are now available as class constants on a separate `PhpParser\Modifiers` class, instead of being part of `PhpParser\Node\Stmt\Class_`, to make it clearer that these are used by many different nodes. The old constants are deprecated, but are still available.
+
+```
+PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC    -> PhpParser\Modifiers::PUBLIC
+PhpParser\Node\Stmt\Class_::MODIFIER_PROTECTED -> PhpParser\Modifiers::PROTECTED
+PhpParser\Node\Stmt\Class_::MODIFIER_PRIVATE   -> PhpParser\Modifiers::PRIVATE
+PhpParser\Node\Stmt\Class_::MODIFIER_STATIC    -> PhpParser\Modifiers::STATIC
+PhpParser\Node\Stmt\Class_::MODIFIER_ABSTRACT  -> PhpParser\Modifiers::ABSTRACT
+PhpParser\Node\Stmt\Class_::MODIFIER_FINAL     -> PhpParser\Modifiers::FINAL
+PhpParser\Node\Stmt\Class_::MODIFIER_READONLY  -> PhpParser\Modifiers::READONLY
+PhpParser\Node\Stmt\Class_::VISIBILITY_MODIFIER_MASK -> PhpParser\Modifiers::VISIBILITY_MASK
+```
 
 ### Changes to the default pretty printer
 
@@ -124,6 +159,8 @@ Backslashes in single-quoted strings are now only printed if they are necessary:
 The pretty printer now accepts a `phpVersion` option, which accepts a `PhpVersion` object and defaults to PHP 7.0. The pretty printer will make formatting choices to make the code valid for that version. It currently controls the following behavior:
 
 * For PHP >= 7.0 (default), short array syntax `[]` will be used by default. This does not affect nodes that specify an explicit array syntax using the `kind` attribute.
+* For PHP >= 7.1, the short array syntax `[]` will be used for destructuring by default (instead of
+  `list()`). This does not affect nodes that specify and explicit syntax using the `kind` attribute.
 * For PHP >= 7.3, a newline is no longer forced after heredoc/nowdoc strings, as the requirement for this has been removed with the introduction of flexible heredoc/nowdoc strings.
 
 ### Changes to token representation

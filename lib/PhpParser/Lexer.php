@@ -2,39 +2,43 @@
 
 namespace PhpParser;
 
-use PhpParser\Parser\Tokens;
-
 require __DIR__ . '/compatibility_tokens.php';
 
-class Lexer
-{
+class Lexer {
     /** @var string Code being tokenized */
     protected $code;
-    /** @var Token[] Array of tokens */
+    /** @var list<Token> List of tokens */
     protected $tokens;
     /** @var int Current position in the token array */
     protected $pos;
+    /** @var bool Whether the preceding closing PHP tag has a trailing newline */
     protected $prevCloseTagHasNewline;
-
-    protected $tokenMap;
+    /** @var array<int, int> Map of tokens that should be dropped (like T_WHITESPACE) */
     protected $dropTokens;
 
+    /** @var bool Whether to use the startLine attribute */
     private $attributeStartLineUsed;
+    /** @var bool Whether to use the endLine attribute */
     private $attributeEndLineUsed;
+    /** @var bool Whether to use the startTokenPos attribute */
     private $attributeStartTokenPosUsed;
+    /** @var bool Whether to use the endTokenPos attribute */
     private $attributeEndTokenPosUsed;
+    /** @var bool Whether to use the startFilePos attribute */
     private $attributeStartFilePosUsed;
+    /** @var bool Whether to use the endFilePos attribute */
     private $attributeEndFilePosUsed;
+    /** @var bool Whether to use the comments attribute */
     private $attributeCommentsUsed;
 
     /**
      * Creates a Lexer.
      *
-     * @param array $options Options array. Currently only the 'usedAttributes' option is supported,
-     *                       which is an array of attributes to add to the AST nodes. Possible
-     *                       attributes are: 'comments', 'startLine', 'endLine', 'startTokenPos',
-     *                       'endTokenPos', 'startFilePos', 'endFilePos'. The option defaults to the
-     *                       first three. For more info see getNextToken() docs.
+     * @param array{usedAttributes?: string[]} $options Options array. Currently only the
+     *        'usedAttributes' option is supported, which is an array of attributes to add to the
+     *        AST nodes. Possible attributes are: 'comments', 'startLine', 'endLine', 'startTokenPos',
+     *        'endTokenPos', 'startFilePos', 'endFilePos'. The option defaults to the first three.
+     *        For more info see getNextToken() docs.
      */
     public function __construct(array $options = []) {
         // map of tokens to drop while lexing (the map is only used for isset lookup,
@@ -66,7 +70,7 @@ class Lexer
      * @param ErrorHandler|null $errorHandler Error handler to use for lexing errors. Defaults to
      *                                        ErrorHandler\Throwing
      */
-    public function startLexing(string $code, ?ErrorHandler $errorHandler = null) {
+    public function startLexing(string $code, ?ErrorHandler $errorHandler = null): void {
         if (null === $errorHandler) {
             $errorHandler = new ErrorHandler\Throwing();
         }
@@ -113,7 +117,7 @@ class Lexer
             && substr($token->text, -2) !== '*/';
     }
 
-    protected function postprocessTokens(ErrorHandler $errorHandler) {
+    protected function postprocessTokens(ErrorHandler $errorHandler): void {
         // This function reports errors (bad characters and unterminated comments) in the token
         // array, and performs certain canonicalizations:
         //  * Use PHP 8.1 T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG and

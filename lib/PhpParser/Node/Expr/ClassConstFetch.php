@@ -6,8 +6,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 
-class ClassConstFetch extends Expr
-{
+class ClassConstFetch extends Expr {
     /** @var Name|Expr Class name */
     public $class;
     /** @var Identifier|Error Constant name */
@@ -18,7 +17,7 @@ class ClassConstFetch extends Expr
      *
      * @param Name|Expr               $class      Class name
      * @param string|Identifier|Error $name       Constant name
-     * @param array                   $attributes Additional attributes
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct($class, $name, array $attributes = []) {
         $this->attributes = $attributes;
@@ -26,11 +25,11 @@ class ClassConstFetch extends Expr
         $this->name = \is_string($name) ? new Identifier($name) : $name;
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['class', 'name'];
     }
-    
-    public function getType() : string {
+
+    public function getType(): string {
         return 'Expr_ClassConstFetch';
     }
 }

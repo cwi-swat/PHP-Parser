@@ -5,8 +5,7 @@ namespace PhpParser\Node\Stmt;
 use PhpParser\Node;
 use PhpParser\Node\AttributeGroup;
 
-class EnumCase extends Node\Stmt
-{
+class EnumCase extends Node\Stmt {
     /** @var Node\Identifier Enum case name */
     public $name;
     /** @var Node\Expr|null Enum case expression */
@@ -17,8 +16,8 @@ class EnumCase extends Node\Stmt
     /**
      * @param string|Node\Identifier    $name       Enum case name
      * @param Node\Expr|null            $expr       Enum case expression
-     * @param AttributeGroup[]          $attrGroups PHP attribute groups
-     * @param array                     $attributes Additional attributes
+     * @param list<AttributeGroup> $attrGroups PHP attribute groups
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct($name, ?Node\Expr $expr = null, array $attrGroups = [], array $attributes = []) {
         parent::__construct($attributes);
@@ -27,11 +26,11 @@ class EnumCase extends Node\Stmt
         $this->attrGroups = $attrGroups;
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['attrGroups', 'name', 'expr'];
     }
 
-    public function getType() : string {
+    public function getType(): string {
         return 'Stmt_EnumCase';
     }
 }

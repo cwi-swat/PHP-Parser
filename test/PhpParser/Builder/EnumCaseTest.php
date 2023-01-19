@@ -9,11 +9,10 @@ use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar;
-use PhpParser\Node\Scalar\LNumber;
+use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Stmt;
 
-class EnumCaseTest extends \PHPUnit\Framework\TestCase
-{
+class EnumCaseTest extends \PHPUnit\Framework\TestCase {
     public function createEnumCaseBuilder($name) {
         return new EnumCase($name);
     }
@@ -27,6 +26,7 @@ class EnumCaseTest extends \PHPUnit\Framework\TestCase
             new Stmt\EnumCase(
                 "TEST",
                 null,
+                [],
                 [
                     'comments' => [new Comment\Doc('/** Test */')]
                 ]
@@ -38,7 +38,7 @@ class EnumCaseTest extends \PHPUnit\Framework\TestCase
     public function testAddAttribute() {
         $attribute = new Attribute(
             new Name('Attr'),
-            [new Arg(new LNumber(1), false, false, [], new Identifier('name'))]
+            [new Arg(new Int_(1), false, false, [], new Identifier('name'))]
         );
         $attributeGroup = new AttributeGroup([$attribute]);
 
@@ -50,7 +50,6 @@ class EnumCaseTest extends \PHPUnit\Framework\TestCase
             new Stmt\EnumCase(
                 "ATTR_GROUP",
                 null,
-                [],
                 [$attributeGroup]
             ),
             $node
@@ -73,7 +72,7 @@ class EnumCaseTest extends \PHPUnit\Framework\TestCase
         return [
             [
                 31415,
-                new Scalar\LNumber(31415)
+                new Scalar\Int_(31415)
             ],
             [
                 'Hallo World',

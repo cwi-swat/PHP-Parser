@@ -10,13 +10,15 @@ use PhpParser\Node;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt;
 
-class EnumCase implements PhpParser\Builder
-{
+class EnumCase implements PhpParser\Builder {
+    /** @var Identifier|string */
     protected $name;
+    /** @var ?Node\Expr */
     protected $value = null;
+    /** @var array<string, mixed> */
     protected $attributes = [];
 
-    /** @var Node\AttributeGroup[] */
+    /** @var list<Node\AttributeGroup> */
     protected $attributeGroups = [];
 
     /**
@@ -78,8 +80,8 @@ class EnumCase implements PhpParser\Builder
         return new Stmt\EnumCase(
             $this->name,
             $this->value,
-            $this->attributes,
-            $this->attributeGroups
+            $this->attributeGroups,
+            $this->attributes
         );
     }
 }

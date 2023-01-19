@@ -2,10 +2,9 @@
 
 namespace PhpParser;
 
-abstract class CodeTestAbstract extends \PHPUnit\Framework\TestCase
-{
+abstract class CodeTestAbstract extends \PHPUnit\Framework\TestCase {
     protected function getTests($directory, $fileExtension, $chunksPerTest = 2) {
-        $parser = new CodeTestParser;
+        $parser = new CodeTestParser();
         $allTests = [];
         foreach (filesInDir($directory, $fileExtension) as $fileName => $fileContents) {
             list($name, $tests) = $parser->parseTest($fileContents, $chunksPerTest);
@@ -119,7 +118,7 @@ abstract class CodeTestAbstract extends \PHPUnit\Framework\TestCase
         return $name;
     }
 
-    protected function parseModeLine(?string $modeLine): array {
+    public function parseModeLine(?string $modeLine): array {
         if ($modeLine === null) {
             return [];
         }

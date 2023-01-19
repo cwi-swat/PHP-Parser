@@ -6,12 +6,14 @@ use PhpParser\Node\Expr\Include_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\GroupUse;
 use PhpParser\Node\Stmt\Use_;
-use PhpParser\Node\Stmt\UseUse;
+use PhpParser\Node\UseItem;
 
-class NodeDumper
-{
+class NodeDumper {
+    /** @var bool */
     private $dumpComments;
+    /** @var bool */
     private $dumpPositions;
+    /** @var string|null */
     private $code;
 
     /**
@@ -39,12 +41,13 @@ class NodeDumper
      *
      * @return string Dumped value
      */
-    public function dump($node, ?string $code = null) : string {
+    public function dump($node, ?string $code = null): string {
         $this->code = $code;
         return $this->dumpRecursive($node);
     }
 
-    protected function dumpRecursive($node) {
+    /** @param Node|Comment|array $node */
+    protected function dumpRecursive($node): string {
         if ($node instanceof Node) {
             $r = $node->getType();
             if ($this->dumpPositions && null !== $p = $this->dumpPosition($node)) {
@@ -68,7 +71,7 @@ class NodeDumper
                     } elseif ('type' === $key && $node instanceof Include_) {
                         $r .= $this->dumpIncludeType($value);
                     } elseif ('type' === $key
-                            && ($node instanceof Use_ || $node instanceof UseUse || $node instanceof GroupUse)) {
+                            && ($node instanceof Use_ || $node instanceof UseItem || $node instanceof GroupUse)) {
                         $r .= $this->dumpUseType($value);
                     } else {
                         $r .= $value;
@@ -108,38 +111,38 @@ class NodeDumper
         return $r . "\n)";
     }
 
-    protected function dumpFlags($flags) {
+    protected function dumpFlags(int $flags): string {
         $strs = [];
-        if ($flags & Class_::MODIFIER_PUBLIC) {
-            $strs[] = 'MODIFIER_PUBLIC';
+        if ($flags & Modifiers::PUBLIC) {
+            $strs[] = 'PUBLIC';
         }
-        if ($flags & Class_::MODIFIER_PROTECTED) {
-            $strs[] = 'MODIFIER_PROTECTED';
+        if ($flags & Modifiers::PROTECTED) {
+            $strs[] = 'PROTECTED';
         }
-        if ($flags & Class_::MODIFIER_PRIVATE) {
-            $strs[] = 'MODIFIER_PRIVATE';
+        if ($flags & Modifiers::PRIVATE) {
+            $strs[] = 'PRIVATE';
         }
-        if ($flags & Class_::MODIFIER_ABSTRACT) {
-            $strs[] = 'MODIFIER_ABSTRACT';
+        if ($flags & Modifiers::ABSTRACT) {
+            $strs[] = 'ABSTRACT';
         }
-        if ($flags & Class_::MODIFIER_STATIC) {
-            $strs[] = 'MODIFIER_STATIC';
+        if ($flags & Modifiers::STATIC) {
+            $strs[] = 'STATIC';
         }
-        if ($flags & Class_::MODIFIER_FINAL) {
-            $strs[] = 'MODIFIER_FINAL';
+        if ($flags & Modifiers::FINAL) {
+            $strs[] = 'FINAL';
         }
-        if ($flags & Class_::MODIFIER_READONLY) {
-            $strs[] = 'MODIFIER_READONLY';
+        if ($flags & Modifiers::READONLY) {
+            $strs[] = 'READONLY';
         }
 
         if ($strs) {
             return implode(' | ', $strs) . ' (' . $flags . ')';
         } else {
-            return $flags;
+            return (string) $flags;
         }
     }
 
-    protected function dumpIncludeType($type) {
+    protected function dumpIncludeType(int $type): string {
         $map = [
             Include_::TYPE_INCLUDE      => 'TYPE_INCLUDE',
             Include_::TYPE_INCLUDE_ONCE => 'TYPE_INCLUDE_ONCE',
@@ -148,12 +151,12 @@ class NodeDumper
         ];
 
         if (!isset($map[$type])) {
-            return $type;
+            return (string) $type;
         }
         return $map[$type] . ' (' . $type . ')';
     }
 
-    protected function dumpUseType($type) {
+    protected function dumpUseType(int $type): string {
         $map = [
             Use_::TYPE_UNKNOWN  => 'TYPE_UNKNOWN',
             Use_::TYPE_NORMAL   => 'TYPE_NORMAL',
@@ -162,7 +165,7 @@ class NodeDumper
         ];
 
         if (!isset($map[$type])) {
-            return $type;
+            return (string) $type;
         }
         return $map[$type] . ' (' . $type . ')';
     }
@@ -191,7 +194,7 @@ class NodeDumper
     }
 
     // Copied from Error class
-    private function toColumn($code, $pos) {
+    private function toColumn(string $code, int $pos): int {
         if ($pos > strlen($code)) {
             throw new \RuntimeException('Invalid position information');
         }

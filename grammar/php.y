@@ -298,16 +298,16 @@ non_empty_inline_use_declarations:
 
 unprefixed_use_declaration:
       namespace_name
-          { $$ = Stmt\UseUse[$1, null, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #1); }
+          { $$ = Node\UseItem[$1, null, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #1); }
     | namespace_name T_AS identifier_not_reserved
-          { $$ = Stmt\UseUse[$1, $3, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #3); }
+          { $$ = Node\UseItem[$1, $3, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #3); }
 ;
 
 use_declaration:
       legacy_namespace_name
-          { $$ = Stmt\UseUse[$1, null, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #1); }
+          { $$ = Node\UseItem[$1, null, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #1); }
     | legacy_namespace_name T_AS identifier_not_reserved
-          { $$ = Stmt\UseUse[$1, $3, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #3); }
+          { $$ = Node\UseItem[$1, $3, Stmt\Use_::TYPE_UNKNOWN]; $this->checkUseUse($$, #3); }
 ;
 
 inline_use_declaration:
@@ -468,15 +468,23 @@ block_or_error:
     | error                                                 { $$ = []; }
 ;
 
+identifier_maybe_readonly:
+      identifier_not_reserved                               { $$ = $1; }
+    | T_READONLY                                            { $$ = Node\Identifier[$1]; }
+;
+
 function_declaration_statement:
-      T_FUNCTION optional_ref identifier_not_reserved '(' parameter_list ')' optional_return_type block_or_error
+      T_FUNCTION optional_ref identifier_maybe_readonly '(' parameter_list ')' optional_return_type block_or_error
           { $$ = Stmt\Function_[$3, ['byRef' => $2, 'params' => $5, 'returnType' => $7, 'stmts' => $8, 'attrGroups' => []]]; }
-    | attributes T_FUNCTION optional_ref identifier_not_reserved '(' parameter_list ')' optional_return_type block_or_error
+    | attributes T_FUNCTION optional_ref identifier_maybe_readonly '(' parameter_list ')' optional_return_type block_or_error
           { $$ = Stmt\Function_[$4, ['byRef' => $3, 'params' => $6, 'returnType' => $8, 'stmts' => $9, 'attrGroups' => $1]]; }
 ;
 
 class_declaration_statement:
-      optional_attributes class_entry_type identifier_not_reserved extends_from implements_list '{' class_statement_list '}'
+      class_entry_type identifier_not_reserved extends_from implements_list '{' class_statement_list '}'
+          { $$ = Stmt\Class_[$2, ['type' => $1, 'extends' => $3, 'implements' => $4, 'stmts' => $6, 'attrGroups' => []]];
+            $this->checkClass($$, #2); }
+    | attributes class_entry_type identifier_not_reserved extends_from implements_list '{' class_statement_list '}'
           { $$ = Stmt\Class_[$3, ['type' => $2, 'extends' => $4, 'implements' => $5, 'stmts' => $7, 'attrGroups' => $1]];
             $this->checkClass($$, #3); }
     | optional_attributes T_INTERFACE identifier_not_reserved interface_extends_list '{' class_statement_list '}'
@@ -509,9 +517,9 @@ class_modifiers:
 ;
 
 class_modifier:
-      T_ABSTRACT                                            { $$ = Stmt\Class_::MODIFIER_ABSTRACT; }
-    | T_FINAL                                               { $$ = Stmt\Class_::MODIFIER_FINAL; }
-    | T_READONLY                                            { $$ = Stmt\Class_::MODIFIER_READONLY; }
+      T_ABSTRACT                                            { $$ = Modifiers::ABSTRACT; }
+    | T_FINAL                                               { $$ = Modifiers::FINAL; }
+    | T_READONLY                                            { $$ = Modifiers::READONLY; }
 ;
 
 extends_from:
@@ -564,7 +572,7 @@ non_empty_declare_list:
 ;
 
 declare_list_element:
-      identifier_not_reserved '=' expr                      { $$ = Stmt\DeclareDeclare[$1, $3]; }
+      identifier_not_reserved '=' expr                      { $$ = Node\DeclareItem[$1, $3]; }
 ;
 
 switch_case_list:
@@ -628,7 +636,8 @@ new_elseif_list:
 ;
 
 new_elseif:
-     T_ELSEIF '(' expr ')' ':' inner_statement_list         { $$ = Stmt\ElseIf_[$3, $6]; }
+     T_ELSEIF '(' expr ')' ':' inner_statement_list
+         { $$ = Stmt\ElseIf_[$3, $6]; $this->fixupAlternativeElse($$); }
 ;
 
 else_single:
@@ -638,14 +647,16 @@ else_single:
 
 new_else_single:
       /* empty */                                           { $$ = null; }
-    | T_ELSE ':' inner_statement_list                       { $$ = Stmt\Else_[$3]; }
+    | T_ELSE ':' inner_statement_list
+          { $$ = Stmt\Else_[$3]; $this->fixupAlternativeElse($$); }
 ;
 
 foreach_variable:
       variable                                              { $$ = array($1, false); }
     | ampersand variable                                    { $$ = array($2, true); }
     | list_expr                                             { $$ = array($1, false); }
-    | array_short_syntax                                    { $$ = array($1, false); }
+    | array_short_syntax
+          { $$ = array($this->fixupArrayDestructuring($1), false); }
 ;
 
 parameter_list:
@@ -665,10 +676,10 @@ optional_property_modifiers:
 ;
 
 property_modifier:
-      T_PUBLIC                  { $$ = Stmt\Class_::MODIFIER_PUBLIC; }
-    | T_PROTECTED               { $$ = Stmt\Class_::MODIFIER_PROTECTED; }
-    | T_PRIVATE                 { $$ = Stmt\Class_::MODIFIER_PRIVATE; }
-    | T_READONLY                { $$ = Stmt\Class_::MODIFIER_READONLY; }
+      T_PUBLIC                  { $$ = Modifiers::PUBLIC; }
+    | T_PROTECTED               { $$ = Modifiers::PROTECTED; }
+    | T_PRIVATE                 { $$ = Modifiers::PRIVATE; }
+    | T_READONLY                { $$ = Modifiers::READONLY; }
 ;
 
 parameter:
@@ -808,8 +819,8 @@ non_empty_static_var_list:
 ;
 
 static_var:
-      plain_variable                                        { $$ = Stmt\StaticVar[$1, null]; }
-    | plain_variable '=' expr                               { $$ = Stmt\StaticVar[$1, $3]; }
+      plain_variable                                        { $$ = Node\StaticVar[$1, null]; }
+    | plain_variable '=' expr                               { $$ = Node\StaticVar[$1, $3]; }
 ;
 
 class_statement_list_ex:
@@ -892,13 +903,13 @@ non_empty_member_modifiers:
 ;
 
 member_modifier:
-      T_PUBLIC                                              { $$ = Stmt\Class_::MODIFIER_PUBLIC; }
-    | T_PROTECTED                                           { $$ = Stmt\Class_::MODIFIER_PROTECTED; }
-    | T_PRIVATE                                             { $$ = Stmt\Class_::MODIFIER_PRIVATE; }
-    | T_STATIC                                              { $$ = Stmt\Class_::MODIFIER_STATIC; }
-    | T_ABSTRACT                                            { $$ = Stmt\Class_::MODIFIER_ABSTRACT; }
-    | T_FINAL                                               { $$ = Stmt\Class_::MODIFIER_FINAL; }
-    | T_READONLY                                            { $$ = Stmt\Class_::MODIFIER_READONLY; }
+      T_PUBLIC                                              { $$ = Modifiers::PUBLIC; }
+    | T_PROTECTED                                           { $$ = Modifiers::PROTECTED; }
+    | T_PRIVATE                                             { $$ = Modifiers::PRIVATE; }
+    | T_STATIC                                              { $$ = Modifiers::STATIC; }
+    | T_ABSTRACT                                            { $$ = Modifiers::ABSTRACT; }
+    | T_FINAL                                               { $$ = Modifiers::FINAL; }
+    | T_READONLY                                            { $$ = Modifiers::READONLY; }
 ;
 
 property_declaration_list:
@@ -916,8 +927,8 @@ property_decl_name:
 ;
 
 property_declaration:
-      property_decl_name                                    { $$ = Stmt\PropertyProperty[$1, null]; }
-    | property_decl_name '=' expr                           { $$ = Stmt\PropertyProperty[$1, $3]; }
+      property_decl_name                                    { $$ = Node\PropertyItem[$1, null]; }
+    | property_decl_name '=' expr                           { $$ = Node\PropertyItem[$1, $3]; }
 ;
 
 expr_list_forbid_comma:
@@ -941,7 +952,8 @@ for_expr:
 expr:
       variable                                              { $$ = $1; }
     | list_expr '=' expr                                    { $$ = Expr\Assign[$1, $3]; }
-    | array_short_syntax '=' expr                           { $$ = Expr\Assign[$1, $3]; }
+    | array_short_syntax '=' expr
+          { $$ = Expr\Assign[$this->fixupArrayDestructuring($1), $3]; }
     | variable '=' expr                                     { $$ = Expr\Assign[$1, $3]; }
     | variable '=' ampersand variable                       { $$ = Expr\AssignRef[$1, $4]; }
     | variable '=' ampersand new_expr
@@ -1083,11 +1095,16 @@ non_empty_lexical_var_list:
 ;
 
 lexical_var:
-      optional_ref plain_variable                           { $$ = Expr\ClosureUse[$2, $1]; }
+      optional_ref plain_variable                           { $$ = Node\ClosureUse[$2, $1]; }
+;
+
+name_readonly:
+      T_READONLY                                            { $$ = Name[$1]; }
 ;
 
 function_call:
       name argument_list                                    { $$ = Expr\FuncCall[$1, $2]; }
+    | name_readonly argument_list                           { $$ = Expr\FuncCall[$1, $2]; }
     | callable_expr argument_list                           { $$ = Expr\FuncCall[$1, $2]; }
     | class_name_or_var T_PAAMAYIM_NEKUDOTAYIM member_name argument_list
           { $$ = Expr\StaticCall[$1, $3, $4]; }
@@ -1125,7 +1142,7 @@ exit_expr:
 backticks_expr:
       /* empty */                                           { $$ = array(); }
     | T_ENCAPSED_AND_WHITESPACE
-          { $$ = array(Scalar\EncapsedStringPart[Scalar\String_::parseEscapeSequences($1, '`')]); }
+          { $$ = array(Node\InterpolatedStringPart[Scalar\String_::parseEscapeSequences($1, '`')]); }
     | encaps_list                                           { parseEncapsed($1, '`', true); $$ = $1; }
 ;
 
@@ -1164,18 +1181,19 @@ array_short_syntax:
 dereferencable_scalar:
       T_ARRAY '(' array_pair_list ')'
           { $attrs = attributes(); $attrs['kind'] = Expr\Array_::KIND_LONG;
-            $$ = new Expr\Array_($3, $attrs); }
-    | array_short_syntax                                    { $$ = $1; }
+            $$ = new Expr\Array_($3, $attrs);
+            $this->createdArrays->attach($$); }
+    | array_short_syntax                                    { $$ = $1; $this->createdArrays->attach($$); }
     | T_CONSTANT_ENCAPSED_STRING                            { $$ = Scalar\String_::fromString($1, attributes()); }
     | '"' encaps_list '"'
           { $attrs = attributes(); $attrs['kind'] = Scalar\String_::KIND_DOUBLE_QUOTED;
-            parseEncapsed($2, '"', true); $$ = new Scalar\Encapsed($2, $attrs); }
+            parseEncapsed($2, '"', true); $$ = new Scalar\InterpolatedString($2, $attrs); }
 ;
 
 scalar:
       T_LNUMBER
           { $$ = $this->parseLNumber($1, attributes(), $this->phpVersion->allowsInvalidOctals()); }
-    | T_DNUMBER                                             { $$ = Scalar\DNumber::fromString($1, attributes()); }
+    | T_DNUMBER                                             { $$ = Scalar\Float_::fromString($1, attributes()); }
     | dereferencable_scalar                                 { $$ = $1; }
     | constant                                              { $$ = $1; }
     | class_constant                                        { $$ = $1; }
@@ -1278,12 +1296,14 @@ property_name:
 ;
 
 list_expr:
-      T_LIST '(' inner_array_pair_list ')'                  { $$ = Expr\List_[$3]; }
+      T_LIST '(' inner_array_pair_list ')'
+          { $$ = Expr\List_[$3]; $$->setAttribute('kind', Expr\List_::KIND_LIST);
+            $this->postprocessList($$); }
 ;
 
 array_pair_list:
       inner_array_pair_list
-          { $$ = $1; $end = count($$)-1; if ($$[$end] === null) array_pop($$); }
+          { $$ = $1; $end = count($$)-1; if ($$[$end]->value instanceof Expr\Error) array_pop($$); }
 ;
 
 comma_or_error:
@@ -1298,14 +1318,18 @@ inner_array_pair_list:
 ;
 
 array_pair:
-      expr                                                  { $$ = Expr\ArrayItem[$1, null, false]; }
-    | ampersand variable                                    { $$ = Expr\ArrayItem[$2, null, true]; }
-    | list_expr                                             { $$ = Expr\ArrayItem[$1, null, false]; }
-    | expr T_DOUBLE_ARROW expr                              { $$ = Expr\ArrayItem[$3, $1,   false]; }
-    | expr T_DOUBLE_ARROW ampersand variable                { $$ = Expr\ArrayItem[$4, $1,   true]; }
-    | expr T_DOUBLE_ARROW list_expr                         { $$ = Expr\ArrayItem[$3, $1,   false]; }
-    | T_ELLIPSIS expr                                       { $$ = Expr\ArrayItem[$2, null, false, attributes(), true]; }
-    | /* empty */                                           { $$ = null; }
+      expr                                                  { $$ = Node\ArrayItem[$1, null, false]; }
+    | ampersand variable                                    { $$ = Node\ArrayItem[$2, null, true]; }
+    | list_expr                                             { $$ = Node\ArrayItem[$1, null, false]; }
+    | expr T_DOUBLE_ARROW expr                              { $$ = Node\ArrayItem[$3, $1,   false]; }
+    | expr T_DOUBLE_ARROW ampersand variable                { $$ = Node\ArrayItem[$4, $1,   true]; }
+    | expr T_DOUBLE_ARROW list_expr                         { $$ = Node\ArrayItem[$3, $1,   false]; }
+    | T_ELLIPSIS expr                                       { $$ = new Node\ArrayItem($2, null, false, attributes(), true); }
+    | /* empty */
+        { /* Create an Error node now to remember the position. We'll later either report an error,
+             or convert this into a null element, depending on whether this is a creation or destructuring context. */
+          $attrs = $this->createEmptyElemAttributes($this->lookaheadStartAttributes);
+          $$ = new Node\ArrayItem(new Expr\Error($attrs), null, false, $attrs); }
 ;
 
 encaps_list:
@@ -1316,7 +1340,7 @@ encaps_list:
 ;
 
 encaps_string_part:
-      T_ENCAPSED_AND_WHITESPACE                             { $$ = Scalar\EncapsedStringPart[$1]; }
+      T_ENCAPSED_AND_WHITESPACE                             { $$ = Node\InterpolatedStringPart[$1]; }
 ;
 
 encaps_str_varname:

@@ -4,8 +4,7 @@ namespace PhpParser\Node\Expr;
 
 use PhpParser\Node\Expr;
 
-class Clone_ extends Expr
-{
+class Clone_ extends Expr {
     /** @var Expr Expression */
     public $expr;
 
@@ -13,18 +12,18 @@ class Clone_ extends Expr
      * Constructs a clone node.
      *
      * @param Expr  $expr       Expression
-     * @param array $attributes Additional attributes
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Expr $expr, array $attributes = []) {
         $this->attributes = $attributes;
         $this->expr = $expr;
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['expr'];
     }
-    
-    public function getType() : string {
+
+    public function getType(): string {
         return 'Expr_Clone';
     }
 }

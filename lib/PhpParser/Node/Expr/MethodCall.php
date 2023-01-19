@@ -7,8 +7,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\VariadicPlaceholder;
 
-class MethodCall extends CallLike
-{
+class MethodCall extends CallLike {
     /** @var Expr Variable holding object */
     public $var;
     /** @var Identifier|Expr Method name */
@@ -22,7 +21,7 @@ class MethodCall extends CallLike
      * @param Expr                           $var        Variable holding object
      * @param string|Identifier|Expr         $name       Method name
      * @param array<Arg|VariadicPlaceholder> $args       Arguments
-     * @param array                          $attributes Additional attributes
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Expr $var, $name, array $args = [], array $attributes = []) {
         $this->attributes = $attributes;
@@ -31,11 +30,11 @@ class MethodCall extends CallLike
         $this->args = $args;
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['var', 'name', 'args'];
     }
-    
-    public function getType() : string {
+
+    public function getType(): string {
         return 'Expr_MethodCall';
     }
 

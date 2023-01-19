@@ -5,15 +5,19 @@ namespace PhpParser;
 use PhpParser\Internal\DiffElem;
 use PhpParser\Internal\PrintableNewAnonClassNode;
 use PhpParser\Internal\TokenStream;
+use PhpParser\Node\AttributeGroup;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\AssignOp;
 use PhpParser\Node\Expr\BinaryOp;
 use PhpParser\Node\Expr\Cast;
+use PhpParser\Node\IntersectionType;
+use PhpParser\Node\MatchArm;
+use PhpParser\Node\Param;
 use PhpParser\Node\Scalar;
 use PhpParser\Node\Stmt;
+use PhpParser\Node\UnionType;
 
-abstract class PrettyPrinterAbstract
-{
+abstract class PrettyPrinterAbstract {
     protected const FIXUP_PREC_LEFT       = 0; // LHS operand affected by precedence
     protected const FIXUP_PREC_RIGHT      = 1; // RHS operand affected by precedence
     protected const FIXUP_CALL_LHS        = 2; // LHS of call
@@ -22,6 +26,7 @@ abstract class PrettyPrinterAbstract
     protected const FIXUP_VAR_BRACED_NAME = 5; // Name operand that may require ${} bracing
     protected const FIXUP_ENCAPSED        = 6; // Encapsed string part
 
+    /** @var array<class-string, array{int, int}> */
     protected $precedenceMap = [
         // [precedence, associativity]
         // where for precedence -1 is %left, 0 is %nonassoc and 1 is %right
@@ -100,37 +105,43 @@ abstract class PrettyPrinterAbstract
     /** @var PhpVersion PHP version to target */
     protected $phpVersion;
 
-    /** @var TokenStream Original tokens for use in format-preserving pretty print */
+    /** @var TokenStream|null Original tokens for use in format-preserving pretty print */
     protected $origTokens;
-    /** @var Internal\Differ Differ for node lists */
+    /** @var Internal\Differ<Node>|null Differ for node lists */
     protected $nodeListDiffer;
-    /** @var bool[] Map determining whether a certain character is a label character */
+    /** @var array<string, bool> Map determining whether a certain character is a label character */
     protected $labelCharMap;
     /**
-     * @var int[][] Map from token classes and subnode names to FIXUP_* constants. This is used
-     *              during format-preserving prints to place additional parens/braces if necessary.
+     * @var array<string, array<string, int>> Map from token classes and subnode names to FIXUP_* constants.
+     *      This is used during format-preserving prints to place additional parens/braces if necessary.
      */
     protected $fixupMap;
     /**
-     * @var int[][] Map from "{$node->getType()}->{$subNode}" to ['left' => $l, 'right' => $r],
-     *              where $l and $r specify the token type that needs to be stripped when removing
-     *              this node.
+     * @var array<string, array{left?: int|string, right?: int|string}> Map from "{$node->getType()}->{$subNode}"
+     *      to ['left' => $l, 'right' => $r], where $l and $r specify the token type that needs to be stripped
+     *      when removing this node.
      */
     protected $removalMap;
     /**
-     * @var mixed[] Map from "{$node->getType()}->{$subNode}" to [$find, $beforeToken, $extraLeft, $extraRight].
-     *              $find is an optional token after which the insertion occurs. $extraLeft/Right
-     *              are optionally added before/after the main insertions.
+     * @var array<string, array{int|string|null, bool, string|null, string|null}> Map from
+     *      "{$node->getType()}->{$subNode}" to [$find, $beforeToken, $extraLeft, $extraRight].
+     *      $find is an optional token after which the insertion occurs. $extraLeft/Right
+     *      are optionally added before/after the main insertions.
      */
     protected $insertionMap;
     /**
-     * @var string[] Map From "{$node->getType()}->{$subNode}" to string that should be inserted
-     *               between elements of this list subnode.
+     * @var array<string, string> Map From "{$class}->{$subNode}" to string that should be inserted
+     *                            between elements of this list subnode.
      */
     protected $listInsertionMap;
+
+    /**
+     * @var array<string, array{int|string|null, string, string}>
+     */
     protected $emptyListInsertionMap;
-    /** @var int[] Map from "{$node->getType()}->{$subNode}" to token before which the modifiers
-     *             should be reprinted. */
+    /** @var array<string, array{string, int}> Map from "{$class}->{$subNode}" to [$printFn, $token]
+     *       where $printFn is the function to print the modifiers and $token is the token before which
+     *       the modifiers should be reprinted. */
     protected $modifierChangeMap;
 
     /**
@@ -147,7 +158,7 @@ abstract class PrettyPrinterAbstract
      *                            syntax, if the node does not specify a format. Defaults to whether
      *                            the phpVersion support short array syntax.
      *
-     * @param array $options Dictionary of formatting options
+     * @param array{phpVersion?: PhpVersion, shortArraySyntax?: bool} $options Dictionary of formatting options
      */
     public function __construct(array $options = []) {
         $this->phpVersion = $options['phpVersion'] ?? PhpVersion::fromComponents(7, 0);
@@ -160,7 +171,7 @@ abstract class PrettyPrinterAbstract
     /**
      * Reset pretty printing state.
      */
-    protected function resetState() {
+    protected function resetState(): void {
         $this->indentLevel = 0;
         $this->nl = "\n";
         $this->origTokens = null;
@@ -171,7 +182,7 @@ abstract class PrettyPrinterAbstract
      *
      * @param int $level Level in number of spaces
      */
-    protected function setIndentLevel(int $level) {
+    protected function setIndentLevel(int $level): void {
         $this->indentLevel = $level;
         $this->nl = "\n" . \str_repeat(' ', $level);
     }
@@ -179,7 +190,7 @@ abstract class PrettyPrinterAbstract
     /**
      * Increase indentation level.
      */
-    protected function indent() {
+    protected function indent(): void {
         $this->indentLevel += 4;
         $this->nl .= '    ';
     }
@@ -187,7 +198,7 @@ abstract class PrettyPrinterAbstract
     /**
      * Decrease indentation level.
      */
-    protected function outdent() {
+    protected function outdent(): void {
         assert($this->indentLevel >= 4);
         $this->indentLevel -= 4;
         $this->nl = "\n" . str_repeat(' ', $this->indentLevel);
@@ -200,7 +211,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed statements
      */
-    public function prettyPrint(array $stmts) : string {
+    public function prettyPrint(array $stmts): string {
         $this->resetState();
         $this->preprocessNodes($stmts);
 
@@ -214,7 +225,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed node
      */
-    public function prettyPrintExpr(Expr $node) : string {
+    public function prettyPrintExpr(Expr $node): string {
         $this->resetState();
         return $this->handleMagicTokens($this->p($node));
     }
@@ -226,7 +237,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed statements
      */
-    public function prettyPrintFile(array $stmts) : string {
+    public function prettyPrintFile(array $stmts): string {
         if (!$stmts) {
             return "<?php\n\n";
         }
@@ -248,7 +259,7 @@ abstract class PrettyPrinterAbstract
      *
      * @param Node[] $nodes Array of nodes
      */
-    protected function preprocessNodes(array $nodes) {
+    protected function preprocessNodes(array $nodes): void {
         /* We can use semicolon-namespaces unless there is a global namespace declaration */
         $this->canUseSemicolonNamespaces = true;
         foreach ($nodes as $node) {
@@ -283,7 +294,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed statements
      */
-    protected function pStmts(array $nodes, bool $indent = true) : string {
+    protected function pStmts(array $nodes, bool $indent = true): string {
         if ($indent) {
             $this->indent();
         }
@@ -318,7 +329,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed infix operation
      */
-    protected function pInfixOp(string $class, Node $leftNode, string $operatorString, Node $rightNode) : string {
+    protected function pInfixOp(string $class, Node $leftNode, string $operatorString, Node $rightNode): string {
         list($precedence, $associativity) = $this->precedenceMap[$class];
 
         return $this->pPrec($leftNode, $precedence, $associativity, -1)
@@ -335,7 +346,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed prefix operation
      */
-    protected function pPrefixOp(string $class, string $operatorString, Node $node) : string {
+    protected function pPrefixOp(string $class, string $operatorString, Node $node): string {
         list($precedence, $associativity) = $this->precedenceMap[$class];
         return $operatorString . $this->pPrec($node, $precedence, $associativity, 1);
     }
@@ -352,7 +363,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string The pretty printed node
      */
-    protected function pPrec(Node $node, int $parentPrecedence, int $parentAssociativity, int $childPosition) : string {
+    protected function pPrec(Node $node, int $parentPrecedence, int $parentAssociativity, int $childPosition): string {
         $class = \get_class($node);
         if (isset($this->precedenceMap[$class])) {
             $childPrecedence = $this->precedenceMap[$class][0];
@@ -374,7 +385,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Imploded pretty printed nodes
      */
-    protected function pImplode(array $nodes, string $glue = '') : string {
+    protected function pImplode(array $nodes, string $glue = ''): string {
         $pNodes = [];
         foreach ($nodes as $node) {
             if (null === $node) {
@@ -394,7 +405,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Comma separated pretty printed nodes
      */
-    protected function pCommaSeparated(array $nodes) : string {
+    protected function pCommaSeparated(array $nodes): string {
         return $this->pImplode($nodes, ', ');
     }
 
@@ -408,7 +419,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Comma separated pretty printed nodes in multiline style
      */
-    protected function pCommaSeparatedMultiline(array $nodes, bool $trailingComma) : string {
+    protected function pCommaSeparatedMultiline(array $nodes, bool $trailingComma): string {
         $this->indent();
 
         $result = '';
@@ -440,7 +451,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Reformatted text of comments
      */
-    protected function pComments(array $comments) : string {
+    protected function pComments(array $comments): string {
         $formattedComments = [];
 
         foreach ($comments as $comment) {
@@ -463,11 +474,11 @@ abstract class PrettyPrinterAbstract
      *
      * @param Node[] $stmts      Modified AST with links to original AST
      * @param Node[] $origStmts  Original AST with token offset information
-     * @param array  $origTokens Tokens of the original code
+     * @param Token[] $origTokens Tokens of the original code
      *
      * @return string
      */
-    public function printFormatPreserving(array $stmts, array $origStmts, array $origTokens) : string {
+    public function printFormatPreserving(array $stmts, array $origStmts, array $origTokens): string {
         $this->initializeNodeListDiffer();
         $this->initializeLabelCharMap();
         $this->initializeFixupMap();
@@ -495,7 +506,7 @@ abstract class PrettyPrinterAbstract
         return ltrim($this->handleMagicTokens($result));
     }
 
-    protected function pFallback(Node $node) {
+    protected function pFallback(Node $node): string {
         return $this->{'p' . $node->getType()}($node);
     }
 
@@ -509,13 +520,13 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Pretty printed node
      */
-    protected function p(Node $node, bool $parentFormatPreserved = false) : string {
+    protected function p(Node $node, bool $parentFormatPreserved = false): string {
         // No orig tokens means this is a normal pretty print without preservation of formatting
         if (!$this->origTokens) {
             return $this->{'p' . $node->getType()}($node);
         }
 
-        /** @var Node $origNode */
+        /** @var Node|null $origNode */
         $origNode = $node->getAttribute('origNode');
         if (null === $origNode) {
             return $this->pFallback($node);
@@ -531,8 +542,10 @@ abstract class PrettyPrinterAbstract
         $fallbackNode = $node;
         if ($node instanceof Expr\New_ && $node->class instanceof Stmt\Class_) {
             // Normalize node structure of anonymous classes
+            assert($origNode instanceof Expr\New_);
             $node = PrintableNewAnonClassNode::fromNewNode($node);
             $origNode = PrintableNewAnonClassNode::fromNewNode($origNode);
+            $class = PrintableNewAnonClassNode::class;
         }
 
         // InlineHTML node does not contain closing and opening PHP tags. If the parent formatting
@@ -564,7 +577,7 @@ abstract class PrettyPrinterAbstract
                 if (is_array($subNode) && is_array($origSubNode)) {
                     // Array subnode changed, we might be able to reconstruct it
                     $listResult = $this->pArray(
-                        $subNode, $origSubNode, $pos, $indentAdjustment, $type, $subNodeName,
+                        $subNode, $origSubNode, $pos, $indentAdjustment, $class, $subNodeName,
                         $fixupInfo[$subNodeName] ?? null
                     );
                     if (null === $listResult) {
@@ -575,23 +588,16 @@ abstract class PrettyPrinterAbstract
                     continue;
                 }
 
-                if (is_int($subNode) && is_int($origSubNode)) {
-                    // Check if this is a modifier change
-                    $key = $type . '->' . $subNodeName;
-                    if (!isset($this->modifierChangeMap[$key])) {
-                        return $this->pFallback($fallbackNode);
-                    }
-
-                    $findToken = $this->modifierChangeMap[$key];
-                    $result .= $this->pModifiers($subNode);
-                    $pos = $this->origTokens->findRight($pos, $findToken);
-                    continue;
+                // Check if this is a modifier change
+                $key = $class . '->' . $subNodeName;
+                if (!isset($this->modifierChangeMap[$key])) {
+                    return $this->pFallback($fallbackNode);
                 }
 
-                // If a non-node, non-array subnode changed, we don't be able to do a partial
-                // reconstructions, as we don't have enough offset information. Pretty print the
-                // whole node instead.
-                return $this->pFallback($fallbackNode);
+                [$printFn, $findToken] = $this->modifierChangeMap[$key];
+                $result .= $this->$printFn($subNode);
+                $pos = $this->origTokens->findRight($pos, $findToken);
+                continue;
             }
 
             $extraLeft = '';
@@ -680,23 +686,23 @@ abstract class PrettyPrinterAbstract
     /**
      * Perform a format-preserving pretty print of an array.
      *
-     * @param array       $nodes            New nodes
-     * @param array       $origNodes        Original nodes
+     * @param Node[]      $nodes            New nodes
+     * @param Node[]      $origNodes        Original nodes
      * @param int         $pos              Current token position (updated by reference)
      * @param int         $indentAdjustment Adjustment for indentation
-     * @param string      $parentNodeType   Type of the containing node.
+     * @param string      $parentNodeClass  Class of the containing node.
      * @param string      $subNodeName      Name of array subnode.
      * @param null|int    $fixup            Fixup information for array item nodes
      *
      * @return null|string Result of pretty print or null if cannot preserve formatting
      */
     protected function pArray(
-        array $nodes, array $origNodes, int &$pos, int $indentAdjustment,
-        string $parentNodeType, string $subNodeName, ?int $fixup
+        array  $nodes, array $origNodes, int &$pos, int $indentAdjustment,
+        string $parentNodeClass, string $subNodeName, ?int $fixup
     ): ?string {
         $diff = $this->nodeListDiffer->diffWithReplacements($origNodes, $nodes);
 
-        $mapKey = $parentNodeType . '->' . $subNodeName;
+        $mapKey = $parentNodeClass . '->' . $subNodeName;
         $insertStr = $this->listInsertionMap[$mapKey] ?? null;
         $isStmtList = $subNodeName === 'stmts';
 
@@ -727,9 +733,9 @@ abstract class PrettyPrinterAbstract
         $result = '';
         foreach ($diff as $i => $diffElem) {
             $diffType = $diffElem->type;
-            /** @var Node|null $arrItem */
+            /** @var Node|string|null $arrItem */
             $arrItem = $diffElem->new;
-            /** @var Node|null $origArrItem */
+            /** @var Node|string|null $origArrItem */
             $origArrItem = $diffElem->old;
 
             if ($diffType === DiffElem::TYPE_KEEP || $diffType === DiffElem::TYPE_REPLACE) {
@@ -768,7 +774,8 @@ abstract class PrettyPrinterAbstract
                 }
 
                 if ($skipRemovedNode) {
-                    if ($isStmtList && $this->origTokens->haveBracesInRange($pos, $itemStartPos)) {
+                    if ($isStmtList && ($this->origTokens->haveBracesInRange($pos, $itemStartPos) ||
+                                        $this->origTokens->haveTagInRange($pos, $itemStartPos))) {
                         // We'd remove the brace of a code block.
                         // TODO: Preserve formatting.
                         $this->setIndentLevel($origIndentLevel);
@@ -818,10 +825,17 @@ abstract class PrettyPrinterAbstract
                     return null;
                 }
 
+                if (!$arrItem instanceof Node) {
+                    // We only support list insertion of nodes.
+                    return null;
+                }
+
                 // We go multiline if the original code was multiline,
                 // or if it's an array item with a comment above it.
+                // Match always uses multiline formatting.
                 if ($insertStr === ', ' &&
-                    ($this->isMultiline($origNodes) || $arrItem->getComments())
+                    ($this->isMultiline($origNodes) || $arrItem->getComments() ||
+                     $parentNodeClass === Expr\Match_::class)
                 ) {
                     $insertStr = ',';
                     $insertNewline = true;
@@ -871,7 +885,8 @@ abstract class PrettyPrinterAbstract
                         $pos, $itemStartPos, $indentAdjustment);
                     $skipRemovedNode = true;
                 } else {
-                    if ($isStmtList && $this->origTokens->haveBracesInRange($pos, $itemStartPos)) {
+                    if ($isStmtList && ($this->origTokens->haveBracesInRange($pos, $itemStartPos) ||
+                                        $this->origTokens->haveTagInRange($pos, $itemStartPos))) {
                         // We'd remove the brace of a code block.
                         // TODO: Preserve formatting.
                         return null;
@@ -917,11 +932,14 @@ abstract class PrettyPrinterAbstract
             foreach ($delayedAdd as $delayedAddNode) {
                 if (!$first) {
                     $result .= $insertStr;
+                    if ($insertNewline) {
+                        $result .= $this->nl;
+                    }
                 }
                 $result .= $this->p($delayedAddNode, true);
                 $first = false;
             }
-            $result .= $extraRight;
+            $result .= $extraRight === "\n" ? $this->nl : $extraRight;
         }
 
         return $result;
@@ -942,7 +960,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return string Result of fixed-up print of subnode
      */
-    protected function pFixup(int $fixup, Node $subNode, ?string $parentClass, int $subStartPos, int $subEndPos) : string {
+    protected function pFixup(int $fixup, Node $subNode, ?string $parentClass, int $subStartPos, int $subEndPos): string {
         switch ($fixup) {
             case self::FIXUP_PREC_LEFT:
             case self::FIXUP_PREC_RIGHT:
@@ -976,7 +994,7 @@ abstract class PrettyPrinterAbstract
                 }
                 break;
             case self::FIXUP_ENCAPSED:
-                if (!$subNode instanceof Scalar\EncapsedStringPart
+                if (!$subNode instanceof Node\InterpolatedStringPart
                     && !$this->origTokens->haveBraces($subStartPos, $subEndPos)
                 ) {
                     return '{' . $this->p($subNode) . '}';
@@ -999,7 +1017,7 @@ abstract class PrettyPrinterAbstract
      * @param string $str
      * @param string $append
      */
-    protected function safeAppend(string &$str, string $append) {
+    protected function safeAppend(string &$str, string $append): void {
         if ($str === "") {
             $str = $append;
             return;
@@ -1024,7 +1042,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return bool Whether parentheses are required
      */
-    protected function callLhsRequiresParens(Node $node) : bool {
+    protected function callLhsRequiresParens(Node $node): bool {
         return !($node instanceof Node\Name
             || $node instanceof Expr\Variable
             || $node instanceof Expr\ArrayDimFetch
@@ -1042,7 +1060,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return bool Whether parentheses are required
      */
-    protected function dereferenceLhsRequiresParens(Node $node) : bool {
+    protected function dereferenceLhsRequiresParens(Node $node): bool {
         return !($node instanceof Expr\Variable
             || $node instanceof Node\Name
             || $node instanceof Expr\ArrayDimFetch
@@ -1067,13 +1085,17 @@ abstract class PrettyPrinterAbstract
      * @return string Printed modifiers
      */
     protected function pModifiers(int $modifiers): string {
-        return ($modifiers & Stmt\Class_::MODIFIER_FINAL     ? 'final '     : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_ABSTRACT  ? 'abstract '  : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_PUBLIC    ? 'public '    : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_PROTECTED ? 'protected ' : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_PRIVATE   ? 'private '   : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_STATIC    ? 'static '    : '')
-             . ($modifiers & Stmt\Class_::MODIFIER_READONLY  ? 'readonly '  : '');
+        return ($modifiers & Modifiers::FINAL ? 'final ' : '')
+             . ($modifiers & Modifiers::ABSTRACT ? 'abstract ' : '')
+             . ($modifiers & Modifiers::PUBLIC ? 'public ' : '')
+             . ($modifiers & Modifiers::PROTECTED ? 'protected ' : '')
+             . ($modifiers & Modifiers::PRIVATE ? 'private ' : '')
+             . ($modifiers & Modifiers::STATIC ? 'static ' : '')
+             . ($modifiers & Modifiers::READONLY ? 'readonly ' : '');
+    }
+
+    protected function pStatic(bool $static): string {
+        return $static ? 'static ' : '';
     }
 
     /**
@@ -1083,7 +1105,7 @@ abstract class PrettyPrinterAbstract
      *
      * @return bool Whether multiline formatting is used
      */
-    protected function isMultiline(array $nodes) : bool {
+    protected function isMultiline(array $nodes): bool {
         if (\count($nodes) < 2) {
             return false;
         }
@@ -1115,8 +1137,10 @@ abstract class PrettyPrinterAbstract
      *
      * The label char map determines whether a certain character may occur in a label.
      */
-    protected function initializeLabelCharMap() {
-        if ($this->labelCharMap) return;
+    protected function initializeLabelCharMap(): void {
+        if ($this->labelCharMap) {
+            return;
+        }
 
         $this->labelCharMap = [];
         for ($i = 0; $i < 256; $i++) {
@@ -1132,8 +1156,10 @@ abstract class PrettyPrinterAbstract
      *
      * The node list differ is used to determine differences between two array subnodes.
      */
-    protected function initializeNodeListDiffer() {
-        if ($this->nodeListDiffer) return;
+    protected function initializeNodeListDiffer(): void {
+        if ($this->nodeListDiffer) {
+            return;
+        }
 
         $this->nodeListDiffer = new Internal\Differ(function ($a, $b) {
             if ($a instanceof Node && $b instanceof Node) {
@@ -1150,8 +1176,10 @@ abstract class PrettyPrinterAbstract
      * The fixup map is used to determine whether a certain subnode of a certain node may require
      * some kind of "fixup" operation, e.g. the addition of parenthesis or braces.
      */
-    protected function initializeFixupMap() {
-        if ($this->fixupMap) return;
+    protected function initializeFixupMap(): void {
+        if ($this->fixupMap) {
+            return;
+        }
 
         $this->fixupMap = [
             Expr\Instanceof_::class => [
@@ -1188,7 +1216,7 @@ abstract class PrettyPrinterAbstract
                 'var' => self::FIXUP_DEREF_LHS,
                 'name' => self::FIXUP_BRACED_NAME,
             ],
-            Scalar\Encapsed::class => [
+            Scalar\InterpolatedString::class => [
                 'parts' => self::FIXUP_ENCAPSED,
             ],
         ];
@@ -1232,8 +1260,10 @@ abstract class PrettyPrinterAbstract
      * The removal map is used to determine which additional tokens should be removed when a
      * certain node is replaced by null.
      */
-    protected function initializeRemovalMap() {
-        if ($this->removalMap) return;
+    protected function initializeRemovalMap(): void {
+        if ($this->removalMap) {
+            return;
+        }
 
         $stripBoth = ['left' => \T_WHITESPACE, 'right' => \T_WHITESPACE];
         $stripLeft = ['left' => \T_WHITESPACE];
@@ -1243,7 +1273,7 @@ abstract class PrettyPrinterAbstract
         $stripEquals = ['left' => '='];
         $this->removalMap = [
             'Expr_ArrayDimFetch->dim' => $stripBoth,
-            'Expr_ArrayItem->key' => $stripDoubleArrow,
+            'ArrayItem->key' => $stripDoubleArrow,
             'Expr_ArrowFunction->returnType' => $stripColon,
             'Expr_Closure->returnType' => $stripColon,
             'Expr_Exit->expr' => $stripBoth,
@@ -1265,7 +1295,7 @@ abstract class PrettyPrinterAbstract
             'Stmt_If->else' => $stripLeft,
             'Stmt_Namespace->name' => $stripLeft,
             'Stmt_Property->type' => $stripRight,
-            'Stmt_PropertyProperty->default' => $stripEquals,
+            'PropertyItem->default' => $stripEquals,
             'Stmt_Return->expr' => $stripBoth,
             'Stmt_StaticVar->default' => $stripEquals,
             'Stmt_TraitUseAdaptation_Alias->newName' => $stripLeft,
@@ -1277,14 +1307,16 @@ abstract class PrettyPrinterAbstract
         ];
     }
 
-    protected function initializeInsertionMap() {
-        if ($this->insertionMap) return;
+    protected function initializeInsertionMap(): void {
+        if ($this->insertionMap) {
+            return;
+        }
 
         // TODO: "yield" where both key and value are inserted doesn't work
         // [$find, $beforeToken, $extraLeft, $extraRight]
         $this->insertionMap = [
             'Expr_ArrayDimFetch->dim' => ['[', false, null, null],
-            'Expr_ArrayItem->key' => [null, false, null, ' => '],
+            'ArrayItem->key' => [null, false, null, ' => '],
             'Expr_ArrowFunction->returnType' => [')', false, ': ', null],
             'Expr_Closure->returnType' => [')', false, ': ', null],
             'Expr_Ternary->if' => ['?', false, ' ', ' '],
@@ -1298,14 +1330,14 @@ abstract class PrettyPrinterAbstract
             'Stmt_Class->extends' => [null, false, ' extends ', null],
             'Stmt_Enum->scalarType' => [null, false, ' : ', null],
             'Stmt_EnumCase->expr' => [null, false, ' = ', null],
-            'Expr_PrintableNewAnonClass->extends' => [null, ' extends ', null],
+            'Expr_PrintableNewAnonClass->extends' => [null, false, ' extends ', null],
             'Stmt_Continue->num' => [\T_CONTINUE, false, ' ', null],
             'Stmt_Foreach->keyVar' => [\T_AS, false, null, ' => '],
             'Stmt_Function->returnType' => [')', false, ': ', null],
             'Stmt_If->else' => [null, false, ' ', null],
             'Stmt_Namespace->name' => [\T_NAMESPACE, false, ' ', null],
             'Stmt_Property->type' => [\T_VARIABLE, true, null, ' '],
-            'Stmt_PropertyProperty->default' => [null, false, ' = ', null],
+            'PropertyItem->default' => [null, false, ' = ', null],
             'Stmt_Return->expr' => [\T_RETURN, false, ' ', null],
             'Stmt_StaticVar->default' => [null, false, ' = ', null],
             //'Stmt_TraitUseAdaptation_Alias->newName' => [T_AS, false, ' ', null], // TODO
@@ -1319,122 +1351,138 @@ abstract class PrettyPrinterAbstract
         ];
     }
 
-    protected function initializeListInsertionMap() {
-        if ($this->listInsertionMap) return;
+    protected function initializeListInsertionMap(): void {
+        if ($this->listInsertionMap) {
+            return;
+        }
 
         $this->listInsertionMap = [
             // special
             //'Expr_ShellExec->parts' => '', // TODO These need to be treated more carefully
-            //'Scalar_Encapsed->parts' => '',
-            'Stmt_Catch->types' => '|',
-            'UnionType->types' => '|',
-            'IntersectionType->types' => '&',
-            'Stmt_If->elseifs' => ' ',
-            'Stmt_TryCatch->catches' => ' ',
+            //'Scalar_InterpolatedString->parts' => '',
+            Stmt\Catch_::class . '->types' => '|',
+            UnionType::class . '->types' => '|',
+            IntersectionType::class . '->types' => '&',
+            Stmt\If_::class . '->elseifs' => ' ',
+            Stmt\TryCatch::class . '->catches' => ' ',
 
             // comma-separated lists
-            'Expr_Array->items' => ', ',
-            'Expr_ArrowFunction->params' => ', ',
-            'Expr_Closure->params' => ', ',
-            'Expr_Closure->uses' => ', ',
-            'Expr_FuncCall->args' => ', ',
-            'Expr_Isset->vars' => ', ',
-            'Expr_List->items' => ', ',
-            'Expr_MethodCall->args' => ', ',
-            'Expr_NullsafeMethodCall->args' => ', ',
-            'Expr_New->args' => ', ',
-            'Expr_PrintableNewAnonClass->args' => ', ',
-            'Expr_StaticCall->args' => ', ',
-            'Stmt_ClassConst->consts' => ', ',
-            'Stmt_ClassMethod->params' => ', ',
-            'Stmt_Class->implements' => ', ',
-            'Stmt_Enum->implements' => ', ',
-            'Expr_PrintableNewAnonClass->implements' => ', ',
-            'Stmt_Const->consts' => ', ',
-            'Stmt_Declare->declares' => ', ',
-            'Stmt_Echo->exprs' => ', ',
-            'Stmt_For->init' => ', ',
-            'Stmt_For->cond' => ', ',
-            'Stmt_For->loop' => ', ',
-            'Stmt_Function->params' => ', ',
-            'Stmt_Global->vars' => ', ',
-            'Stmt_GroupUse->uses' => ', ',
-            'Stmt_Interface->extends' => ', ',
-            'Stmt_Match->arms' => ', ',
-            'Stmt_Property->props' => ', ',
-            'Stmt_StaticVar->vars' => ', ',
-            'Stmt_TraitUse->traits' => ', ',
-            'Stmt_TraitUseAdaptation_Precedence->insteadof' => ', ',
-            'Stmt_Unset->vars' => ', ',
-            'Stmt_Use->uses' => ', ',
-            'MatchArm->conds' => ', ',
-            'AttributeGroup->attrs' => ', ',
+            Expr\Array_::class . '->items' => ', ',
+            Expr\ArrowFunction::class . '->params' => ', ',
+            Expr\Closure::class . '->params' => ', ',
+            Expr\Closure::class . '->uses' => ', ',
+            Expr\FuncCall::class . '->args' => ', ',
+            Expr\Isset_::class . '->vars' => ', ',
+            Expr\List_::class . '->items' => ', ',
+            Expr\MethodCall::class . '->args' => ', ',
+            Expr\NullsafeMethodCall::class . '->args' => ', ',
+            Expr\New_::class . '->args' => ', ',
+            PrintableNewAnonClassNode::class . '->args' => ', ',
+            Expr\StaticCall::class . '->args' => ', ',
+            Stmt\ClassConst::class . '->consts' => ', ',
+            Stmt\ClassMethod::class . '->params' => ', ',
+            Stmt\Class_::class . '->implements' => ', ',
+            Stmt\Enum_::class . '->implements' => ', ',
+            PrintableNewAnonClassNode::class . '->implements' => ', ',
+            Stmt\Const_::class . '->consts' => ', ',
+            Stmt\Declare_::class . '->declares' => ', ',
+            Stmt\Echo_::class . '->exprs' => ', ',
+            Stmt\For_::class . '->init' => ', ',
+            Stmt\For_::class . '->cond' => ', ',
+            Stmt\For_::class . '->loop' => ', ',
+            Stmt\Function_::class . '->params' => ', ',
+            Stmt\Global_::class . '->vars' => ', ',
+            Stmt\GroupUse::class . '->uses' => ', ',
+            Stmt\Interface_::class . '->extends' => ', ',
+            Expr\Match_::class . '->arms' => ', ',
+            Stmt\Property::class . '->props' => ', ',
+            Stmt\StaticVar::class . '->vars' => ', ',
+            Stmt\TraitUse::class . '->traits' => ', ',
+            Stmt\TraitUseAdaptation\Precedence::class . '->insteadof' => ', ',
+            Stmt\Unset_::class .  '->vars' => ', ',
+            Stmt\UseUse::class . '->uses' => ', ',
+            MatchArm::class . '->conds' => ', ',
+            AttributeGroup::class . '->attrs' => ', ',
 
             // statement lists
-            'Expr_Closure->stmts' => "\n",
-            'Stmt_Case->stmts' => "\n",
-            'Stmt_Catch->stmts' => "\n",
-            'Stmt_Class->stmts' => "\n",
-            'Stmt_Enum->stmts' => "\n",
-            'Expr_PrintableNewAnonClass->stmts' => "\n",
-            'Stmt_Interface->stmts' => "\n",
-            'Stmt_Trait->stmts' => "\n",
-            'Stmt_ClassMethod->stmts' => "\n",
-            'Stmt_Declare->stmts' => "\n",
-            'Stmt_Do->stmts' => "\n",
-            'Stmt_ElseIf->stmts' => "\n",
-            'Stmt_Else->stmts' => "\n",
-            'Stmt_Finally->stmts' => "\n",
-            'Stmt_Foreach->stmts' => "\n",
-            'Stmt_For->stmts' => "\n",
-            'Stmt_Function->stmts' => "\n",
-            'Stmt_If->stmts' => "\n",
-            'Stmt_Namespace->stmts' => "\n",
-            'Stmt_Class->attrGroups' => "\n",
-            'Stmt_Enum->attrGroups' => "\n",
-            'Stmt_EnumCase->attrGroups' => "\n",
-            'Stmt_Interface->attrGroups' => "\n",
-            'Stmt_Trait->attrGroups' => "\n",
-            'Stmt_Function->attrGroups' => "\n",
-            'Stmt_ClassMethod->attrGroups' => "\n",
-            'Stmt_ClassConst->attrGroups' => "\n",
-            'Stmt_Property->attrGroups' => "\n",
-            'Expr_PrintableNewAnonClass->attrGroups' => ' ',
-            'Expr_Closure->attrGroups' => ' ',
-            'Expr_ArrowFunction->attrGroups' => ' ',
-            'Param->attrGroups' => ' ',
-            'Stmt_Switch->cases' => "\n",
-            'Stmt_TraitUse->adaptations' => "\n",
-            'Stmt_TryCatch->stmts' => "\n",
-            'Stmt_While->stmts' => "\n",
+            Expr\Closure::class . '->stmts' => "\n",
+            Stmt\Case_::class . '->stmts' => "\n",
+            Stmt\Catch_::class . '->stmts' => "\n",
+            Stmt\Class_::class . '->stmts' => "\n",
+            Stmt\Enum_::class . '->stmts' => "\n",
+            PrintableNewAnonClassNode::class . '->stmts' => "\n",
+            Stmt\Interface_::class . '->stmts' => "\n",
+            Stmt\Trait_::class . '->stmts' => "\n",
+            Stmt\ClassMethod::class . '->stmts' => "\n",
+            Stmt\Declare_::class . '->stmts' => "\n",
+            Stmt\Do_::class . '->stmts' => "\n",
+            Stmt\ElseIf_::class . '->stmts' => "\n",
+            Stmt\Else_::class . '->stmts' => "\n",
+            Stmt\Finally_::class . '->stmts' => "\n",
+            Stmt\Foreach_::class . '->stmts' => "\n",
+            Stmt\For_::class . '->stmts' => "\n",
+            Stmt\Function_::class . '->stmts' => "\n",
+            Stmt\If_::class . '->stmts' => "\n",
+            Stmt\Namespace_::class . '->stmts' => "\n",
+
+            // Attribute groups
+            Stmt\Class_::class . '->attrGroups' => "\n",
+            Stmt\Enum_::class . '->attrGroups' => "\n",
+            Stmt\EnumCase::class . '->attrGroups' => "\n",
+            Stmt\Interface_::class . '->attrGroups' => "\n",
+            Stmt\Trait_::class . '->attrGroups' => "\n",
+            Stmt\Function_::class . '->attrGroups' => "\n",
+            Stmt\ClassMethod::class . '->attrGroups' => "\n",
+            Stmt\ClassConst::class . '->attrGroups' => "\n",
+            Stmt\Property::class . '->attrGroups' => "\n",
+            PrintableNewAnonClassNode::class . '->attrGroups' => ' ',
+            Expr\Closure::class . '->attrGroups' => ' ',
+            Expr\ArrowFunction::class . '->attrGroups' => ' ',
+            Param::class . '->attrGroups' => ' ',
+            Stmt\Switch_::class . '->cases' => "\n",
+            Stmt\TraitUse::class . '->adaptations' => "\n",
+            Stmt\TryCatch::class . '->stmts' => "\n",
+            Stmt\While_::class . '->stmts' => "\n",
 
             // dummy for top-level context
             'File->stmts' => "\n",
         ];
     }
 
-    protected function initializeEmptyListInsertionMap() {
-        if ($this->emptyListInsertionMap) return;
+    protected function initializeEmptyListInsertionMap(): void {
+        if ($this->emptyListInsertionMap) {
+            return;
+        }
 
         // TODO Insertion into empty statement lists.
 
         // [$find, $extraLeft, $extraRight]
         $this->emptyListInsertionMap = [
-            'Expr_ArrowFunction->params' => ['(', '', ''],
-            'Expr_Closure->uses' => [')', ' use (', ')'],
-            'Expr_Closure->params' => ['(', '', ''],
-            'Expr_FuncCall->args' => ['(', '', ''],
-            'Expr_MethodCall->args' => ['(', '', ''],
-            'Expr_NullsafeMethodCall->args' => ['(', '', ''],
-            'Expr_New->args' => ['(', '', ''],
-            'Expr_PrintableNewAnonClass->args' => ['(', '', ''],
-            'Expr_PrintableNewAnonClass->implements' => [null, ' implements ', ''],
-            'Expr_StaticCall->args' => ['(', '', ''],
-            'Stmt_Class->implements' => [null, ' implements ', ''],
-            'Stmt_Enum->implements' => [null, ' implements ', ''],
-            'Stmt_ClassMethod->params' => ['(', '', ''],
-            'Stmt_Interface->extends' => [null, ' extends ', ''],
-            'Stmt_Function->params' => ['(', '', ''],
+            Expr\ArrowFunction::class . '->params' => ['(', '', ''],
+            Expr\Closure::class . '->uses' => [')', ' use (', ')'],
+            Expr\Closure::class . '->params' => ['(', '', ''],
+            Expr\FuncCall::class . '->args' => ['(', '', ''],
+            Expr\MethodCall::class . '->args' => ['(', '', ''],
+            Expr\NullsafeMethodCall::class . '->args' => ['(', '', ''],
+            Expr\New_::class . '->args' => ['(', '', ''],
+            PrintableNewAnonClassNode::class . '->args' => ['(', '', ''],
+            PrintableNewAnonClassNode::class . '->implements' => [null, ' implements ', ''],
+            Expr\StaticCall::class . '->args' => ['(', '', ''],
+            Stmt\Class_::class . '->implements' => [null, ' implements ', ''],
+            Stmt\Enum_::class . '->implements' => [null, ' implements ', ''],
+            Stmt\ClassMethod::class . '->params' => ['(', '', ''],
+            Stmt\Interface_::class . '->extends' => [null, ' extends ', ''],
+            Stmt\Function_::class . '->params' => ['(', '', ''],
+            Stmt\Interface_::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\Class_::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\ClassConst::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\ClassMethod::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\Function_::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\Property::class . '->attrGroups' => [null, '', "\n"],
+            Stmt\Trait_::class . '->attrGroups' => [null, '', "\n"],
+            Expr\ArrowFunction::class . '->attrGroups' => [null, '', ' '],
+            Expr\Closure::class . '->attrGroups' => [null, '', ' '],
+            PrintableNewAnonClassNode::class . '->attrGroups' => [\T_NEW, ' ', ''],
 
             /* These cannot be empty to start with:
              * Expr_Isset->vars
@@ -1466,22 +1514,26 @@ abstract class PrettyPrinterAbstract
         ];
     }
 
-    protected function initializeModifierChangeMap() {
-        if ($this->modifierChangeMap) return;
+    protected function initializeModifierChangeMap(): void {
+        if ($this->modifierChangeMap) {
+            return;
+        }
 
         $this->modifierChangeMap = [
-            'Stmt_ClassConst->flags' => \T_CONST,
-            'Stmt_ClassMethod->flags' => \T_FUNCTION,
-            'Stmt_Class->flags' => \T_CLASS,
-            'Stmt_Property->flags' => \T_VARIABLE,
-            'Param->flags' => \T_VARIABLE,
-            //'Stmt_TraitUseAdaptation_Alias->newModifier' => 0, // TODO
+            Stmt\ClassConst::class . '->flags' => ['pModifiers', \T_CONST],
+            Stmt\ClassMethod::class . '->flags' => ['pModifiers', \T_FUNCTION],
+            Stmt\Class_::class . '->flags' => ['pModifiers', \T_CLASS],
+            Stmt\Property::class . '->flags' => ['pModifiers', \T_VARIABLE],
+            Param::class . '->flags' => ['pModifiers', \T_VARIABLE],
+            Expr\Closure::class . '->static' => ['pStatic', \T_FUNCTION],
+            Expr\ArrowFunction::class . '->static' => ['pStatic', \T_FN],
+            //Stmt\TraitUseAdaptation\Alias::class . '->newModifier' => 0, // TODO
         ];
 
         // List of integer subnodes that are not modifiers:
         // Expr_Include->type
         // Stmt_GroupUse->type
         // Stmt_Use->type
-        // Stmt_UseUse->type
+        // UseItem->type
     }
 }

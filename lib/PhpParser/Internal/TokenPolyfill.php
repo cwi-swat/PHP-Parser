@@ -3,7 +3,8 @@
 namespace PhpParser\Internal;
 
 if (\PHP_VERSION_ID >= 80000) {
-    class TokenPolyfill extends \PhpToken {}
+    class TokenPolyfill extends \PhpToken {
+    }
     return;
 }
 
@@ -24,7 +25,7 @@ class TokenPolyfill {
     /** @var int The 0-based starting position of the token (or -1 if unknown). */
     public $pos;
 
-    /** @var bool[] Tokens ignored by the PHP parser. */
+    /** @var array<int, bool> Tokens ignored by the PHP parser. */
     private const IGNORABLE_TOKENS = [
         \T_WHITESPACE => true,
         \T_COMMENT => true,
@@ -32,7 +33,7 @@ class TokenPolyfill {
         \T_OPEN_TAG => true,
     ];
 
-    /** @var bool[] Tokens that may be part of a T_NAME_* identifier. */
+    /** @var array<int, bool>|null Tokens that may be part of a T_NAME_* identifier. */
     private static $identifierTokens;
 
     /**
@@ -63,7 +64,7 @@ class TokenPolyfill {
      * the token ID, a string that matches the token text, or an array of integers/strings. In the
      * latter case, the function returns true if any of the kinds in the array match.
      *
-     * @param int|string|array $kind
+     * @param int|string|(int|string)[] $kind
      */
     public function is($kind): bool {
         if (\is_int($kind)) {
@@ -78,7 +79,7 @@ class TokenPolyfill {
                     if ($this->id === $entry) {
                         return true;
                     }
-                } else if (\is_string($entry)) {
+                } elseif (\is_string($entry)) {
                     if ($this->text === $entry) {
                         return true;
                     }
@@ -118,7 +119,7 @@ class TokenPolyfill {
      *    T_WHITESPACE token.
      *  * Namespaced names are represented using T_NAME_* tokens.
      *
-     * @returns static[]
+     * @return static[]
      */
     public static function tokenize(string $code, int $flags = 0): array {
         self::init();
@@ -196,7 +197,7 @@ class TokenPolyfill {
                     if ($j > $i + 1) {
                         if ($id === \T_NS_SEPARATOR) {
                             $id = \T_NAME_FULLY_QUALIFIED;
-                        } else if ($id === \T_NAMESPACE) {
+                        } elseif ($id === \T_NAMESPACE) {
                             $id = \T_NAME_RELATIVE;
                         } else {
                             $id = \T_NAME_QUALIFIED;

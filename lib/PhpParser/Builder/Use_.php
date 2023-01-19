@@ -7,10 +7,12 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class Use_ implements Builder
-{
+class Use_ implements Builder {
+    /** @var Node\Name */
     protected $name;
+    /** @var int */
     protected $type;
+    /** @var string|null */
     protected $alias = null;
 
     /**
@@ -41,9 +43,9 @@ class Use_ implements Builder
      *
      * @return Stmt\Use_ The built node
      */
-    public function getNode() : Node {
+    public function getNode(): Node {
         return new Stmt\Use_([
-            new Stmt\UseUse($this->name, $this->alias)
+            new Node\UseItem($this->name, $this->alias)
         ], $this->type);
     }
 }

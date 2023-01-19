@@ -6,20 +6,18 @@ use PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 
-class Param implements PhpParser\Builder
-{
+class Param implements PhpParser\Builder {
+    /** @var string */
     protected $name;
-
+    /** @var Node\Expr|null */
     protected $default = null;
-
-    /** @var Node\Identifier|Node\Name|Node\NullableType|null */
+    /** @var Node\Identifier|Node\Name|Node\ComplexType|null */
     protected $type = null;
-
+    /** @var bool */
     protected $byRef = false;
-
+    /** @var bool */
     protected $variadic = false;
-
-    /** @var Node\AttributeGroup[] */
+    /** @var list<Node\AttributeGroup> */
     protected $attributeGroups = [];
 
     /**
@@ -100,7 +98,7 @@ class Param implements PhpParser\Builder
      *
      * @return Node\Param The built parameter node
      */
-    public function getNode() : Node {
+    public function getNode(): Node {
         return new Node\Param(
             new Node\Expr\Variable($this->name),
             $this->default, $this->type, $this->byRef, $this->variadic, [], 0, $this->attributeGroups

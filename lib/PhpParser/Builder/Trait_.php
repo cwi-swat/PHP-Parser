@@ -7,14 +7,18 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class Trait_ extends Declaration
-{
+class Trait_ extends Declaration {
+    /** @var string */
     protected $name;
+    /** @var list<Stmt\TraitUse> */
     protected $uses = [];
+    /** @var list<Stmt\ClassConst> */
+    protected $constants = [];
+    /** @var list<Stmt\Property> */
     protected $properties = [];
+    /** @var list<Stmt\ClassMethod> */
     protected $methods = [];
-
-    /** @var Node\AttributeGroup[] */
+    /** @var list<Node\AttributeGroup> */
     protected $attributeGroups = [];
 
     /**
@@ -42,6 +46,8 @@ class Trait_ extends Declaration
             $this->methods[] = $stmt;
         } elseif ($stmt instanceof Stmt\TraitUse) {
             $this->uses[] = $stmt;
+        } elseif ($stmt instanceof Stmt\ClassConst) {
+            $this->constants[] = $stmt;
         } else {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
@@ -67,10 +73,10 @@ class Trait_ extends Declaration
      *
      * @return Stmt\Trait_ The built interface node
      */
-    public function getNode() : PhpParser\Node {
+    public function getNode(): PhpParser\Node {
         return new Stmt\Trait_(
             $this->name, [
-                'stmts' => array_merge($this->uses, $this->properties, $this->methods),
+                'stmts' => array_merge($this->uses, $this->constants, $this->properties, $this->methods),
                 'attrGroups' => $this->attributeGroups,
             ], $this->attributes
         );

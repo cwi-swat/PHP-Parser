@@ -8,8 +8,7 @@ use PhpParser\LexerTest;
 
 require __DIR__ . '/../../../lib/PhpParser/compatibility_tokens.php';
 
-class EmulativeTest extends LexerTest
-{
+class EmulativeTest extends LexerTest {
     protected function getLexer(array $options = []) {
         return new Emulative($options);
     }
@@ -133,7 +132,7 @@ class EmulativeTest extends LexerTest
      * @dataProvider provideTestLexNewFeatures
      */
     public function testErrorAfterEmulation($code) {
-        $errorHandler = new ErrorHandler\Collecting;
+        $errorHandler = new ErrorHandler\Collecting();
         $lexer = $this->getLexer();
         $lexer->startLexing('<?php ' . $code . "\0", $errorHandler);
 
@@ -242,8 +241,8 @@ class EmulativeTest extends LexerTest
             ['1_000', [
                 [\T_LNUMBER, '1_000'],
             ]],
-            ['0xCAFE_F00D', [
-                [\T_LNUMBER, '0xCAFE_F00D'],
+            ['0x7AFE_F00D', [
+                [\T_LNUMBER, '0x7AFE_F00D'],
             ]],
             ['0b0101_1111', [
                 [\T_LNUMBER, '0b0101_1111'],
@@ -361,12 +360,12 @@ class EmulativeTest extends LexerTest
             ]],
             ['function readonly(', [
                 [\T_FUNCTION, 'function'],
-                [\T_STRING, 'readonly'],
+                [\T_READONLY, 'readonly'],
                 [ord('('), '('],
             ]],
             ['function readonly (', [
                 [\T_FUNCTION, 'function'],
-                [\T_STRING, 'readonly'],
+                [\T_READONLY, 'readonly'],
                 [ord('('), '('],
             ]],
         ];

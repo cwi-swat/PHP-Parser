@@ -7,9 +7,10 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class Namespace_ extends Declaration
-{
+class Namespace_ extends Declaration {
+    /** @var Node\Name|null */
     private $name;
+    /** @var Stmt[] */
     private $stmts = [];
 
     /**
@@ -39,7 +40,7 @@ class Namespace_ extends Declaration
      *
      * @return Stmt\Namespace_ The built node
      */
-    public function getNode() : Node {
+    public function getNode(): Node {
         return new Stmt\Namespace_($this->name, $this->stmts, $this->attributes);
     }
 }

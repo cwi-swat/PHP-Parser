@@ -2,8 +2,7 @@
 
 namespace PhpParser;
 
-class NodeTraverser implements NodeTraverserInterface
-{
+class NodeTraverser implements NodeTraverserInterface {
     /**
      * If NodeVisitor::enterNode() returns DONT_TRAVERSE_CHILDREN, child nodes
      * of the current node will not be traversed for any visitors.
@@ -39,7 +38,7 @@ class NodeTraverser implements NodeTraverserInterface
      */
     public const DONT_TRAVERSE_CURRENT_AND_CHILDREN = 4;
 
-    /** @var NodeVisitor[] Visitors */
+    /** @var list<NodeVisitor> Visitors */
     protected $visitors = [];
 
     /** @var bool Whether traversal should be stopped */
@@ -54,7 +53,7 @@ class NodeTraverser implements NodeTraverserInterface
      *
      * @param NodeVisitor $visitor Visitor to add
      */
-    public function addVisitor(NodeVisitor $visitor) {
+    public function addVisitor(NodeVisitor $visitor): void {
         $this->visitors[] = $visitor;
     }
 
@@ -63,7 +62,7 @@ class NodeTraverser implements NodeTraverserInterface
      *
      * @param NodeVisitor $visitor
      */
-    public function removeVisitor(NodeVisitor $visitor) {
+    public function removeVisitor(NodeVisitor $visitor): void {
         foreach ($this->visitors as $index => $storedVisitor) {
             if ($storedVisitor === $visitor) {
                 unset($this->visitors[$index]);
@@ -79,7 +78,7 @@ class NodeTraverser implements NodeTraverserInterface
      *
      * @return Node[] Traversed array of nodes
      */
-    public function traverse(array $nodes) : array {
+    public function traverse(array $nodes): array {
         $this->stopTraversal = false;
 
         foreach ($this->visitors as $visitor) {
@@ -106,7 +105,7 @@ class NodeTraverser implements NodeTraverserInterface
      *
      * @return Node Result of traversal (may be original node or new one)
      */
-    protected function traverseNode(Node $node) : Node {
+    protected function traverseNode(Node $node): Node {
         foreach ($node->getSubNodeNames() as $name) {
             $subNode =& $node->$name;
 
@@ -188,7 +187,7 @@ class NodeTraverser implements NodeTraverserInterface
      *
      * @return array Result of traversal (may be original array or changed one)
      */
-    protected function traverseArray(array $nodes) : array {
+    protected function traverseArray(array $nodes): array {
         $doNodes = [];
 
         foreach ($nodes as $i => &$node) {
@@ -202,6 +201,12 @@ class NodeTraverser implements NodeTraverserInterface
                         if ($return instanceof Node) {
                             $this->ensureReplacementReasonable($node, $return);
                             $node = $return;
+                        } elseif (\is_array($return)) {
+                            $doNodes[] = [$i, $return];
+                            continue 2;
+                        } elseif (self::REMOVE_NODE === $return) {
+                            $doNodes[] = [$i, []];
+                            continue 2;
                         } elseif (self::DONT_TRAVERSE_CHILDREN === $return) {
                             $traverseChildren = false;
                         } elseif (self::DONT_TRAVERSE_CURRENT_AND_CHILDREN === $return) {
@@ -242,11 +247,6 @@ class NodeTraverser implements NodeTraverserInterface
                         } elseif (self::STOP_TRAVERSAL === $return) {
                             $this->stopTraversal = true;
                             break 2;
-                        } elseif (false === $return) {
-                            throw new \LogicException(
-                                'bool(false) return from leaveNode() no longer supported. ' .
-                                'Return NodeTraverser::REMOVE_NODE instead'
-                            );
                         } else {
                             throw new \LogicException(
                                 'leaveNode() returned invalid value of type ' . gettype($return)
@@ -272,7 +272,7 @@ class NodeTraverser implements NodeTraverserInterface
         return $nodes;
     }
 
-    private function ensureReplacementReasonable($old, $new) {
+    private function ensureReplacementReasonable(Node $old, Node $new): void {
         if ($old instanceof Node\Stmt && $new instanceof Node\Expr) {
             throw new \LogicException(
                 "Trying to replace statement ({$old->getType()}) " .

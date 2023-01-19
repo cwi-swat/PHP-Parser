@@ -4,8 +4,7 @@ namespace PhpParser\Node\Expr;
 
 use PhpParser\Node\Expr;
 
-class Assign extends Expr
-{
+class Assign extends Expr {
     /** @var Expr Variable */
     public $var;
     /** @var Expr Expression */
@@ -16,7 +15,7 @@ class Assign extends Expr
      *
      * @param Expr  $var        Variable
      * @param Expr  $expr       Expression
-     * @param array $attributes Additional attributes
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Expr $var, Expr $expr, array $attributes = []) {
         $this->attributes = $attributes;
@@ -24,11 +23,11 @@ class Assign extends Expr
         $this->expr = $expr;
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['var', 'expr'];
     }
-    
-    public function getType() : string {
+
+    public function getType(): string {
         return 'Expr_Assign';
     }
 }

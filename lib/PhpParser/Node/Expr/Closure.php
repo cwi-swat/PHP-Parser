@@ -7,8 +7,7 @@ use PhpParser\Node\ClosureUse;
 use PhpParser\Node\Expr;
 use PhpParser\Node\FunctionLike;
 
-class Closure extends Expr implements FunctionLike
-{
+class Closure extends Expr implements FunctionLike {
     /** @var bool Whether the closure is static */
     public $static;
     /** @var bool Whether to return by reference */
@@ -27,15 +26,23 @@ class Closure extends Expr implements FunctionLike
     /**
      * Constructs a lambda function node.
      *
-     * @param array $subNodes   Array of the following optional subnodes:
-     *                          'static'     => false  : Whether the closure is static
-     *                          'byRef'      => false  : Whether to return by reference
-     *                          'params'     => array(): Parameters
-     *                          'uses'       => array(): use()s
-     *                          'returnType' => null   : Return type
-     *                          'stmts'      => array(): Statements
-     *                          'attrGroups' => array(): PHP attributes groups
-     * @param array $attributes Additional attributes
+     * @param array{
+     *     static?: bool,
+     *     byRef?: bool,
+     *     params?: Node\Param[],
+     *     uses?: ClosureUse[],
+     *     returnType?: null|string|Node\Identifier|Node\Name|Node\ComplexType,
+     *     stmts?: Node\Stmt[],
+     *     attrGroups?: Node\AttributeGroup[],
+     * } $subNodes Array of the following optional subnodes:
+     *             'static'     => false  : Whether the closure is static
+     *             'byRef'      => false  : Whether to return by reference
+     *             'params'     => array(): Parameters
+     *             'uses'       => array(): use()s
+     *             'returnType' => null   : Return type
+     *             'stmts'      => array(): Statements
+     *             'attrGroups' => array(): PHP attributes groups
+     * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(array $subNodes = [], array $attributes = []) {
         $this->attributes = $attributes;
@@ -49,15 +56,15 @@ class Closure extends Expr implements FunctionLike
         $this->attrGroups = $subNodes['attrGroups'] ?? [];
     }
 
-    public function getSubNodeNames() : array {
+    public function getSubNodeNames(): array {
         return ['attrGroups', 'static', 'byRef', 'params', 'uses', 'returnType', 'stmts'];
     }
 
-    public function returnsByRef() : bool {
+    public function returnsByRef(): bool {
         return $this->byRef;
     }
 
-    public function getParams() : array {
+    public function getParams(): array {
         return $this->params;
     }
 
@@ -66,15 +73,15 @@ class Closure extends Expr implements FunctionLike
     }
 
     /** @return Node\Stmt[] */
-    public function getStmts() : array {
+    public function getStmts(): array {
         return $this->stmts;
     }
 
-    public function getAttrGroups() : array {
+    public function getAttrGroups(): array {
         return $this->attrGroups;
     }
 
-    public function getType() : string {
+    public function getType(): string {
         return 'Expr_Closure';
     }
 }
