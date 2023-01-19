@@ -162,21 +162,21 @@ class RascalPrinter extends BasePrinter
     {
         if ($this->projectName != "") {
             if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
-                return "@at=|project://{$this->projectName}/{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
+                return "at=|project://{$this->projectName}/{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
-                return "@at=|project://{$this->projectName}/{$this->filename}|";
+                return "at=|project://{$this->projectName}/{$this->filename}|";
             }
         } elseif ($this->relativeLocations) {
             if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
-                return "@at=|home://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
+                return "at=|home://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
-                return "@at=|home://{$this->filename}|";
+                return "at=|home://{$this->filename}|";
             }
         } else {
             if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
-                return "@at=|file://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
+                return "at=|file://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
-                return "@at=|file://{$this->filename}|";
+                return "at=|file://{$this->filename}|";
             }
         }
     }
@@ -1169,7 +1169,7 @@ class RascalPrinter extends BasePrinter
         } else {
             $ns = $this->currentNamespace;
             $currentClass = strlen($ns) > 0 ? $ns . "\\\\" . $this->currentClass : $this->currentClass;
-            $fragment = "classConstant()[@actualValue=\"{$this->rascalizeString($currentClass)}\"]";
+            $fragment = "classConstant()[actualValue=\"{$this->rascalizeString($currentClass)}\"]";
         }
         $fragment = "scalar(" . $fragment . ")";
         $fragment .= $this->annotateASTNode($node);
@@ -1221,7 +1221,7 @@ class RascalPrinter extends BasePrinter
      */
     private function handleMagicConstExpression(\PhpParser\Node\Scalar\MagicConst $node, $name, $value)
     {
-        $fragment = "{$name}()[@actualValue=\"{$this->rascalizeString($value)}\"]";
+        $fragment = "{$name}()[actualValue=\"{$this->rascalizeString($value)}\"]";
         $fragment = "scalar(" . $fragment . ")";
         $fragment .= $this->annotateASTNode($node);
 
