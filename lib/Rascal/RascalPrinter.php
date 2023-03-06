@@ -73,6 +73,20 @@ class RascalPrinter extends BasePrinter
                 } else {
                     return "nullableType(" . $this->formatType($node->type) . ")";
                 }
+            } elseif ($node instanceof \PhpParser\Node\UnionType) {
+                $types = array();
+                foreach ($node->types as $type)
+                {
+                    $types[] = $this->formatType($type);
+                }
+                return 'unionType([' . implode(",", $types) . '])';
+            } elseif ($node instanceof \PhpParser\Node\IntersectionType) {
+                $types = array();
+                foreach ($node->types as $type)
+                {
+                    $types[] = $this->formatType($type);
+                }
+                return 'intersectionType([' . implode(",", $types) . '])';
             } elseif ($node instanceof \PhpParser\Node\Identifier) {
                 return 'regularType(name("' . $node . '"))';
             } else {
@@ -236,7 +250,12 @@ class RascalPrinter extends BasePrinter
         else
             $unpack = "false";
 
-        $fragment = sprintf("actualParameter(%s,%s,%s", $argValue, $byRef, $unpack);
+        if (null != $node->name)
+            $paramName = "someName(" . $this->pprint($node->name) . ")";
+        else
+            $paramName = "noName()";
+
+        $fragment = sprintf("actualParameter(%s,%s,%s", $argValue, $byRef, $unpack, $paramName);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -305,7 +324,12 @@ class RascalPrinter extends BasePrinter
         else
             $byRef = "false";
 
-        $fragment = sprintf("arrayElement(%s,%s,%s", $key, $nodeValue, $byRef);
+        if ($node->unpack)
+            $unpack = "true";
+        else
+            $unpack = "false";
+
+        $fragment = sprintf("arrayElement(%s,%s,%s,%s", $key, $nodeValue, $byRef, $unpack);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -673,6 +697,11 @@ class RascalPrinter extends BasePrinter
         foreach ($node->stmts as $stmt)
             $body[] = $this->pprint($stmt);
 
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+        
         $fragment = "closure([" . implode(",", $body) . "],[";
         $fragment .= implode(",", $params) . "],[";
         $fragment .= implode(",", $uses) . "],";
@@ -685,7 +714,7 @@ class RascalPrinter extends BasePrinter
         else
             $fragment .= "false,";
         $fragment .= $this->formatType($node->returnType);
-
+        $fragment .= ",[" . implode(",",$attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
         return $fragment;
@@ -856,7 +885,7 @@ class RascalPrinter extends BasePrinter
 
         $target = $this->pprint($node->var);
 
-        $fragment = "methodCall(" . $target . "," . $name . ",[" . implode(",", $args) . "]";
+        $fragment = "methodCall(" . $target . "," . $name . ",[" . implode(",", $args) . "],false";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -940,7 +969,7 @@ class RascalPrinter extends BasePrinter
             $fragment = "name(name(\"" . $this->pprint($node->name) . "\"))";
         }
 
-        $fragment = "propertyFetch(" . $this->pprint($node->var) . "," . $fragment;
+        $fragment = "propertyFetch(" . $this->pprint($node->var) . "," . $fragment . ",false";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1142,7 +1171,23 @@ class RascalPrinter extends BasePrinter
         else
             $variadic = "true";
 
-        $fragment = sprintf("param(\"%s\",%s,%s,%s,%s", $varName, $default, $byRef, $variadic, $type);
+        $modifiers = array();
+        if ($node->flags & \PhpParser\Modifiers::PUBLIC)
+            $modifiers[] = "\\public()";
+        if ($node->flags & \PhpParser\Modifiers::PROTECTED)
+            $modifiers[] = "protected()";
+        if ($node->flags & \PhpParser\Modifiers::PRIVATE)
+            $modifiers[] = "\\private()";
+        if ($node->flags & \PhpParser\Modifiers::READONLY)
+            $modifiers[] = "readonly()";
+        $mods = implode(",", $modifiers);
+
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+        
+        $fragment = sprintf("param(\"%s\",%s,%s,%s,%s,{%s},[%s]", $varName, $default, $byRef, $variadic, $type, $mods, implode(",",$attrs));
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1350,6 +1395,11 @@ class RascalPrinter extends BasePrinter
             if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
                 $stmts[] = $this->pprint($stmt);
 
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+
         $implements = array();
         foreach ($node->implements as $implemented)
             $implements[] = $this->pprint($implemented);
@@ -1375,7 +1425,7 @@ class RascalPrinter extends BasePrinter
 
         $fragment = "class(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $extends . ",";
         $fragment .= "[" . implode(",", $implements) . "],[";
-        $fragment .= implode(",", $stmts) . "]";
+        $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1397,6 +1447,11 @@ class RascalPrinter extends BasePrinter
         foreach ($node->consts as $const)
             $consts[] = $this->pprint($const);
 
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+    
         $modifiers = array();
         if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC)
             $modifiers[] = "\\public()";
@@ -1407,7 +1462,7 @@ class RascalPrinter extends BasePrinter
         if ($node->flags & \PhpParser\Node\Stmt\Class_::VISIBILITY_MODIFIER_MASK == 0)
             $modifiers[] = "\\public()";
 
-        $fragment = sprintf("constCI([%s],{%s}", implode(",", $consts), implode(",", $modifiers));
+        $fragment = sprintf("constCI([%s],{%s},[%s]", implode(",", $consts), implode(",", $modifiers), implode(",", $attrs));
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1451,7 +1506,12 @@ class RascalPrinter extends BasePrinter
 
         $returnType = $this->formatType($node->returnType);
 
-        $fragment = "method(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "], " . $returnType;
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+    
+        $fragment = "method(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "], " . $returnType . ",[" . implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1653,7 +1713,13 @@ class RascalPrinter extends BasePrinter
 
         $returnType = $this->formatType($node->returnType);
 
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+    
         $fragment = "function(\"" . $this->pprint($node->name) . "\"," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "]," . $returnType;
+        $fragment .= "[" . implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1707,7 +1773,7 @@ class RascalPrinter extends BasePrinter
         }
 
         $usesToPrint = implode(',', $uses);
-        $fragment = sprintf("use([%s],%s,%s",implode(",", $usesToPrint),$prefix,$usetype);
+        $fragment = sprintf("useStmt([%s],%s,%s",$usesToPrint,$prefix,$usetype);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1765,13 +1831,19 @@ class RascalPrinter extends BasePrinter
         foreach ($node->stmts as $stmt)
             $stmts[] = $this->pprint($stmt);
 
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+            
         $extends = array();
         foreach ($node->extends as $extended)
             $extends[] = $this->pprint($extended);
 
         $fragment = "interface(\"" . $this->pprint($node->name) . "\",[";
         $fragment .= implode(",", $extends) . "],[";
-        $fragment .= implode(",", $stmts) . "]";
+        $fragment .= implode(",", $stmts) . "],[";
+        $fragment .= implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1877,7 +1949,13 @@ class RascalPrinter extends BasePrinter
         if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
             $modifiers[] = "static()";
 
-        $fragment = "property({" . implode(",", $modifiers) . "},[" . implode(",", $props) . "]";
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+            
+        $fragment = "property({" . implode(",", $modifiers) . "},[" . implode(",", $props) . "]," . $this->formatType($node->type);
+        $fragment .= ",[" . implode(",",$attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1975,7 +2053,12 @@ class RascalPrinter extends BasePrinter
         foreach ($node->stmts as $stmt)
             $body[] = $this->pprint($stmt);
 
-        $fragment = "trait(\"" . $this->pprint($node->name) . "\",[" . implode(",", $body) . "]";
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+            
+        $fragment = "trait(\"" . $this->pprint($node->name) . "\",[" . implode(",", $body) . "],[" . implode(",",$attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -2130,7 +2213,7 @@ class RascalPrinter extends BasePrinter
         }
 
         $usesToPrint = implode(',', $uses);
-        $fragment = sprintf("useStmt([%s],%s", $usesToPrint, $usetype);
+        $fragment = sprintf("useStmt([%s],noName(),%s", $usesToPrint, $usetype);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -2202,77 +2285,201 @@ class RascalPrinter extends BasePrinter
 
     public function pprintEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node)
     {
-        $fragment = "";
+        $enumName = $this->pprint($node->name);
+        
+        if (null != $node->expr) {
+            $enumExpr = sprintf("someExpr(%s)", $this->pprint($node->expr));
+        } else {
+            $enumExpr = "noExpr()";
+        }
+
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+    
+        $fragment = sprintf("enumCase(\"%s\",%s,[%s]", $enumName, $enumExpr, implode(",", $attrs));
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintEnumStmt(\PhpParser\Node\Stmt\Enum_ $node)
     {
-        $fragment = "";
+        $enumName = $this->pprint($node->name);
+        $scalarType = $this->formatType($node->scalarType);
+
+        $itypes = array();
+        foreach($node->implements as $itype)
+        {
+            $itypes[] = $this->pprint($itype);
+        }
+
+        $stmts = array();
+        foreach ($node->stmts as $stmt)
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $stmts[] = $this->pprint($stmt);
+
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+                    
+        $fragment = sprintf("enum(\"%s\",%s,[%s],[%s],[%s]",
+            $enumName,
+            $scalarType,
+            implode(",",$itypes),
+            implode(",",$stmts),
+            implode(",",$attrs));
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
+
+        $fragment = "enumDef(" . $fragment;
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintMatchArm(\PhpParser\Node\MatchArm $node)
     {
-        $fragment = "";
+        $conds = array();
+        if (null != $node->conds) {
+            foreach ($node->conds as $item) {
+                $conds[] = $this->pprint($item);
+            }    
+        }
+
+        $body = $this->pprint($node->body);
+        $fragment = "matchArm([" . implode(",", $conds) . "]," . $body;
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintAttribute(\PhpParser\Node\Attribute $node)
     {
-        $fragment = "";
+        $attrName = $this->pprint($node->name);
+
+        $args = array();
+        foreach($node->args as $arg) {
+            $args[] = $this->pprint($arg);
+        }
+
+        $fragment = sprintf("attribute(%s,[%s])", $attrName, implode(",",$args));
 
         return $fragment;
     }
 
     public function pprintThrowExpr(\PhpParser\Node\Expr\Throw_ $node)
     {
-        $fragment = "";
+        $fragment = "\\throw(" . $this->pprint($node->expr);
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
+
     }
 
     public function pprintArrowFunctionExpr(\PhpParser\Node\Expr\ArrowFunction $node)
     {
-        $fragment = "";
+        $isStatic = "false";
+        if ($node->static)
+            $isStatic = "true";
+
+        $byRef = "false";
+        if ($node->byRef)
+            $byRef = "true";
+
+        $params = array();
+        foreach ($node->params as $param)
+            $params[] = $this->pprint($param);
+
+        $returnType = $this->formatType($node->returnType);
+
+        $body = $this->pprint($node->expr);
+
+        $attrs = array();
+        foreach ($node->attrGroups as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+    
+        $fragment = sprintf("arrowFunction(%s,%s,[%s],%s,%s,[%s]", $isStatic, $byRef, implode(",", $params), $returnType, $body, implode(",", $attrs));
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintNullsafePropertyFetchExpr(\PhpParser\Node\Expr\NullsafePropertyFetch $node)
     {
-        $fragment = "";
+        if ($node->name instanceof \PhpParser\Node\Expr) {
+            $fragment = "expr(" . $this->pprint($node->name) . ")";
+        } else {
+            $fragment = "name(name(\"" . $this->pprint($node->name) . "\"))";
+        }
+
+        $fragment = "propertyFetch(" . $this->pprint($node->var) . "," . $fragment . ",true";
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintCoalesceAssignOpExpr(\PhpParser\Node\Expr\AssignOp\Coalesce $node)
     {
-        $fragment = "";
-
-        return $fragment;
+        return $this->handleAssignOpExpression($node, "coalesce");
     }
 
     public function pprintNullsafeMethodCallExpr(\PhpParser\Node\Expr\NullsafeMethodCall $node)
     {
-        $fragment = "";
+        $args = array();
+        foreach ($node->args as $arg)
+            $args[] = $this->pprint($arg);
+
+        if ($node->name instanceof \PhpParser\Node\Expr) {
+            $name = $this->pprint($node->name);
+            $name = "expr({$name})";
+        } else {
+            $name = "name(name(\"" . $this->pprint($node->name) . "\"))";
+        }
+
+        $target = $this->pprint($node->var);
+
+        $fragment = "methodCall(" . $target . "," . $name . ",[" . implode(",", $args) . "],true";
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
     }
 
     public function pprintMatchExpr(\PhpParser\Node\Expr\Match_ $node)
     {
-        $fragment = "";
+        $arms = array();
+        if (null != $node->arms) {
+            foreach ($node->arms as $arm) {
+                $arms[] = $this->pprint($arm);
+            }    
+        }
+
+        $cond = $this->pprint($node->cond);
+        $fragment = "match(" . $cond . ",[" . implode(",", $arms) . "]";
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
 
         return $fragment;
+
     }
 
     public function pprintAttributeGroup(\PhpParser\Node\AttributeGroup $node)
     {
-        $fragment = "";
+        $attrs = array();
+        foreach($node->attrs as $attr) {
+            $attrs[] = $this->pprint($attr);
+        }
+        $fragment = sprintf("attributeGroup([%s])", implode(",", $attrs));
 
         return $fragment;
     }
@@ -2286,7 +2493,9 @@ class RascalPrinter extends BasePrinter
 
     public function pprintVariadicPlaceholder(\PhpParser\Node\VariadicPlaceholder $node)
     {
-        $fragment = "";
+        $fragment = "variadicPlaceholder(";
+        $fragment .= $this->annotateAstNode($node,$addStartingComma = false);
+        $fragment .= ")";
 
         return $fragment;
     }
