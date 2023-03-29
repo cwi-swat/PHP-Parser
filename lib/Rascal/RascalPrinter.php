@@ -68,11 +68,7 @@ class RascalPrinter extends BasePrinter
     public function formatType(\PhpParser\Node $node = null) {        
         if (null != $node) {
             if ($node instanceof \PhpParser\Node\NullableType) {
-                if ($node->type instanceof \PhpParser\Node\Identifier) {
-                    return 'nullableType(name("' . $node->type . '"))';
-                } else {
-                    return "nullableType(" . $this->formatType($node->type) . ")";
-                }
+                return "nullableType(" . $this->formatType($node->type) . ")";
             } elseif ($node instanceof \PhpParser\Node\UnionType) {
                 $types = array();
                 foreach ($node->types as $type)
