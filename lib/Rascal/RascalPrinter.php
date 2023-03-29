@@ -187,10 +187,11 @@ class RascalPrinter extends BasePrinter
                 return "at=|home://{$this->filename}|";
             }
         } else {
+            $filename = urlencode($this->filename);
             if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
-                return "at=|file://{$this->filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
+                return "at=|file://{$filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
-                return "at=|file://{$this->filename}|";
+                return "at=|file://{$filename}|";
             }
         }
     }
@@ -255,7 +256,7 @@ class RascalPrinter extends BasePrinter
         else
             $paramName = "noName()";
 
-        $fragment = sprintf("actualParameter(%s,%s,%s", $argValue, $byRef, $unpack, $paramName);
+        $fragment = sprintf("actualParameter(%s,%s,%s,%s", $argValue, $byRef, $unpack, $paramName);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1719,7 +1720,7 @@ class RascalPrinter extends BasePrinter
         }
     
         $fragment = "function(\"" . $this->pprint($node->name) . "\"," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "]," . $returnType;
-        $fragment .= "[" . implode(",", $attrs) . "]";
+        $fragment .= ",[" . implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -2035,7 +2036,10 @@ class RascalPrinter extends BasePrinter
 
     public function pprintThrowStmt(\PhpParser\Node\Stmt\Throw_ $node)
     {
-        $fragment = "\\throw(" . $this->pprint($node->expr);
+        $fragment = "exprstmt(";
+        $fragment .= "\\throw(" . $this->pprint($node->expr);
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 

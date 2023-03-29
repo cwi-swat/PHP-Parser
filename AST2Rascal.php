@@ -129,10 +129,19 @@ try {
 
     $stmts = array();
 
-    foreach ($parseTree as $stmt)
-        $stmts[] = $printer->pprint($stmt);
+    if (count($parseTree) == 1 && $parseTree[0] instanceof \PhpParser\Node\Stmt\Nop) {
+        $script = "";
+    } else {
+        foreach ($parseTree as $stmt) {
+            $stmts[] = $printer->pprint($stmt);
+        }
 
-    $script = implode(",\n", $stmts);
+        if (count($stmts) > 1) {
+            $script = implode(",\n", $stmts);
+        } else {
+            $script = $stmts[0];
+        }
+    }
 
     echo sprintf("script([%s])", $script);
 
