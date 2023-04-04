@@ -1825,8 +1825,10 @@ class RascalPrinter extends BasePrinter
         $this->currentInterface = $this->pprint($node->name);
 
         $stmts = array();
-        foreach ($node->stmts as $stmt)
+        if (!($node->stmts[0] instanceof \PhpParser\Node\Stmt\Nop)) {
+            foreach ($node->stmts as $stmt)
             $stmts[] = $this->pprint($stmt);
+        }
 
         $attrs = array();
         foreach ($node->attrGroups as $attr) {
