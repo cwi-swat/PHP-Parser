@@ -117,36 +117,55 @@ $resolveNames = isset($opts['resolveNames']) ? true : false;
 $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 $printer = new RascalPrinter($file, $enableLocations, $relativeLocations, $uniqueIds, $prefix, $projectName, $addPHPDocs, $addDeclarations);
 
+// First try parsing with the newest supported version of the parser
+$fallback = false;
+$parseTree = null;
 try {
     $parseTree = $parser->parse($inputCode);
-
-    if ($resolveNames) {
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor(new NameResolver);
-        $traverser->addVisitor(new NameResolverRascal);
-        $traverser->traverse($parseTree);
-    }
-
-    $stmts = array();
-
-    if (count($parseTree) == 1 && $parseTree[0] instanceof \PhpParser\Node\Stmt\Nop) {
-        $script = "";
-    } else {
-        foreach ($parseTree as $stmt) {
-            $stmts[] = $printer->pprint($stmt);
-        }
-
-        if (count($stmts) > 1) {
-            $script = implode(",\n", $stmts);
-        } else {
-            $script = $stmts[0];
-        }
-    }
-
-    echo sprintf("script([%s])", $script);
-
 } catch (\PhpParser\Error $e) {
-    echo "errscript(\"" . $printer->rascalizeString($e->getMessage()) . "\")";
-} catch (\Exception $e) {
-    echo "errscript(\"" . $printer->rascalizeString($e->getMessage()) . "\")";
+    $fallback = true;
+}
+
+// If that does not work, fall back to PHP version 5.4
+if ($fallback) {
+    try {
+        $parser = (new ParserFactory())->createForVersion(\PhpParser\PhpVersion::fromComponents(5,4));
+        $parseTree = $parser->parse($inputCode);
+    } catch (\PhpParser\Error $e) {
+        echo "errscript(\"" . $printer->rascalizeString($e->getMessage()) . "\")";
+    }
+}
+
+if (null !== $parseTree) {
+    try {
+        if ($resolveNames) {
+            $traverser = new NodeTraverser;
+            $traverser->addVisitor(new NameResolver);
+            $traverser->addVisitor(new NameResolverRascal);
+            $traverser->traverse($parseTree);
+        }
+    
+        $stmts = array();
+    
+        if (count($parseTree) == 1 && $parseTree[0] instanceof \PhpParser\Node\Stmt\Nop) {
+            $script = "";
+        } else {
+            foreach ($parseTree as $stmt) {
+                $stmts[] = $printer->pprint($stmt);
+            }
+    
+            if (count($stmts) > 1) {
+                $script = implode(",\n", $stmts);
+            } elseif (count($stmts) === 1) {
+                $script = $stmts[0];
+            } else {
+                $script = "";
+            }
+        }
+    
+        echo sprintf("script([%s])", $script);
+    
+    } catch (\Exception $e) {
+        echo "errscript(\"" . $printer->rascalizeString($e->getMessage()) . "\")";
+    }    
 }

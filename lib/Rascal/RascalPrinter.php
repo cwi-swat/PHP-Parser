@@ -66,7 +66,7 @@ class RascalPrinter extends BasePrinter
     }
 
     public function formatType(\PhpParser\Node $node = null) {        
-        if (null != $node) {
+        if (null !== $node) {
             if ($node instanceof \PhpParser\Node\NullableType) {
                 return "nullableType(" . $this->formatType($node->type) . ")";
             } elseif ($node instanceof \PhpParser\Node\UnionType) {
@@ -194,7 +194,7 @@ class RascalPrinter extends BasePrinter
 
     /**
      * Try to extract data from PHPDoc.
-     * If no PHPDoc found, return NULL
+     * If no PHPDoc found, return null
      *
      * @return string
      */
@@ -247,7 +247,7 @@ class RascalPrinter extends BasePrinter
         else
             $unpack = "false";
 
-        if (null != $node->name)
+        if (null !== $node->name)
             $paramName = "someName(" . $this->pprint($node->name) . ")";
         else
             $paramName = "noName()";
@@ -294,7 +294,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintArrayDimFetchExpr(\PhpParser\Node\Expr\ArrayDimFetch $node)
     {
-        if (null != $node->dim)
+        if (null !== $node->dim)
             $dim = "someExpr(" . $this->pprint($node->dim) . ")";
         else
             $dim = "noExpr()";
@@ -311,7 +311,7 @@ class RascalPrinter extends BasePrinter
     {
         $nodeValue = $this->pprint($node->value);
 
-        if (null == $node->key)
+        if (null === $node->key)
             $key = "noExpr()";
         else
             $key = "someExpr(" . $this->pprint($node->key) . ")";
@@ -692,7 +692,8 @@ class RascalPrinter extends BasePrinter
         foreach ($node->params as $param)
             $params[] = $this->pprint($param);
         foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
 
         $attrs = array();
         foreach ($node->attrGroups as $attr) {
@@ -767,7 +768,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintExitExpr(\PhpParser\Node\Expr\Exit_ $node)
     {
-        if (null != $node->expr) {
+        if (null !== $node->expr) {
             $exitExpr = "someExpr(" . $this->pprint($node->expr) . ")";
         } else {
             $exitExpr = "noExpr()";
@@ -855,7 +856,7 @@ class RascalPrinter extends BasePrinter
     {
         $exprs = array();
         foreach ($node->items as $item)
-            if (null != $item)
+            if (null !== $item)
                 $exprs[] = $this->pprint($item);
             else
                 $exprs[] = "emptyElement()";
@@ -902,7 +903,7 @@ class RascalPrinter extends BasePrinter
         } elseif ($node->class instanceof \PhpParser\Node\Expr) {
             $name = "computedClassName({$name})";
         } elseif ($node->class instanceof \PhpParser\Node\Stmt\Class_) {
-            $name = "anonymousClass({$name})";
+            $name = "anonymousClassDef({$name})";
         } else {
             throw new \Exception("Unexpected type passed as class name for new");
         }
@@ -979,6 +980,8 @@ class RascalPrinter extends BasePrinter
         foreach ($node->parts as $item) {
             if ($item instanceof \PhpParser\Node\Expr) {
                 $parts[] = $this->pprint($item);
+            } elseif ($item instanceof \PhpParser\Node\InterpolatedStringPart) {
+               $parts[] = $this->pprint($item);
             } else {
                 $parts[] = "scalar(string(\"" . $this->rascalizeString($item) . "\"))";
             }
@@ -1039,7 +1042,7 @@ class RascalPrinter extends BasePrinter
     public function pprintTernaryExpr(\PhpParser\Node\Expr\Ternary $node)
     {
         $else = $this->pprint($node->else);
-        if (null != $node->if)
+        if (null !== $node->if)
             $if = "someExpr(" . $this->pprint($node->if) . ")";
         else
             $if = "noExpr()";
@@ -1088,12 +1091,12 @@ class RascalPrinter extends BasePrinter
 
     public function pprintYieldExpr(\PhpParser\Node\Expr\Yield_ $node)
     {
-        if (null != $node->value)
+        if (null !== $node->value)
             $valuePart = "someExpr(" . $this->pprint($node->value) . ")";
         else
             $valuePart = "noExpr()";
 
-        if (null != $node->key)
+        if (null !== $node->key)
             $keyPart = "someExpr(" . $this->pprint($node->key) . ")";
         else
             $keyPart = "noExpr()";
@@ -1152,7 +1155,7 @@ class RascalPrinter extends BasePrinter
             throw new \Exception("Parameter names must be given as string, not more complex expressions");
         }
 
-        if (null == $node->default) {
+        if (null === $node->default) {
             $default = "noExpr()";
         } else {
             $default = "someExpr(" . $this->pprint($node->default) . ")";
@@ -1329,7 +1332,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintBreakStmt(\PhpParser\Node\Stmt\Break_ $node)
     {
-        if (null != $node->num)
+        if (null !== $node->num)
             $fragment = "someExpr(" . $this->pprint($node->num) . ")";
         else
             $fragment = "noExpr()";
@@ -1343,14 +1346,15 @@ class RascalPrinter extends BasePrinter
 
     public function pprintCaseStmt(\PhpParser\Node\Stmt\Case_ $node)
     {
-        if (null != $node->cond)
+        if (null !== $node->cond)
             $cond = "someExpr(" . $this->pprint($node->cond) . ")";
         else
             $cond = "noExpr()";
 
         $body = array();
         foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
 
         $fragment = "\\case(" . $cond . ",[" . implode(",", $body) . "]";
         $fragment .= $this->annotateASTNode($node);
@@ -1362,9 +1366,9 @@ class RascalPrinter extends BasePrinter
     public function pprintCatchStmt(\PhpParser\Node\Stmt\Catch_ $node)
     {
         $body = array();
-        foreach ($node->stmts as $stmt) {
-            $body[] = $this->pprint($stmt);
-        }
+        foreach ($node->stmts as $stmt)
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
 
         foreach ($node->types as $xtype) {
             $xtypes[] = $this->pprint($xtype);
@@ -1385,8 +1389,12 @@ class RascalPrinter extends BasePrinter
     public function pprintClassStmt(\PhpParser\Node\Stmt\Class_ $node)
     {
         $priorClass = $this->currentClass;
-        $this->currentClass = $this->pprint($node->name);
-
+        if (null === $node->name) {
+            $this->currentClass = "ANONYMOUS"; // TODO: Do we need these settings anymore?    
+        } else {
+            $this->currentClass = $this->pprint($node->name);
+        }
+        
         $stmts = array();
         foreach ($node->stmts as $stmt)
             if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
@@ -1401,7 +1409,7 @@ class RascalPrinter extends BasePrinter
         foreach ($node->implements as $implemented)
             $implements[] = $this->pprint($implemented);
 
-        if (null != $node->extends)
+        if (null !== $node->extends)
             $extends = "someName(" . $this->pprint($node->extends) . ")";
         else
             $extends = "noName()";
@@ -1420,11 +1428,19 @@ class RascalPrinter extends BasePrinter
         if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
             $modifiers[] = "static()";
 
-        $fragment = "class(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $extends . ",";
-        $fragment .= "[" . implode(",", $implements) . "],[";
-        $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
-        $fragment .= $this->annotateASTNode($node);
-        $fragment .= ")";
+        if (null !== $node->name) {
+            $fragment = "class(\"" . $node->name . "\",{" . implode(",", $modifiers) . "}," . $extends . ",";
+            $fragment .= "[" . implode(",", $implements) . "],[";
+            $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
+            $fragment .= $this->annotateASTNode($node);
+            $fragment .= ")";        
+        } else {
+            $fragment = "anonymousClass(" . $extends . ",";
+            $fragment .= "[" . implode(",", $implements) . "],[";
+            $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
+            $fragment .= $this->annotateASTNode($node);
+            $fragment .= ")";        
+        }
 
         $fragment = "classDef(" . $fragment;
         $priorDecl = $this->addDeclarations;
@@ -1475,7 +1491,7 @@ class RascalPrinter extends BasePrinter
         $this->insideFunction = false;
 
         $body = array();
-        if (null != $node->stmts)
+        if (null !== $node->stmts)
             foreach ($node->stmts as $thestmt)
                 $body[] = $this->pprint($thestmt);
 
@@ -1533,7 +1549,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintContinueStmt(\PhpParser\Node\Stmt\Continue_ $node)
     {
-        if (null != $node->num)
+        if (null !== $node->num)
             $fragment = "someExpr(" . $this->pprint($node->num) . ")";
         else
             $fragment = "noExpr()";
@@ -1550,7 +1566,8 @@ class RascalPrinter extends BasePrinter
         $body = array();
         if (isset($node->stmts)) {
             foreach ($node->stmts as $stmt) {
-                $body[] = $this->pprint($stmt);
+                if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                    $body[] = $this->pprint($stmt);
             }
         }
 
@@ -1577,8 +1594,10 @@ class RascalPrinter extends BasePrinter
     public function pprintDoStmt(\PhpParser\Node\Stmt\Do_ $node)
     {
         $stmts = array();
-        foreach ($node->stmts as $stmt)
-            $stmts[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $stmts[] = $this->pprint($stmt);
+        }
 
         $fragment = "\\do(" . $this->pprint($node->cond) . ",[" . implode(",", $stmts) . "]";
         $fragment .= $this->annotateASTNode($node);
@@ -1603,9 +1622,11 @@ class RascalPrinter extends BasePrinter
     public function pprintElseStmt(\PhpParser\Node\Stmt\Else_ $node)
     {
         $body = array();
-        foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
-
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
+        }
+    
         $fragment = "\\else([" . implode(",", $body) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
@@ -1616,8 +1637,10 @@ class RascalPrinter extends BasePrinter
     public function pprintElseIfStmt(\PhpParser\Node\Stmt\ElseIf_ $node)
     {
         $body = array();
-        foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
+        }
 
         $fragment = "elseIf(" . $this->pprint($node->cond) . ",[" . implode(",", $body) . "]";
         $fragment .= $this->annotateASTNode($node);
@@ -1643,8 +1666,10 @@ class RascalPrinter extends BasePrinter
     public function pprintForStmt(\PhpParser\Node\Stmt\For_ $node)
     {
         $stmts = array();
-        foreach ($node->stmts as $stmt)
-            $stmts[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $stmts[] = $this->pprint($stmt);
+        }
 
         $loops = array();
         foreach ($node->loop as $loop)
@@ -1674,11 +1699,13 @@ class RascalPrinter extends BasePrinter
             $byRef = "true";
 
         $stmts = array();
-        foreach ($node->stmts as $stmt)
-            $stmts[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $stmts[] = $this->pprint($stmt);
+        }
 
         $keyvar = "noExpr()";
-        if (null != $node->keyVar)
+        if (null !== $node->keyVar)
             $keyvar = "someExpr(" . $this->pprint($node->keyVar) . ")";
 
         $fragment = "foreach(" . $expr . "," . $keyvar . "," . $byRef . "," . $valueVar . ",[" . implode(",", $stmts) . "]";
@@ -1697,8 +1724,10 @@ class RascalPrinter extends BasePrinter
         $this->insideFunction = true;
 
         $body = array();
-        foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
+        }
 
         $params = array();
         foreach ($node->params as $param)
@@ -1790,7 +1819,7 @@ class RascalPrinter extends BasePrinter
     {
         $cond = $this->pprint($node->cond);
 
-        if (null != $node->else)
+        if (null !== $node->else)
             $elseNode = "someElse(" . $this->pprint($node->else) . ")";
         else
             $elseNode = "noElse()";
@@ -1800,8 +1829,10 @@ class RascalPrinter extends BasePrinter
             $elseIfs[] = $this->pprint($elseif);
 
         $body = array();
-        foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+        foreach ($node->stmts as $stmt) {
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
+        }
 
         $fragment = "\\if(" . $cond . ",[" . implode(",", $body) . "],[" . implode(",", $elseIfs) . "]," . $elseNode;
         $fragment .= $this->annotateASTNode($node);
@@ -1825,9 +1856,12 @@ class RascalPrinter extends BasePrinter
         $this->currentInterface = $this->pprint($node->name);
 
         $stmts = array();
-        if (!($node->stmts[0] instanceof \PhpParser\Node\Stmt\Nop)) {
-            foreach ($node->stmts as $stmt)
-            $stmts[] = $this->pprint($stmt);
+        if (is_array($node->stmts) && count($node->stmts) > 0) {
+            foreach ($node->stmts as $stmt) {
+                if (!($stmt instanceof \PhpParser\Node\Stmt\Nop)) {
+                    $stmts[] = $this->pprint($stmt);
+                }
+            }
         }
 
         $attrs = array();
@@ -1873,7 +1907,7 @@ class RascalPrinter extends BasePrinter
         // don't, this is a global namespace declaration, like
         // namespace { global stuff }
         $priorNamespace = $this->currentNamespace;
-        if (null != $node->name) {
+        if (null !== $node->name) {
             $this->currentNamespace = $this->implodeName($node->name);
         } else {
             $this->currentNamespace = "";
@@ -1881,12 +1915,13 @@ class RascalPrinter extends BasePrinter
 
         $body = array();
         foreach ($node->stmts as $stmt) {
-            $body[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
         }
 
         // Again check the name -- since it is optional, we return an OptionName
         // here, which could be noName() if this is a global namespace
-        if (null != $node->name) {
+        if (null !== $node->name) {
             $headerName = $this->pprint($node->name);
             $name = "someName({$headerName})";
         } else {
@@ -1898,9 +1933,9 @@ class RascalPrinter extends BasePrinter
         // with no brackets, which means the following statements are implicitly
         // included in the namespace until the end of file or another namespace
         // declaration is encountered.
-        if (null != $node->stmts) {
+        if (null !== $node->stmts) {
             $fragment = "namespace(" . $name . ",[" . implode(",", $body) . "]";
-        } elseif (null != $node->name) {
+        } elseif (null !== $node->name) {
             $fragment = "namespaceHeader({$this->pprint($node->name)}";
         } else {
             throw new \Exception("Unknown namespace variant encountered");
@@ -1913,7 +1948,7 @@ class RascalPrinter extends BasePrinter
         // we didn't, it means that we just had a namespace declaration like
         // namespace DB; which had no body, but then is still active at the end
         // in which case we don't want to reset it
-        if (null != $node->stmts) {
+        if (null !== $node->stmts) {
             $this->currentNamespace = $priorNamespace;
         }
 
@@ -1963,7 +1998,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintPropertyItem(\PhpParser\Node\PropertyItem $node)
     {
-        if (null != $node->default) {
+        if (null !== $node->default) {
             $fragment = "someExpr(" . $this->pprint($node->default) . ")";
         } else {
             $fragment = "noExpr()";
@@ -1978,7 +2013,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintReturnStmt(\PhpParser\Node\Stmt\Return_ $node)
     {
-        if (null != $node->expr)
+        if (null !== $node->expr)
             $fragment = "someExpr(" . $this->pprint($node->expr) . ")";
         else
             $fragment = "noExpr()";
@@ -2005,7 +2040,7 @@ class RascalPrinter extends BasePrinter
     public function pprintStaticVar(\PhpParser\Node\StaticVar $node)
     {
         $default = "noExpr()";
-        if (null != $node->default)
+        if (null !== $node->default)
             $default = "someExpr(" . $this->pprint($node->default) . ")";
 
         $varName = $node->var->name;
@@ -2053,7 +2088,8 @@ class RascalPrinter extends BasePrinter
         $this->insideTrait = true;
 
         foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
 
         $attrs = array();
         foreach ($node->attrGroups as $attr) {
@@ -2096,13 +2132,13 @@ class RascalPrinter extends BasePrinter
 
     public function pprintAliasTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation\Alias $node)
     {
-        if (null != $node->newName) {
+        if (null !== $node->newName) {
             $newName = "someName(name(\"" . $node->newName . "\"))";
         } else {
             $newName = "noName()";
         }
 
-        if (null != $node->newModifier) {
+        if (null !== $node->newModifier) {
             $modifiers = array();
             if ($node->newModifier & \PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC)
                 $modifiers[] = "\\public()";
@@ -2121,9 +2157,9 @@ class RascalPrinter extends BasePrinter
             $newModifier = "{ }";
         }
 
-        $newMethod = $this->pprint($node->method) . "\"";
+        $newMethod = "\"" . $this->pprint($node->method) . "\"";
 
-        if (null != $node->trait) {
+        if (null !== $node->trait) {
             $trait = "someName(" . $this->pprint($node->trait) . ")";
         } else {
             $trait = "noName()";
@@ -2142,7 +2178,7 @@ class RascalPrinter extends BasePrinter
         foreach ($node->insteadof as $item)
             $insteadOf[] = $this->pprint($item);
 
-        if (null != $node->trait) {
+        if (null !== $node->trait) {
             $trait = "someName(" . $this->pprint($node->trait) . ")";
         } else {
             $trait = "noName()";
@@ -2160,7 +2196,7 @@ class RascalPrinter extends BasePrinter
     public function pprintTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node)
     {
         $finallyBody = array();
-        if (null != $node->finally)
+        if (null !== $node->finally)
             foreach ($node->finally->stmts as $fstmt)
                 $finallyBody[] = $this->pprint($fstmt);
 
@@ -2170,9 +2206,10 @@ class RascalPrinter extends BasePrinter
 
         $body = array();
         foreach ($node->stmts as $stmt)
-            $body[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $body[] = $this->pprint($stmt);
 
-        if (null != $node->finally)
+        if (null !== $node->finally)
             $fragment = "tryCatchFinally([" . implode(",", $body) . "],[" . implode(",", $catches) . "],[" . implode(",", $finallyBody) . "]";
         else
             $fragment = "tryCatch([" . implode(",", $body) . "],[" . implode(",", $catches) . "]";
@@ -2226,7 +2263,7 @@ class RascalPrinter extends BasePrinter
     {
         $name = $this->pprint($node->name);
 
-        if (null != $node->alias)
+        if (null !== $node->alias)
             $alias = sprintf('someName(name("%s"))', $this->pprint($node->alias));
         else
             $alias = "noName()";
@@ -2255,7 +2292,8 @@ class RascalPrinter extends BasePrinter
     {
         $stmts = array();
         foreach ($node->stmts as $stmt)
-            $stmts[] = $this->pprint($stmt);
+            if (!($stmt instanceof \PhpParser\Node\Stmt\Nop))
+                $stmts[] = $this->pprint($stmt);
 
         $fragment = "\\while(" . $this->pprint($node->cond) . ",[" . implode(",", $stmts) . "]";
         $fragment .= $this->annotateAstNode($node);
@@ -2289,7 +2327,7 @@ class RascalPrinter extends BasePrinter
     {
         $enumName = $this->pprint($node->name);
         
-        if (null != $node->expr) {
+        if (null !== $node->expr) {
             $enumExpr = sprintf("someExpr(%s)", $this->pprint($node->expr));
         } else {
             $enumExpr = "noExpr()";
@@ -2347,7 +2385,7 @@ class RascalPrinter extends BasePrinter
     public function pprintMatchArm(\PhpParser\Node\MatchArm $node)
     {
         $conds = array();
-        if (null != $node->conds) {
+        if (null !== $node->conds) {
             foreach ($node->conds as $item) {
                 $conds[] = $this->pprint($item);
             }    
@@ -2460,7 +2498,7 @@ class RascalPrinter extends BasePrinter
     public function pprintMatchExpr(\PhpParser\Node\Expr\Match_ $node)
     {
         $arms = array();
-        if (null != $node->arms) {
+        if (null !== $node->arms) {
             foreach ($node->arms as $arm) {
                 $arms[] = $this->pprint($arm);
             }    
