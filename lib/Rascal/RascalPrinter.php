@@ -183,7 +183,8 @@ class RascalPrinter extends BasePrinter
                 return "at=|home://{$this->filename}|";
             }
         } else {
-            $filename = urlencode($this->filename);
+            // Replace [ and ] characters with URL encoding equivalents
+            $filename = str_replace("]","%5D",str_replace("[","%5B",$this->filename)); 
             if ($node->getStartFilePos() >= 0 && $node->getLength() !== -1) {
                 return "at=|file://{$filename}|({$node->getStartFilePos()},{$node->getLength()},<{$node->getStartLine()},0>,<{$node->getEndLine()},0>)";
             } else {
