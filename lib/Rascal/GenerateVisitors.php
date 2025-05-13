@@ -37,7 +37,7 @@ class GenerateCode extends \PhpParser\NodeVisitorAbstract
     }
 }
 
-$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+$parser = (new ParserFactory())->createForHostVersion();
 $visitor = new \PhpParser\NodeTraverser;
 $rvis = new GenerateCode;
 $visitor->addVisitor($rvis);

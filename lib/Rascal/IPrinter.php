@@ -6,6 +6,7 @@ interface IPrinter
 	public function pprint(\PhpParser\Node $node);
 	public function pprintEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node);
 	public function pprintExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function pprintUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function pprintGlobalStmt(\PhpParser\Node\Stmt\Global_ $node);
 	public function pprintNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node);
 	public function pprintTraitUseStmt(\PhpParser\Node\Stmt\TraitUse $node);
@@ -13,8 +14,9 @@ interface IPrinter
 	public function pprintAliasTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation\Alias $node);
 	public function pprintCatchStmt(\PhpParser\Node\Stmt\Catch_ $node);
 	public function pprintClassStmt(\PhpParser\Node\Stmt\Class_ $node);
-	public function pprintThrowStmt(\PhpParser\Node\Stmt\Throw_ $node);
+	public function pprintPropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node);
 	public function pprintLabelStmt(\PhpParser\Node\Stmt\Label $node);
+	public function pprintStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node);
 	public function pprintCaseStmt(\PhpParser\Node\Stmt\Case_ $node);
 	public function pprintContinueStmt(\PhpParser\Node\Stmt\Continue_ $node);
 	public function pprintClassMethodStmt(\PhpParser\Node\Stmt\ClassMethod $node);
@@ -24,9 +26,11 @@ interface IPrinter
 	public function pprintElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function pprintWhileStmt(\PhpParser\Node\Stmt\While_ $node);
 	public function pprintHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node);
+	public function pprintDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function pprintGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function pprintStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
 	public function pprintExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function pprintBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function pprintReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function pprintTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);
 	public function pprintEchoStmt(\PhpParser\Node\Stmt\Echo_ $node);
@@ -51,6 +55,7 @@ interface IPrinter
 	public function pprintMatchArm(\PhpParser\Node\MatchArm $node);
 	public function pprintNullableType(\PhpParser\Node\NullableType $node);
 	public function pprintIdentifier(\PhpParser\Node\Identifier $node);
+	public function pprintPropertyHook(\PhpParser\Node\PropertyHook $node);
 	public function pprintParam(\PhpParser\Node\Param $node);
 	public function pprintStaticVar(\PhpParser\Node\StaticVar $node);
 	public function pprintInterpolatedStringPart(\PhpParser\Node\InterpolatedStringPart $node);
@@ -141,9 +146,11 @@ interface IPrinter
 	public function pprintCloneExpr(\PhpParser\Node\Expr\Clone_ $node);
 	public function pprintPreDecExpr(\PhpParser\Node\Expr\PreDec $node);
 	public function pprintMatchExpr(\PhpParser\Node\Expr\Match_ $node);
+	public function pprintArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node);
 	public function pprintArrayExpr(\PhpParser\Node\Expr\Array_ $node);
 	public function pprintAssignRefExpr(\PhpParser\Node\Expr\AssignRef $node);
 	public function pprintIssetExpr(\PhpParser\Node\Expr\Isset_ $node);
+	public function pprintClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function pprintAttributeGroup(\PhpParser\Node\AttributeGroup $node);
 	public function pprintUnionType(\PhpParser\Node\UnionType $node);
 	public function pprintConst(\PhpParser\Node\Const_ $node);
@@ -156,6 +163,7 @@ interface IPrinter
 	public function pprintName(\PhpParser\Node\Name $node);
 	public function pprintIntScalar(\PhpParser\Node\Scalar\Int_ $node);
 	public function pprintFloatScalar(\PhpParser\Node\Scalar\Float_ $node);
+	public function pprintDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function pprintStringScalar(\PhpParser\Node\Scalar\String_ $node);
 	public function pprintInterpolatedStringScalar(\PhpParser\Node\Scalar\InterpolatedString $node);
 	public function pprintNamespaceMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Namespace_ $node);
@@ -163,9 +171,13 @@ interface IPrinter
 	public function pprintDirMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Dir $node);
 	public function pprintFileMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\File $node);
 	public function pprintMethodMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Method $node);
+	public function pprintPropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node);
 	public function pprintFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node);
 	public function pprintLineMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Line $node);
 	public function pprintTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node);
+	public function pprintLNumberScalar(\PhpParser\Node\Scalar\LNumber $node);
+	public function pprintEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node);
+	public function pprintEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
 	public function pprintDeclareItem(\PhpParser\Node\DeclareItem $node);
 	public function pprintUseItem(\PhpParser\Node\UseItem $node);
 	public function pprintArrayItem(\PhpParser\Node\ArrayItem $node);

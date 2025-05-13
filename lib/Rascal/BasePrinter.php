@@ -9,6 +9,8 @@ class BasePrinter implements IPrinter
 			return $this->pprintEnumCaseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Expression) {
 			return $this->pprintExpressionStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\UseUse) {
+			return $this->pprintUseUseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Global_) {
 			return $this->pprintGlobalStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Namespace_) {
@@ -23,10 +25,12 @@ class BasePrinter implements IPrinter
 			return $this->pprintCatchStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Class_) {
 			return $this->pprintClassStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\Throw_) {
-			return $this->pprintThrowStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\PropertyProperty) {
+			return $this->pprintPropertyPropertyStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Label) {
 			return $this->pprintLabelStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\StaticVar) {
+			return $this->pprintStaticVarStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Case_) {
 			return $this->pprintCaseStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Continue_) {
@@ -45,12 +49,16 @@ class BasePrinter implements IPrinter
 			return $this->pprintWhileStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\HaltCompiler) {
 			return $this->pprintHaltCompilerStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\DeclareDeclare) {
+			return $this->pprintDeclareDeclareStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Goto_) {
 			return $this->pprintGotoStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Static_) {
 			return $this->pprintStaticStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Expr) {
 			return $this->pprintExprStmt($node);
+		} elseif ($node instanceof \PhpParser\Node\Stmt\Block) {
+			return $this->pprintBlockStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Return_) {
 			return $this->pprintReturnStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\TryCatch) {
@@ -99,6 +107,8 @@ class BasePrinter implements IPrinter
 			return $this->pprintNullableType($node);
 		} elseif ($node instanceof \PhpParser\Node\Identifier) {
 			return $this->pprintIdentifier($node);
+		} elseif ($node instanceof \PhpParser\Node\PropertyHook) {
+			return $this->pprintPropertyHook($node);
 		} elseif ($node instanceof \PhpParser\Node\Param) {
 			return $this->pprintParam($node);
 		} elseif ($node instanceof \PhpParser\Node\StaticVar) {
@@ -279,12 +289,16 @@ class BasePrinter implements IPrinter
 			return $this->pprintPreDecExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Match_) {
 			return $this->pprintMatchExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\ArrayItem) {
+			return $this->pprintArrayItemExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Array_) {
 			return $this->pprintArrayExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\AssignRef) {
 			return $this->pprintAssignRefExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\Expr\Isset_) {
 			return $this->pprintIssetExpr($node);
+		} elseif ($node instanceof \PhpParser\Node\Expr\ClosureUse) {
+			return $this->pprintClosureUseExpr($node);
 		} elseif ($node instanceof \PhpParser\Node\AttributeGroup) {
 			return $this->pprintAttributeGroup($node);
 		} elseif ($node instanceof \PhpParser\Node\UnionType) {
@@ -309,6 +323,8 @@ class BasePrinter implements IPrinter
 			return $this->pprintIntScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\Float_) {
 			return $this->pprintFloatScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\DNumber) {
+			return $this->pprintDNumberScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\String_) {
 			return $this->pprintStringScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\InterpolatedString) {
@@ -323,12 +339,20 @@ class BasePrinter implements IPrinter
 			return $this->pprintFileMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Method) {
 			return $this->pprintMethodMagicConstScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Property) {
+			return $this->pprintPropertyMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Function_) {
 			return $this->pprintFunctionMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Line) {
 			return $this->pprintLineMagicConstScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\Scalar\MagicConst\Trait_) {
 			return $this->pprintTraitMagicConstScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\LNumber) {
+			return $this->pprintLNumberScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\EncapsedStringPart) {
+			return $this->pprintEncapsedStringPartScalar($node);
+		} elseif ($node instanceof \PhpParser\Node\Scalar\Encapsed) {
+			return $this->pprintEncapsedScalar($node);
 		} elseif ($node instanceof \PhpParser\Node\DeclareItem) {
 			return $this->pprintDeclareItem($node);
 		} elseif ($node instanceof \PhpParser\Node\UseItem) {
@@ -346,6 +370,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintExpressionStmt(\PhpParser\Node\Stmt\Expression $node)
+	{
+		return "";
+	}
+	public function pprintUseUseStmt(\PhpParser\Node\Stmt\UseUse $node)
 	{
 		return "";
 	}
@@ -377,11 +405,15 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
-	public function pprintThrowStmt(\PhpParser\Node\Stmt\Throw_ $node)
+	public function pprintPropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node)
 	{
 		return "";
 	}
 	public function pprintLabelStmt(\PhpParser\Node\Stmt\Label $node)
+	{
+		return "";
+	}
+	public function pprintStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node)
 	{
 		return "";
 	}
@@ -421,6 +453,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node)
+	{
+		return "";
+	}
 	public function pprintGotoStmt(\PhpParser\Node\Stmt\Goto_ $node)
 	{
 		return "";
@@ -430,6 +466,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintExprStmt(\PhpParser\Node\Stmt\Expr $node)
+	{
+		return "";
+	}
+	public function pprintBlockStmt(\PhpParser\Node\Stmt\Block $node)
 	{
 		return "";
 	}
@@ -526,6 +566,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return "";
+	}
+	public function pprintPropertyHook(\PhpParser\Node\PropertyHook $node)
 	{
 		return "";
 	}
@@ -889,6 +933,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node)
+	{
+		return "";
+	}
 	public function pprintArrayExpr(\PhpParser\Node\Expr\Array_ $node)
 	{
 		return "";
@@ -898,6 +946,10 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintIssetExpr(\PhpParser\Node\Expr\Isset_ $node)
+	{
+		return "";
+	}
+	public function pprintClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node)
 	{
 		return "";
 	}
@@ -949,6 +1001,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintDNumberScalar(\PhpParser\Node\Scalar\DNumber $node)
+	{
+		return "";
+	}
 	public function pprintStringScalar(\PhpParser\Node\Scalar\String_ $node)
 	{
 		return "";
@@ -977,6 +1033,10 @@ class BasePrinter implements IPrinter
 	{
 		return "";
 	}
+	public function pprintPropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node)
+	{
+		return "";
+	}
 	public function pprintFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node)
 	{
 		return "";
@@ -986,6 +1046,18 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node)
+	{
+		return "";
+	}
+	public function pprintLNumberScalar(\PhpParser\Node\Scalar\LNumber $node)
+	{
+		return "";
+	}
+	public function pprintEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
+	{
+		return "";
+	}
+	public function pprintEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node)
 	{
 		return "";
 	}

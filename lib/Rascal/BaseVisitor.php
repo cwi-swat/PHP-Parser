@@ -11,6 +11,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterUseUseStmt(\PhpParser\Node\Stmt\UseUse $node)
+	{
+		return null;
+	}
 	public function enterGlobalStmt(\PhpParser\Node\Stmt\Global_ $node)
 	{
 		return null;
@@ -39,11 +43,15 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterThrowStmt(\PhpParser\Node\Stmt\Throw_ $node)
+	public function enterPropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node)
 	{
 		return null;
 	}
 	public function enterLabelStmt(\PhpParser\Node\Stmt\Label $node)
+	{
+		return null;
+	}
+	public function enterStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node)
 	{
 		return null;
 	}
@@ -83,6 +91,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node)
+	{
+		return null;
+	}
 	public function enterGotoStmt(\PhpParser\Node\Stmt\Goto_ $node)
 	{
 		return null;
@@ -92,6 +104,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterExprStmt(\PhpParser\Node\Stmt\Expr $node)
+	{
+		return null;
+	}
+	public function enterBlockStmt(\PhpParser\Node\Stmt\Block $node)
 	{
 		return null;
 	}
@@ -188,6 +204,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return null;
+	}
+	public function enterPropertyHook(\PhpParser\Node\PropertyHook $node)
 	{
 		return null;
 	}
@@ -551,6 +571,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node)
+	{
+		return null;
+	}
 	public function enterArrayExpr(\PhpParser\Node\Expr\Array_ $node)
 	{
 		return null;
@@ -560,6 +584,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterIssetExpr(\PhpParser\Node\Expr\Isset_ $node)
+	{
+		return null;
+	}
+	public function enterClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node)
 	{
 		return null;
 	}
@@ -611,6 +639,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterDNumberScalar(\PhpParser\Node\Scalar\DNumber $node)
+	{
+		return null;
+	}
 	public function enterStringScalar(\PhpParser\Node\Scalar\String_ $node)
 	{
 		return null;
@@ -639,6 +671,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function enterPropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node)
+	{
+		return null;
+	}
 	public function enterFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node)
 	{
 		return null;
@@ -648,6 +684,18 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function enterTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node)
+	{
+		return null;
+	}
+	public function enterLNumberScalar(\PhpParser\Node\Scalar\LNumber $node)
+	{
+		return null;
+	}
+	public function enterEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
+	{
+		return null;
+	}
+	public function enterEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node)
 	{
 		return null;
 	}
@@ -680,6 +728,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveUseUseStmt(\PhpParser\Node\Stmt\UseUse $node)
+	{
+		return null;
+	}
 	public function leaveGlobalStmt(\PhpParser\Node\Stmt\Global_ $node)
 	{
 		return null;
@@ -708,11 +760,15 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function leaveThrowStmt(\PhpParser\Node\Stmt\Throw_ $node)
+	public function leavePropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node)
 	{
 		return null;
 	}
 	public function leaveLabelStmt(\PhpParser\Node\Stmt\Label $node)
+	{
+		return null;
+	}
+	public function leaveStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node)
 	{
 		return null;
 	}
@@ -752,6 +808,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node)
+	{
+		return null;
+	}
 	public function leaveGotoStmt(\PhpParser\Node\Stmt\Goto_ $node)
 	{
 		return null;
@@ -761,6 +821,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveExprStmt(\PhpParser\Node\Stmt\Expr $node)
+	{
+		return null;
+	}
+	public function leaveBlockStmt(\PhpParser\Node\Stmt\Block $node)
 	{
 		return null;
 	}
@@ -857,6 +921,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveIdentifier(\PhpParser\Node\Identifier $node)
+	{
+		return null;
+	}
+	public function leavePropertyHook(\PhpParser\Node\PropertyHook $node)
 	{
 		return null;
 	}
@@ -1220,6 +1288,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node)
+	{
+		return null;
+	}
 	public function leaveArrayExpr(\PhpParser\Node\Expr\Array_ $node)
 	{
 		return null;
@@ -1229,6 +1301,10 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveIssetExpr(\PhpParser\Node\Expr\Isset_ $node)
+	{
+		return null;
+	}
+	public function leaveClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node)
 	{
 		return null;
 	}
@@ -1280,6 +1356,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leaveDNumberScalar(\PhpParser\Node\Scalar\DNumber $node)
+	{
+		return null;
+	}
 	public function leaveStringScalar(\PhpParser\Node\Scalar\String_ $node)
 	{
 		return null;
@@ -1308,6 +1388,10 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
+	public function leavePropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node)
+	{
+		return null;
+	}
 	public function leaveFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node)
 	{
 		return null;
@@ -1317,6 +1401,18 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node)
+	{
+		return null;
+	}
+	public function leaveLNumberScalar(\PhpParser\Node\Scalar\LNumber $node)
+	{
+		return null;
+	}
+	public function leaveEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node)
+	{
+		return null;
+	}
+	public function leaveEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node)
 	{
 		return null;
 	}

@@ -5,6 +5,7 @@ interface IVisitor
 {
 	public function enterEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node);
 	public function enterExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function enterUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function enterGlobalStmt(\PhpParser\Node\Stmt\Global_ $node);
 	public function enterNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node);
 	public function enterTraitUseStmt(\PhpParser\Node\Stmt\TraitUse $node);
@@ -12,8 +13,9 @@ interface IVisitor
 	public function enterAliasTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation\Alias $node);
 	public function enterCatchStmt(\PhpParser\Node\Stmt\Catch_ $node);
 	public function enterClassStmt(\PhpParser\Node\Stmt\Class_ $node);
-	public function enterThrowStmt(\PhpParser\Node\Stmt\Throw_ $node);
+	public function enterPropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node);
 	public function enterLabelStmt(\PhpParser\Node\Stmt\Label $node);
+	public function enterStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node);
 	public function enterCaseStmt(\PhpParser\Node\Stmt\Case_ $node);
 	public function enterContinueStmt(\PhpParser\Node\Stmt\Continue_ $node);
 	public function enterClassMethodStmt(\PhpParser\Node\Stmt\ClassMethod $node);
@@ -23,9 +25,11 @@ interface IVisitor
 	public function enterElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function enterWhileStmt(\PhpParser\Node\Stmt\While_ $node);
 	public function enterHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node);
+	public function enterDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function enterGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function enterStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
 	public function enterExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function enterBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function enterReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function enterTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);
 	public function enterEchoStmt(\PhpParser\Node\Stmt\Echo_ $node);
@@ -50,6 +54,7 @@ interface IVisitor
 	public function enterMatchArm(\PhpParser\Node\MatchArm $node);
 	public function enterNullableType(\PhpParser\Node\NullableType $node);
 	public function enterIdentifier(\PhpParser\Node\Identifier $node);
+	public function enterPropertyHook(\PhpParser\Node\PropertyHook $node);
 	public function enterParam(\PhpParser\Node\Param $node);
 	public function enterStaticVar(\PhpParser\Node\StaticVar $node);
 	public function enterInterpolatedStringPart(\PhpParser\Node\InterpolatedStringPart $node);
@@ -140,9 +145,11 @@ interface IVisitor
 	public function enterCloneExpr(\PhpParser\Node\Expr\Clone_ $node);
 	public function enterPreDecExpr(\PhpParser\Node\Expr\PreDec $node);
 	public function enterMatchExpr(\PhpParser\Node\Expr\Match_ $node);
+	public function enterArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node);
 	public function enterArrayExpr(\PhpParser\Node\Expr\Array_ $node);
 	public function enterAssignRefExpr(\PhpParser\Node\Expr\AssignRef $node);
 	public function enterIssetExpr(\PhpParser\Node\Expr\Isset_ $node);
+	public function enterClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function enterAttributeGroup(\PhpParser\Node\AttributeGroup $node);
 	public function enterUnionType(\PhpParser\Node\UnionType $node);
 	public function enterConst(\PhpParser\Node\Const_ $node);
@@ -155,6 +162,7 @@ interface IVisitor
 	public function enterName(\PhpParser\Node\Name $node);
 	public function enterIntScalar(\PhpParser\Node\Scalar\Int_ $node);
 	public function enterFloatScalar(\PhpParser\Node\Scalar\Float_ $node);
+	public function enterDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function enterStringScalar(\PhpParser\Node\Scalar\String_ $node);
 	public function enterInterpolatedStringScalar(\PhpParser\Node\Scalar\InterpolatedString $node);
 	public function enterNamespaceMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Namespace_ $node);
@@ -162,9 +170,13 @@ interface IVisitor
 	public function enterDirMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Dir $node);
 	public function enterFileMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\File $node);
 	public function enterMethodMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Method $node);
+	public function enterPropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node);
 	public function enterFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node);
 	public function enterLineMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Line $node);
 	public function enterTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node);
+	public function enterLNumberScalar(\PhpParser\Node\Scalar\LNumber $node);
+	public function enterEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node);
+	public function enterEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
 	public function enterDeclareItem(\PhpParser\Node\DeclareItem $node);
 	public function enterUseItem(\PhpParser\Node\UseItem $node);
 	public function enterArrayItem(\PhpParser\Node\ArrayItem $node);
@@ -173,6 +185,7 @@ interface IVisitor
 
 	public function leaveEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node);
 	public function leaveExpressionStmt(\PhpParser\Node\Stmt\Expression $node);
+	public function leaveUseUseStmt(\PhpParser\Node\Stmt\UseUse $node);
 	public function leaveGlobalStmt(\PhpParser\Node\Stmt\Global_ $node);
 	public function leaveNamespaceStmt(\PhpParser\Node\Stmt\Namespace_ $node);
 	public function leaveTraitUseStmt(\PhpParser\Node\Stmt\TraitUse $node);
@@ -180,8 +193,9 @@ interface IVisitor
 	public function leaveAliasTraitUseAdaptationStmt(\PhpParser\Node\Stmt\TraitUseAdaptation\Alias $node);
 	public function leaveCatchStmt(\PhpParser\Node\Stmt\Catch_ $node);
 	public function leaveClassStmt(\PhpParser\Node\Stmt\Class_ $node);
-	public function leaveThrowStmt(\PhpParser\Node\Stmt\Throw_ $node);
+	public function leavePropertyPropertyStmt(\PhpParser\Node\Stmt\PropertyProperty $node);
 	public function leaveLabelStmt(\PhpParser\Node\Stmt\Label $node);
+	public function leaveStaticVarStmt(\PhpParser\Node\Stmt\StaticVar $node);
 	public function leaveCaseStmt(\PhpParser\Node\Stmt\Case_ $node);
 	public function leaveContinueStmt(\PhpParser\Node\Stmt\Continue_ $node);
 	public function leaveClassMethodStmt(\PhpParser\Node\Stmt\ClassMethod $node);
@@ -191,9 +205,11 @@ interface IVisitor
 	public function leaveElseStmt(\PhpParser\Node\Stmt\Else_ $node);
 	public function leaveWhileStmt(\PhpParser\Node\Stmt\While_ $node);
 	public function leaveHaltCompilerStmt(\PhpParser\Node\Stmt\HaltCompiler $node);
+	public function leaveDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function leaveGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function leaveStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
 	public function leaveExprStmt(\PhpParser\Node\Stmt\Expr $node);
+	public function leaveBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function leaveReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function leaveTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);
 	public function leaveEchoStmt(\PhpParser\Node\Stmt\Echo_ $node);
@@ -218,6 +234,7 @@ interface IVisitor
 	public function leaveMatchArm(\PhpParser\Node\MatchArm $node);
 	public function leaveNullableType(\PhpParser\Node\NullableType $node);
 	public function leaveIdentifier(\PhpParser\Node\Identifier $node);
+	public function leavePropertyHook(\PhpParser\Node\PropertyHook $node);
 	public function leaveParam(\PhpParser\Node\Param $node);
 	public function leaveStaticVar(\PhpParser\Node\StaticVar $node);
 	public function leaveInterpolatedStringPart(\PhpParser\Node\InterpolatedStringPart $node);
@@ -308,9 +325,11 @@ interface IVisitor
 	public function leaveCloneExpr(\PhpParser\Node\Expr\Clone_ $node);
 	public function leavePreDecExpr(\PhpParser\Node\Expr\PreDec $node);
 	public function leaveMatchExpr(\PhpParser\Node\Expr\Match_ $node);
+	public function leaveArrayItemExpr(\PhpParser\Node\Expr\ArrayItem $node);
 	public function leaveArrayExpr(\PhpParser\Node\Expr\Array_ $node);
 	public function leaveAssignRefExpr(\PhpParser\Node\Expr\AssignRef $node);
 	public function leaveIssetExpr(\PhpParser\Node\Expr\Isset_ $node);
+	public function leaveClosureUseExpr(\PhpParser\Node\Expr\ClosureUse $node);
 	public function leaveAttributeGroup(\PhpParser\Node\AttributeGroup $node);
 	public function leaveUnionType(\PhpParser\Node\UnionType $node);
 	public function leaveConst(\PhpParser\Node\Const_ $node);
@@ -323,6 +342,7 @@ interface IVisitor
 	public function leaveName(\PhpParser\Node\Name $node);
 	public function leaveIntScalar(\PhpParser\Node\Scalar\Int_ $node);
 	public function leaveFloatScalar(\PhpParser\Node\Scalar\Float_ $node);
+	public function leaveDNumberScalar(\PhpParser\Node\Scalar\DNumber $node);
 	public function leaveStringScalar(\PhpParser\Node\Scalar\String_ $node);
 	public function leaveInterpolatedStringScalar(\PhpParser\Node\Scalar\InterpolatedString $node);
 	public function leaveNamespaceMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Namespace_ $node);
@@ -330,9 +350,13 @@ interface IVisitor
 	public function leaveDirMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Dir $node);
 	public function leaveFileMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\File $node);
 	public function leaveMethodMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Method $node);
+	public function leavePropertyMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Property $node);
 	public function leaveFunctionMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Function_ $node);
 	public function leaveLineMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Line $node);
 	public function leaveTraitMagicConstScalar(\PhpParser\Node\Scalar\MagicConst\Trait_ $node);
+	public function leaveLNumberScalar(\PhpParser\Node\Scalar\LNumber $node);
+	public function leaveEncapsedStringPartScalar(\PhpParser\Node\Scalar\EncapsedStringPart $node);
+	public function leaveEncapsedScalar(\PhpParser\Node\Scalar\Encapsed $node);
 	public function leaveDeclareItem(\PhpParser\Node\DeclareItem $node);
 	public function leaveUseItem(\PhpParser\Node\UseItem $node);
 	public function leaveArrayItem(\PhpParser\Node\ArrayItem $node);
