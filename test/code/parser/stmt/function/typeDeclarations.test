@@ -24,6 +24,8 @@ array(
                     name: b
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
@@ -38,6 +40,8 @@ array(
                     name: c
                 )
                 default: null
+                hooks: array(
+                )
             )
             2: Param(
                 attrGroups: array(
@@ -52,15 +56,15 @@ array(
                     name: d
                 )
                 default: null
+                hooks: array(
+                )
             )
             3: Param(
                 attrGroups: array(
                 )
                 flags: 0
                 type: Name(
-                    parts: array(
-                        0: E
-                    )
+                    name: E
                 )
                 byRef: false
                 variadic: false
@@ -68,6 +72,8 @@ array(
                     name: f
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: null

@@ -16,7 +16,7 @@ class NameResolverTest extends \PHPUnit\Framework\TestCase {
     /**
      * @covers \PhpParser\NodeVisitor\NameResolver
      */
-    public function testResolveNames() {
+    public function testResolveNames(): void {
         $code = <<<'EOC'
 <?php
 
@@ -176,7 +176,7 @@ EOC;
     /**
      * @covers \PhpParser\NodeVisitor\NameResolver
      */
-    public function testResolveLocations() {
+    public function testResolveLocations(): void {
         $code = <<<'EOC'
 <?php
 namespace NS;
@@ -188,7 +188,7 @@ class A extends B implements C, D {
         E::h as i;
         E::j insteadof F, G;
     }
-    
+
     #[X]
     public float $php = 7.4;
     public ?Foo $person;
@@ -197,6 +197,22 @@ class A extends B implements C, D {
 
     #[X]
     const C = 1;
+    
+    public const X A = X::Bar;
+    public const X\Foo B = X\Foo::Bar;
+    public const \X\Foo C = \X\Foo::Bar;
+
+    public Foo $foo {
+        #[X]
+        set(#[X] Bar $v) {}
+    }
+
+    public function __construct(
+        public Foo $bar {
+            #[X]
+            set(#[X] Bar $v) {}
+        }
+    ) {}
 }
 
 #[X]
@@ -228,6 +244,9 @@ function(A $a) : A {};
 fn(array $a): array => $a;
 fn(A $a): A => $a;
 fn(?A $a): ?A => $a;
+
+#[X]
+const EXAMPLE = true;
 
 A::b();
 A::$b;
@@ -262,6 +281,27 @@ class A extends \NS\B implements \NS\C, \NS\D
     public \NS\A|\NS\B|int $prop;
     #[\NS\X]
     const C = 1;
+    public const \NS\X A = \NS\X::Bar;
+    public const \NS\X\Foo B = \NS\X\Foo::Bar;
+    public const \X\Foo C = \X\Foo::Bar;
+    public \NS\Foo $foo {
+        #[\NS\X]
+        set(
+            #[\NS\X]
+            \NS\Bar $v
+        ) {
+        }
+    }
+    public function __construct(public \NS\Foo $bar {
+        #[\NS\X]
+        set(
+            #[\NS\X]
+            \NS\Bar $v
+        ) {
+        }
+    })
+    {
+    }
 }
 #[\NS\X]
 interface A extends \NS\C, \NS\D
@@ -281,7 +321,10 @@ trait A
 {
 }
 #[\NS\X]
-function f(#[\NS\X] \NS\A $a): \NS\A
+function f(
+    #[\NS\X]
+    \NS\A $a
+): \NS\A
 {
 }
 function f2(array $a): array
@@ -298,6 +341,8 @@ function fn4(?array $a): ?array
 #[\NS\X] fn(array $a): array => $a;
 fn(\NS\A $a): \NS\A => $a;
 fn(?\NS\A $a): ?\NS\A => $a;
+#[\NS\X]
+const EXAMPLE = true;
 \NS\A::b();
 \NS\A::$b;
 \NS\A::B;
@@ -321,7 +366,7 @@ EOC;
         );
     }
 
-    public function testNoResolveSpecialName() {
+    public function testNoResolveSpecialName(): void {
         $stmts = [new Node\Expr\New_(new Name('self'))];
 
         $traverser = new PhpParser\NodeTraverser();
@@ -330,7 +375,7 @@ EOC;
         $this->assertEquals($stmts, $traverser->traverse($stmts));
     }
 
-    public function testAddDeclarationNamespacedName() {
+    public function testAddDeclarationNamespacedName(): void {
         $nsStmts = [
             new Stmt\Class_('A'),
             new Stmt\Interface_('B'),
@@ -365,7 +410,7 @@ EOC;
         $this->assertSame('F', (string) $stmts[0]->stmts[6]->namespacedName);
     }
 
-    public function testAddRuntimeResolvedNamespacedName() {
+    public function testAddRuntimeResolvedNamespacedName(): void {
         $stmts = [
             new Stmt\Namespace_(new Name('NS'), [
                 new Expr\FuncCall(new Name('foo')),
@@ -391,7 +436,7 @@ EOC;
     /**
      * @dataProvider provideTestError
      */
-    public function testError(Node $stmt, $errorMsg) {
+    public function testError(Node $stmt, $errorMsg): void {
         $this->expectException(\PhpParser\Error::class);
         $this->expectExceptionMessage($errorMsg);
 
@@ -400,7 +445,7 @@ EOC;
         $traverser->traverse([$stmt]);
     }
 
-    public function provideTestError() {
+    public static function provideTestError() {
         return [
             [
                 new Stmt\Use_([
@@ -442,7 +487,7 @@ EOC;
         ];
     }
 
-    public function testClassNameIsCaseInsensitive() {
+    public function testClassNameIsCaseInsensitive(): void {
         $source = <<<'EOC'
 <?php
 namespace Foo;
@@ -460,10 +505,10 @@ EOC;
         $stmt = $stmts[0];
 
         $assign = $stmt->stmts[1]->expr;
-        $this->assertSame(['Bar', 'Baz'], $assign->expr->class->parts);
+        $this->assertSame('Bar\\Baz', $assign->expr->class->name);
     }
 
-    public function testSpecialClassNamesAreCaseInsensitive() {
+    public function testSpecialClassNamesAreCaseInsensitive(): void {
         $source = <<<'EOC'
 <?php
 namespace Foo;
@@ -494,7 +539,7 @@ EOC;
         $this->assertSame('STATIC', (string) $methodStmt->stmts[2]->expr->class);
     }
 
-    public function testAddOriginalNames() {
+    public function testAddOriginalNames(): void {
         $traverser = new PhpParser\NodeTraverser();
         $traverser->addVisitor(new NameResolver(null, ['preserveOriginalNames' => true]));
 
@@ -513,7 +558,7 @@ EOC;
         $this->assertSame($n2, $stmts[0]->stmts[1]->name->getAttribute('originalName'));
     }
 
-    public function testAttributeOnlyMode() {
+    public function testAttributeOnlyMode(): void {
         $traverser = new PhpParser\NodeTraverser();
         $traverser->addVisitor(new NameResolver(null, ['replaceNodes' => false]));
 
@@ -536,7 +581,7 @@ EOC;
     }
 
     private function parseAndResolve(string $code): array {
-        $parser = new PhpParser\Parser\Php7(new PhpParser\Lexer\Emulative());
+        $parser = new PhpParser\Parser\Php8(new PhpParser\Lexer\Emulative());
         $traverser = new PhpParser\NodeTraverser();
         $traverser->addVisitor(new NameResolver());
 

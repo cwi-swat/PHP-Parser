@@ -10,15 +10,15 @@ class Namespace_ extends Node\Stmt {
     public const KIND_BRACED = 2;
 
     /** @var null|Node\Name Name */
-    public $name;
+    public ?Node\Name $name;
     /** @var Node\Stmt[] Statements */
     public $stmts;
 
     /**
      * Constructs a namespace node.
      *
-     * @param null|Node\Name   $name       Name
-     * @param null|Node\Stmt[] $stmts      Statements
+     * @param null|Node\Name $name Name
+     * @param null|Node\Stmt[] $stmts Statements
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(?Node\Name $name = null, ?array $stmts = [], array $attributes = []) {

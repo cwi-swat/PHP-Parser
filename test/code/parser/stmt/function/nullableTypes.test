@@ -20,9 +20,7 @@ array(
                 flags: 0
                 type: NullableType(
                     type: Name(
-                        parts: array(
-                            0: Foo
-                        )
+                        name: Foo
                     )
                 )
                 byRef: false
@@ -31,6 +29,8 @@ array(
                     name: bar
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
@@ -47,13 +47,13 @@ array(
                     name: foo
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: NullableType(
             type: Name(
-                parts: array(
-                    0: Baz
-                )
+                name: Baz
             )
         )
         stmts: array(

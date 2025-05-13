@@ -4,16 +4,16 @@ namespace PhpParser\Lexer\TokenEmulator;
 
 use PhpParser\PhpVersion;
 
-final class FnTokenEmulator extends KeywordEmulator {
+final class PropertyTokenEmulator extends KeywordEmulator {
     public function getPhpVersion(): PhpVersion {
-        return PhpVersion::fromComponents(7, 4);
+        return PhpVersion::fromComponents(8, 4);
     }
 
     public function getKeywordString(): string {
-        return 'fn';
+        return '__property__';
     }
 
     public function getKeywordToken(): int {
-        return \T_FN;
+        return \T_PROPERTY_C;
     }
 }

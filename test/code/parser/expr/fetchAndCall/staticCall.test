@@ -22,20 +22,12 @@ array(
     0: Stmt_Expression(
         expr: Expr_StaticCall(
             class: Name(
-                parts: array(
-                    0: A
-                )
-                comments: array(
-                    0: // method name variations
-                )
+                name: A
             )
             name: Identifier(
                 name: b
             )
             args: array(
-            )
-            comments: array(
-                0: // method name variations
             )
         )
         comments: array(
@@ -45,9 +37,7 @@ array(
     1: Stmt_Expression(
         expr: Expr_StaticCall(
             class: Name(
-                parts: array(
-                    0: A
-                )
+                name: A
             )
             name: Scalar_String(
                 value: b
@@ -59,9 +49,7 @@ array(
     2: Stmt_Expression(
         expr: Expr_StaticCall(
             class: Name(
-                parts: array(
-                    0: A
-                )
+                name: A
             )
             name: Expr_Variable(
                 name: b
@@ -75,9 +63,7 @@ array(
             name: Expr_ArrayDimFetch(
                 var: Expr_StaticPropertyFetch(
                     class: Name(
-                        parts: array(
-                            0: A
-                        )
+                        name: A
                     )
                     name: VarLikeIdentifier(
                         name: b
@@ -97,9 +83,7 @@ array(
                 var: Expr_ArrayDimFetch(
                     var: Expr_StaticPropertyFetch(
                         class: Name(
-                            parts: array(
-                                0: A
-                            )
+                            name: A
                         )
                         name: VarLikeIdentifier(
                             name: b
@@ -121,27 +105,16 @@ array(
         expr: Expr_ArrayDimFetch(
             var: Expr_StaticCall(
                 class: Name(
-                    parts: array(
-                        0: A
-                    )
-                    comments: array(
-                        0: // array dereferencing
-                    )
+                    name: A
                 )
                 name: Identifier(
                     name: b
                 )
                 args: array(
                 )
-                comments: array(
-                    0: // array dereferencing
-                )
             )
             dim: Scalar_String(
                 value: c
-            )
-            comments: array(
-                0: // array dereferencing
             )
         )
         comments: array(
@@ -151,20 +124,12 @@ array(
     6: Stmt_Expression(
         expr: Expr_StaticCall(
             class: Name(
-                parts: array(
-                    0: static
-                )
-                comments: array(
-                    0: // class name variations
-                )
+                name: static
             )
             name: Identifier(
                 name: b
             )
             args: array(
-            )
-            comments: array(
-                0: // class name variations
             )
         )
         comments: array(

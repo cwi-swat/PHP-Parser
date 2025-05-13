@@ -15,9 +15,7 @@ class BuilderFactory {
      * Creates an attribute node.
      *
      * @param string|Name $name Name of the attribute
-     * @param array       $args Attribute named arguments
-     *
-     * @return Node\Attribute
+     * @param array $args Attribute named arguments
      */
     public function attribute($name, array $args = []): Node\Attribute {
         return new Node\Attribute(
@@ -95,7 +93,7 @@ class BuilderFactory {
     /**
      * Creates a trait use adaptation builder.
      *
-     * @param Node\Name|string|null  $trait  Trait name
+     * @param Node\Name|string|null $trait Trait name
      * @param Node\Identifier|string $method Method name
      *
      * @return Builder\TraitUseAdaptation The created trait use adaptation builder
@@ -189,7 +187,7 @@ class BuilderFactory {
     /**
      * Creates a class constant builder.
      *
-     * @param string|Identifier                          $name  Name
+     * @param string|Identifier $name Name
      * @param Node\Expr|bool|null|int|float|string|array $value Value
      *
      * @return Builder\ClassConst The created use const builder
@@ -201,7 +199,7 @@ class BuilderFactory {
     /**
      * Creates an enum case builder.
      *
-     * @param string|Identifier $name  Name
+     * @param string|Identifier $name Name
      *
      * @return Builder\EnumCase The created use const builder
      */
@@ -212,9 +210,7 @@ class BuilderFactory {
     /**
      * Creates node a for a literal value.
      *
-     * @param Expr|bool|null|int|float|string|array $value $value
-     *
-     * @return Expr
+     * @param Expr|bool|null|int|float|string|array|\UnitEnum $value $value
      */
     public function val($value): Expr {
         return BuilderHelpers::normalizeValue($value);
@@ -224,8 +220,6 @@ class BuilderFactory {
      * Creates variable node.
      *
      * @param string|Expr $name Name
-     *
-     * @return Expr\Variable
      */
     public function var($name): Expr\Variable {
         if (!\is_string($name) && !$name instanceof Expr) {
@@ -262,9 +256,7 @@ class BuilderFactory {
      * Creates a function call node.
      *
      * @param string|Name|Expr $name Function name
-     * @param array            $args Function arguments
-     *
-     * @return Expr\FuncCall
+     * @param array $args Function arguments
      */
     public function funcCall($name, array $args = []): Expr\FuncCall {
         return new Expr\FuncCall(
@@ -276,11 +268,9 @@ class BuilderFactory {
     /**
      * Creates a method call node.
      *
-     * @param Expr                   $var  Variable the method is called on
+     * @param Expr $var Variable the method is called on
      * @param string|Identifier|Expr $name Method name
-     * @param array                  $args Method arguments
-     *
-     * @return Expr\MethodCall
+     * @param array $args Method arguments
      */
     public function methodCall(Expr $var, $name, array $args = []): Expr\MethodCall {
         return new Expr\MethodCall(
@@ -293,11 +283,9 @@ class BuilderFactory {
     /**
      * Creates a static method call node.
      *
-     * @param string|Name|Expr       $class Class name
-     * @param string|Identifier|Expr $name  Method name
-     * @param array                  $args  Method arguments
-     *
-     * @return Expr\StaticCall
+     * @param string|Name|Expr $class Class name
+     * @param string|Identifier|Expr $name Method name
+     * @param array $args Method arguments
      */
     public function staticCall($class, $name, array $args = []): Expr\StaticCall {
         return new Expr\StaticCall(
@@ -311,9 +299,7 @@ class BuilderFactory {
      * Creates an object creation node.
      *
      * @param string|Name|Expr $class Class name
-     * @param array            $args  Constructor arguments
-     *
-     * @return Expr\New_
+     * @param array $args Constructor arguments
      */
     public function new($class, array $args = []): Expr\New_ {
         return new Expr\New_(
@@ -326,8 +312,6 @@ class BuilderFactory {
      * Creates a constant fetch node.
      *
      * @param string|Name $name Constant name
-     *
-     * @return Expr\ConstFetch
      */
     public function constFetch($name): Expr\ConstFetch {
         return new Expr\ConstFetch(BuilderHelpers::normalizeName($name));
@@ -336,10 +320,8 @@ class BuilderFactory {
     /**
      * Creates a property fetch node.
      *
-     * @param Expr                   $var  Variable holding object
+     * @param Expr $var Variable holding object
      * @param string|Identifier|Expr $name Property name
-     *
-     * @return Expr\PropertyFetch
      */
     public function propertyFetch(Expr $var, $name): Expr\PropertyFetch {
         return new Expr\PropertyFetch($var, BuilderHelpers::normalizeIdentifierOrExpr($name));
@@ -348,15 +330,13 @@ class BuilderFactory {
     /**
      * Creates a class constant fetch node.
      *
-     * @param string|Name|Expr  $class Class name
-     * @param string|Identifier $name  Constant name
-     *
-     * @return Expr\ClassConstFetch
+     * @param string|Name|Expr $class Class name
+     * @param string|Identifier|Expr $name Constant name
      */
     public function classConstFetch($class, $name): Expr\ClassConstFetch {
         return new Expr\ClassConstFetch(
             BuilderHelpers::normalizeNameOrExpr($class),
-            BuilderHelpers::normalizeIdentifier($name)
+            BuilderHelpers::normalizeIdentifierOrExpr($name)
         );
     }
 
@@ -364,8 +344,6 @@ class BuilderFactory {
      * Creates nested Concat nodes from a list of expressions.
      *
      * @param Expr|string ...$exprs Expressions or literal strings
-     *
-     * @return Concat
      */
     public function concat(...$exprs): Concat {
         $numExprs = count($exprs);
@@ -382,7 +360,6 @@ class BuilderFactory {
 
     /**
      * @param string|Expr $expr
-     * @return Expr
      */
     private function normalizeStringExpr($expr): Expr {
         if ($expr instanceof Expr) {

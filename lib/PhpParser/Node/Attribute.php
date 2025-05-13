@@ -7,13 +7,13 @@ use PhpParser\NodeAbstract;
 
 class Attribute extends NodeAbstract {
     /** @var Name Attribute name */
-    public $name;
+    public Name $name;
 
     /** @var list<Arg> Attribute arguments */
-    public $args;
+    public array $args;
 
     /**
-     * @param Node\Name $name       Attribute name
+     * @param Node\Name $name Attribute name
      * @param list<Arg> $args Attribute arguments
      * @param array<string, mixed> $attributes Additional node attributes
      */

@@ -6,12 +6,12 @@ use PhpParser\Node;
 
 class Unset_ extends Node\Stmt {
     /** @var Node\Expr[] Variables to unset */
-    public $vars;
+    public array $vars;
 
     /**
      * Constructs an unset node.
      *
-     * @param Node\Expr[] $vars       Variables to unset
+     * @param Node\Expr[] $vars Variables to unset
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(array $vars, array $attributes = []) {

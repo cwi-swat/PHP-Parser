@@ -7,17 +7,17 @@ use PhpParser\Node\PropertyItem;
 
 abstract class ClassLike extends Node\Stmt {
     /** @var Node\Identifier|null Name */
-    public $name;
+    public ?Node\Identifier $name;
     /** @var Node\Stmt[] Statements */
-    public $stmts;
+    public array $stmts;
     /** @var Node\AttributeGroup[] PHP attribute groups */
-    public $attrGroups;
+    public array $attrGroups;
 
     /** @var Node\Name|null Namespaced name (if using NameResolver) */
-    public $namespacedName;
+    public ?Node\Name $namespacedName;
 
     /**
-     * @return TraitUse[]
+     * @return list<TraitUse>
      */
     public function getTraitUses(): array {
         $traitUses = [];
@@ -30,7 +30,7 @@ abstract class ClassLike extends Node\Stmt {
     }
 
     /**
-     * @return ClassConst[]
+     * @return list<ClassConst>
      */
     public function getConstants(): array {
         $constants = [];
@@ -43,7 +43,7 @@ abstract class ClassLike extends Node\Stmt {
     }
 
     /**
-     * @return Property[]
+     * @return list<Property>
      */
     public function getProperties(): array {
         $properties = [];
@@ -78,7 +78,7 @@ abstract class ClassLike extends Node\Stmt {
     /**
      * Gets all methods defined directly in this class/interface/trait
      *
-     * @return ClassMethod[]
+     * @return list<ClassMethod>
      */
     public function getMethods(): array {
         $methods = [];

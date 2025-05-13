@@ -16,6 +16,8 @@ class Bar {
 -----
 array(
     0: Stmt_Const(
+        attrGroups: array(
+        )
         consts: array(
             0: Const(
                 name: Identifier(
@@ -23,9 +25,7 @@ array(
                 )
                 value: Expr_New(
                     class: Name(
-                        parts: array(
-                            0: Foo
-                        )
+                        name: Foo
                     )
                     args: array(
                     )
@@ -53,12 +53,12 @@ array(
                 )
                 default: Expr_New(
                     class: Name(
-                        parts: array(
-                            0: Foo
-                        )
+                        name: Foo
                     )
                     args: array(
                     )
+                )
+                hooks: array(
                 )
             )
         )
@@ -72,9 +72,7 @@ array(
                         )
                         default: Expr_New(
                             class: Name(
-                                parts: array(
-                                    0: Foo
-                                )
+                                name: Foo
                             )
                             args: array(
                             )
@@ -90,18 +88,14 @@ array(
                 attrs: array(
                     0: Attribute(
                         name: Name(
-                            parts: array(
-                                0: Attr
-                            )
+                            name: Attr
                         )
                         args: array(
                             0: Arg(
                                 name: null
                                 value: Expr_New(
                                     class: Name(
-                                        parts: array(
-                                            0: Foo
-                                        )
+                                        name: Foo
                                     )
                                     args: array(
                                     )
@@ -126,6 +120,7 @@ array(
                 attrGroups: array(
                 )
                 flags: 0
+                type: null
                 consts: array(
                     0: Const(
                         name: Identifier(
@@ -133,9 +128,7 @@ array(
                         )
                         value: Expr_New(
                             class: Name(
-                                parts: array(
-                                    0: Foo
-                                )
+                                name: Foo
                             )
                             args: array(
                             )
@@ -155,14 +148,14 @@ array(
                         )
                         default: Expr_New(
                             class: Name(
-                                parts: array(
-                                    0: Foo
-                                )
+                                name: Foo
                             )
                             args: array(
                             )
                         )
                     )
+                )
+                hooks: array(
                 )
             )
         )

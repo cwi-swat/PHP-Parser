@@ -17,13 +17,14 @@ class Standard extends PrettyPrinterAbstract {
     // Special nodes
 
     protected function pParam(Node\Param $node): string {
-        return $this->pAttrGroups($node->attrGroups, true)
+        return $this->pAttrGroups($node->attrGroups, $this->phpVersion->supportsAttributes())
              . $this->pModifiers($node->flags)
              . ($node->type ? $this->p($node->type) . ' ' : '')
              . ($node->byRef ? '&' : '')
              . ($node->variadic ? '...' : '')
              . $this->p($node->var)
-             . ($node->default ? ' = ' . $this->p($node->default) : '');
+             . ($node->default ? ' = ' . $this->p($node->default) : '')
+             . ($node->hooks ? ' {' . $this->pStmts($node->hooks) . $this->nl . '}' : '');
     }
 
     protected function pArg(Node\Arg $node): string {
@@ -80,15 +81,15 @@ class Standard extends PrettyPrinterAbstract {
     // Names
 
     protected function pName(Name $node): string {
-        return implode('\\', $node->parts);
+        return $node->name;
     }
 
     protected function pName_FullyQualified(Name\FullyQualified $node): string {
-        return '\\' . implode('\\', $node->parts);
+        return '\\' . $node->name;
     }
 
     protected function pName_Relative(Name\Relative $node): string {
-        return 'namespace\\' . implode('\\', $node->parts);
+        return 'namespace\\' . $node->name;
     }
 
     // Magic Constants
@@ -125,7 +126,15 @@ class Standard extends PrettyPrinterAbstract {
         return '__TRAIT__';
     }
 
+    protected function pScalar_MagicConst_Property(MagicConst\Property $node): string {
+        return '__PROPERTY__';
+    }
+
     // Scalars
+
+    private function indentString(string $str): string {
+        return str_replace("\n", $this->nl, $str);
+    }
 
     protected function pScalar_String(Scalar\String_ $node): string {
         $kind = $node->getAttribute('kind', Scalar\String_::KIND_SINGLE_QUOTED);
@@ -133,12 +142,17 @@ class Standard extends PrettyPrinterAbstract {
             case Scalar\String_::KIND_NOWDOC:
                 $label = $node->getAttribute('docLabel');
                 if ($label && !$this->containsEndLabel($node->value, $label)) {
+                    $shouldIdent = $this->phpVersion->supportsFlexibleHeredoc();
+                    $nl = $shouldIdent ? $this->nl : $this->newline;
                     if ($node->value === '') {
-                        return "<<<'$label'\n$label" . $this->docStringEndToken;
+                        return "<<<'$label'$nl$label{$this->docStringEndToken}";
                     }
 
-                    return "<<<'$label'\n$node->value\n$label"
-                         . $this->docStringEndToken;
+                    // Make sure trailing \r is not combined with following \n into CRLF.
+                    if ($node->value[strlen($node->value) - 1] !== "\r") {
+                        $value = $shouldIdent ? $this->indentString($node->value) : $node->value;
+                        return "<<<'$label'$nl$value$nl$label{$this->docStringEndToken}";
+                    }
                 }
                 /* break missing intentionally */
                 // no break
@@ -146,14 +160,14 @@ class Standard extends PrettyPrinterAbstract {
                 return $this->pSingleQuotedString($node->value);
             case Scalar\String_::KIND_HEREDOC:
                 $label = $node->getAttribute('docLabel');
-                if ($label && !$this->containsEndLabel($node->value, $label)) {
-                    if ($node->value === '') {
-                        return "<<<$label\n$label" . $this->docStringEndToken;
+                $escaped = $this->escapeString($node->value, null);
+                if ($label && !$this->containsEndLabel($escaped, $label)) {
+                    $nl = $this->phpVersion->supportsFlexibleHeredoc() ? $this->nl : $this->newline;
+                    if ($escaped === '') {
+                        return "<<<$label$nl$label{$this->docStringEndToken}";
                     }
 
-                    $escaped = $this->escapeString($node->value, null);
-                    return "<<<$label\n" . $escaped . "\n$label"
-                         . $this->docStringEndToken;
+                    return "<<<$label$nl$escaped$nl$label{$this->docStringEndToken}";
                 }
                 /* break missing intentionally */
                 // no break
@@ -167,22 +181,23 @@ class Standard extends PrettyPrinterAbstract {
         if ($node->getAttribute('kind') === Scalar\String_::KIND_HEREDOC) {
             $label = $node->getAttribute('docLabel');
             if ($label && !$this->encapsedContainsEndLabel($node->parts, $label)) {
+                $nl = $this->phpVersion->supportsFlexibleHeredoc() ? $this->nl : $this->newline;
                 if (count($node->parts) === 1
                     && $node->parts[0] instanceof Node\InterpolatedStringPart
                     && $node->parts[0]->value === ''
                 ) {
-                    return "<<<$label\n$label" . $this->docStringEndToken;
+                    return "<<<$label$nl$label{$this->docStringEndToken}";
                 }
 
-                return "<<<$label\n" . $this->pEncapsList($node->parts, null) . "\n$label"
-                     . $this->docStringEndToken;
+                return "<<<$label$nl" . $this->pEncapsList($node->parts, null)
+                     . "$nl$label{$this->docStringEndToken}";
             }
         }
         return '"' . $this->pEncapsList($node->parts, '"') . '"';
     }
 
     protected function pScalar_Int(Scalar\Int_ $node): string {
-        if ($node->value === -\PHP_INT_MAX-1) {
+        if ($node->value === -\PHP_INT_MAX - 1) {
             // PHP_INT_MIN cannot be represented as a literal,
             // because the sign is not part of the literal
             return '(-' . \PHP_INT_MAX . '-1)';
@@ -214,10 +229,10 @@ class Standard extends PrettyPrinterAbstract {
     protected function pScalar_Float(Scalar\Float_ $node): string {
         if (!is_finite($node->value)) {
             if ($node->value === \INF) {
-                return '\INF';
+                return '1.0E+1000';
             }
             if ($node->value === -\INF) {
-                return '-\INF';
+                return '-1.0E+1000';
             } else {
                 return '\NAN';
             }
@@ -240,207 +255,199 @@ class Standard extends PrettyPrinterAbstract {
 
     // Assignments
 
-    protected function pExpr_Assign(Expr\Assign $node): string {
-        return $this->pPrefixOp(Expr\Assign::class, $this->p($node->var) . ' = ', $node->expr);
+    protected function pExpr_Assign(Expr\Assign $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\Assign::class, $this->p($node->var) . ' = ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignRef(Expr\AssignRef $node): string {
-        return $this->pPrefixOp(Expr\AssignRef::class, $this->p($node->var) . ' =& ', $node->expr);
+    protected function pExpr_AssignRef(Expr\AssignRef $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\AssignRef::class, $this->p($node->var) . ' =& ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Plus(AssignOp\Plus $node): string {
-        return $this->pPrefixOp(AssignOp\Plus::class, $this->p($node->var) . ' += ', $node->expr);
+    protected function pExpr_AssignOp_Plus(AssignOp\Plus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Plus::class, $this->p($node->var) . ' += ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Minus(AssignOp\Minus $node): string {
-        return $this->pPrefixOp(AssignOp\Minus::class, $this->p($node->var) . ' -= ', $node->expr);
+    protected function pExpr_AssignOp_Minus(AssignOp\Minus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Minus::class, $this->p($node->var) . ' -= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Mul(AssignOp\Mul $node): string {
-        return $this->pPrefixOp(AssignOp\Mul::class, $this->p($node->var) . ' *= ', $node->expr);
+    protected function pExpr_AssignOp_Mul(AssignOp\Mul $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Mul::class, $this->p($node->var) . ' *= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Div(AssignOp\Div $node): string {
-        return $this->pPrefixOp(AssignOp\Div::class, $this->p($node->var) . ' /= ', $node->expr);
+    protected function pExpr_AssignOp_Div(AssignOp\Div $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Div::class, $this->p($node->var) . ' /= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Concat(AssignOp\Concat $node): string {
-        return $this->pPrefixOp(AssignOp\Concat::class, $this->p($node->var) . ' .= ', $node->expr);
+    protected function pExpr_AssignOp_Concat(AssignOp\Concat $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Concat::class, $this->p($node->var) . ' .= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Mod(AssignOp\Mod $node): string {
-        return $this->pPrefixOp(AssignOp\Mod::class, $this->p($node->var) . ' %= ', $node->expr);
+    protected function pExpr_AssignOp_Mod(AssignOp\Mod $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Mod::class, $this->p($node->var) . ' %= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_BitwiseAnd(AssignOp\BitwiseAnd $node): string {
-        return $this->pPrefixOp(AssignOp\BitwiseAnd::class, $this->p($node->var) . ' &= ', $node->expr);
+    protected function pExpr_AssignOp_BitwiseAnd(AssignOp\BitwiseAnd $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\BitwiseAnd::class, $this->p($node->var) . ' &= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_BitwiseOr(AssignOp\BitwiseOr $node): string {
-        return $this->pPrefixOp(AssignOp\BitwiseOr::class, $this->p($node->var) . ' |= ', $node->expr);
+    protected function pExpr_AssignOp_BitwiseOr(AssignOp\BitwiseOr $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\BitwiseOr::class, $this->p($node->var) . ' |= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_BitwiseXor(AssignOp\BitwiseXor $node): string {
-        return $this->pPrefixOp(AssignOp\BitwiseXor::class, $this->p($node->var) . ' ^= ', $node->expr);
+    protected function pExpr_AssignOp_BitwiseXor(AssignOp\BitwiseXor $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\BitwiseXor::class, $this->p($node->var) . ' ^= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_ShiftLeft(AssignOp\ShiftLeft $node): string {
-        return $this->pPrefixOp(AssignOp\ShiftLeft::class, $this->p($node->var) . ' <<= ', $node->expr);
+    protected function pExpr_AssignOp_ShiftLeft(AssignOp\ShiftLeft $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\ShiftLeft::class, $this->p($node->var) . ' <<= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_ShiftRight(AssignOp\ShiftRight $node): string {
-        return $this->pPrefixOp(AssignOp\ShiftRight::class, $this->p($node->var) . ' >>= ', $node->expr);
+    protected function pExpr_AssignOp_ShiftRight(AssignOp\ShiftRight $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\ShiftRight::class, $this->p($node->var) . ' >>= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Pow(AssignOp\Pow $node): string {
-        return $this->pPrefixOp(AssignOp\Pow::class, $this->p($node->var) . ' **= ', $node->expr);
+    protected function pExpr_AssignOp_Pow(AssignOp\Pow $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Pow::class, $this->p($node->var) . ' **= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_AssignOp_Coalesce(AssignOp\Coalesce $node): string {
-        return $this->pPrefixOp(AssignOp\Coalesce::class, $this->p($node->var) . ' ??= ', $node->expr);
+    protected function pExpr_AssignOp_Coalesce(AssignOp\Coalesce $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(AssignOp\Coalesce::class, $this->p($node->var) . ' ??= ', $node->expr, $precedence, $lhsPrecedence);
     }
 
     // Binary expressions
 
-    protected function pExpr_BinaryOp_Plus(BinaryOp\Plus $node): string {
-        return $this->pInfixOp(BinaryOp\Plus::class, $node->left, ' + ', $node->right);
+    protected function pExpr_BinaryOp_Plus(BinaryOp\Plus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Plus::class, $node->left, ' + ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Minus(BinaryOp\Minus $node): string {
-        return $this->pInfixOp(BinaryOp\Minus::class, $node->left, ' - ', $node->right);
+    protected function pExpr_BinaryOp_Minus(BinaryOp\Minus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Minus::class, $node->left, ' - ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Mul(BinaryOp\Mul $node): string {
-        return $this->pInfixOp(BinaryOp\Mul::class, $node->left, ' * ', $node->right);
+    protected function pExpr_BinaryOp_Mul(BinaryOp\Mul $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Mul::class, $node->left, ' * ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Div(BinaryOp\Div $node): string {
-        return $this->pInfixOp(BinaryOp\Div::class, $node->left, ' / ', $node->right);
+    protected function pExpr_BinaryOp_Div(BinaryOp\Div $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Div::class, $node->left, ' / ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Concat(BinaryOp\Concat $node): string {
-        return $this->pInfixOp(BinaryOp\Concat::class, $node->left, ' . ', $node->right);
+    protected function pExpr_BinaryOp_Concat(BinaryOp\Concat $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Concat::class, $node->left, ' . ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Mod(BinaryOp\Mod $node): string {
-        return $this->pInfixOp(BinaryOp\Mod::class, $node->left, ' % ', $node->right);
+    protected function pExpr_BinaryOp_Mod(BinaryOp\Mod $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Mod::class, $node->left, ' % ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_BooleanAnd(BinaryOp\BooleanAnd $node): string {
-        return $this->pInfixOp(BinaryOp\BooleanAnd::class, $node->left, ' && ', $node->right);
+    protected function pExpr_BinaryOp_BooleanAnd(BinaryOp\BooleanAnd $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\BooleanAnd::class, $node->left, ' && ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_BooleanOr(BinaryOp\BooleanOr $node): string {
-        return $this->pInfixOp(BinaryOp\BooleanOr::class, $node->left, ' || ', $node->right);
+    protected function pExpr_BinaryOp_BooleanOr(BinaryOp\BooleanOr $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\BooleanOr::class, $node->left, ' || ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_BitwiseAnd(BinaryOp\BitwiseAnd $node): string {
-        return $this->pInfixOp(BinaryOp\BitwiseAnd::class, $node->left, ' & ', $node->right);
+    protected function pExpr_BinaryOp_BitwiseAnd(BinaryOp\BitwiseAnd $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\BitwiseAnd::class, $node->left, ' & ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_BitwiseOr(BinaryOp\BitwiseOr $node): string {
-        return $this->pInfixOp(BinaryOp\BitwiseOr::class, $node->left, ' | ', $node->right);
+    protected function pExpr_BinaryOp_BitwiseOr(BinaryOp\BitwiseOr $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\BitwiseOr::class, $node->left, ' | ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_BitwiseXor(BinaryOp\BitwiseXor $node): string {
-        return $this->pInfixOp(BinaryOp\BitwiseXor::class, $node->left, ' ^ ', $node->right);
+    protected function pExpr_BinaryOp_BitwiseXor(BinaryOp\BitwiseXor $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\BitwiseXor::class, $node->left, ' ^ ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_ShiftLeft(BinaryOp\ShiftLeft $node): string {
-        return $this->pInfixOp(BinaryOp\ShiftLeft::class, $node->left, ' << ', $node->right);
+    protected function pExpr_BinaryOp_ShiftLeft(BinaryOp\ShiftLeft $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\ShiftLeft::class, $node->left, ' << ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_ShiftRight(BinaryOp\ShiftRight $node): string {
-        return $this->pInfixOp(BinaryOp\ShiftRight::class, $node->left, ' >> ', $node->right);
+    protected function pExpr_BinaryOp_ShiftRight(BinaryOp\ShiftRight $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\ShiftRight::class, $node->left, ' >> ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Pow(BinaryOp\Pow $node): string {
-        return $this->pInfixOp(BinaryOp\Pow::class, $node->left, ' ** ', $node->right);
+    protected function pExpr_BinaryOp_Pow(BinaryOp\Pow $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Pow::class, $node->left, ' ** ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_LogicalAnd(BinaryOp\LogicalAnd $node): string {
-        return $this->pInfixOp(BinaryOp\LogicalAnd::class, $node->left, ' and ', $node->right);
+    protected function pExpr_BinaryOp_LogicalAnd(BinaryOp\LogicalAnd $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\LogicalAnd::class, $node->left, ' and ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_LogicalOr(BinaryOp\LogicalOr $node): string {
-        return $this->pInfixOp(BinaryOp\LogicalOr::class, $node->left, ' or ', $node->right);
+    protected function pExpr_BinaryOp_LogicalOr(BinaryOp\LogicalOr $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\LogicalOr::class, $node->left, ' or ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_LogicalXor(BinaryOp\LogicalXor $node): string {
-        return $this->pInfixOp(BinaryOp\LogicalXor::class, $node->left, ' xor ', $node->right);
+    protected function pExpr_BinaryOp_LogicalXor(BinaryOp\LogicalXor $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\LogicalXor::class, $node->left, ' xor ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Equal(BinaryOp\Equal $node): string {
-        return $this->pInfixOp(BinaryOp\Equal::class, $node->left, ' == ', $node->right);
+    protected function pExpr_BinaryOp_Equal(BinaryOp\Equal $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Equal::class, $node->left, ' == ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_NotEqual(BinaryOp\NotEqual $node): string {
-        return $this->pInfixOp(BinaryOp\NotEqual::class, $node->left, ' != ', $node->right);
+    protected function pExpr_BinaryOp_NotEqual(BinaryOp\NotEqual $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\NotEqual::class, $node->left, ' != ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Identical(BinaryOp\Identical $node): string {
-        return $this->pInfixOp(BinaryOp\Identical::class, $node->left, ' === ', $node->right);
+    protected function pExpr_BinaryOp_Identical(BinaryOp\Identical $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Identical::class, $node->left, ' === ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_NotIdentical(BinaryOp\NotIdentical $node): string {
-        return $this->pInfixOp(BinaryOp\NotIdentical::class, $node->left, ' !== ', $node->right);
+    protected function pExpr_BinaryOp_NotIdentical(BinaryOp\NotIdentical $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\NotIdentical::class, $node->left, ' !== ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Spaceship(BinaryOp\Spaceship $node): string {
-        return $this->pInfixOp(BinaryOp\Spaceship::class, $node->left, ' <=> ', $node->right);
+    protected function pExpr_BinaryOp_Spaceship(BinaryOp\Spaceship $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Spaceship::class, $node->left, ' <=> ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Greater(BinaryOp\Greater $node): string {
-        return $this->pInfixOp(BinaryOp\Greater::class, $node->left, ' > ', $node->right);
+    protected function pExpr_BinaryOp_Greater(BinaryOp\Greater $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Greater::class, $node->left, ' > ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_GreaterOrEqual(BinaryOp\GreaterOrEqual $node): string {
-        return $this->pInfixOp(BinaryOp\GreaterOrEqual::class, $node->left, ' >= ', $node->right);
+    protected function pExpr_BinaryOp_GreaterOrEqual(BinaryOp\GreaterOrEqual $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\GreaterOrEqual::class, $node->left, ' >= ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Smaller(BinaryOp\Smaller $node): string {
-        return $this->pInfixOp(BinaryOp\Smaller::class, $node->left, ' < ', $node->right);
+    protected function pExpr_BinaryOp_Smaller(BinaryOp\Smaller $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Smaller::class, $node->left, ' < ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_SmallerOrEqual(BinaryOp\SmallerOrEqual $node): string {
-        return $this->pInfixOp(BinaryOp\SmallerOrEqual::class, $node->left, ' <= ', $node->right);
+    protected function pExpr_BinaryOp_SmallerOrEqual(BinaryOp\SmallerOrEqual $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\SmallerOrEqual::class, $node->left, ' <= ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BinaryOp_Coalesce(BinaryOp\Coalesce $node): string {
-        return $this->pInfixOp(BinaryOp\Coalesce::class, $node->left, ' ?? ', $node->right);
+    protected function pExpr_BinaryOp_Coalesce(BinaryOp\Coalesce $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pInfixOp(BinaryOp\Coalesce::class, $node->left, ' ?? ', $node->right, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Instanceof(Expr\Instanceof_ $node): string {
-        list($precedence, $associativity) = $this->precedenceMap[Expr\Instanceof_::class];
-        return $this->pPrec($node->expr, $precedence, $associativity, -1)
-             . ' instanceof '
-             . $this->pNewVariable($node->class);
+    protected function pExpr_Instanceof(Expr\Instanceof_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPostfixOp(
+            Expr\Instanceof_::class, $node->expr,
+            ' instanceof ' . $this->pNewOperand($node->class),
+            $precedence, $lhsPrecedence);
     }
 
     // Unary expressions
 
-    protected function pExpr_BooleanNot(Expr\BooleanNot $node): string {
-        return $this->pPrefixOp(Expr\BooleanNot::class, '!', $node->expr);
+    protected function pExpr_BooleanNot(Expr\BooleanNot $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\BooleanNot::class, '!', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_BitwiseNot(Expr\BitwiseNot $node): string {
-        return $this->pPrefixOp(Expr\BitwiseNot::class, '~', $node->expr);
+    protected function pExpr_BitwiseNot(Expr\BitwiseNot $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\BitwiseNot::class, '~', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_UnaryMinus(Expr\UnaryMinus $node): string {
-        if ($node->expr instanceof Expr\UnaryMinus || $node->expr instanceof Expr\PreDec) {
-            // Enforce -(-$expr) instead of --$expr
-            return '-(' . $this->p($node->expr) . ')';
-        }
-        return $this->pPrefixOp(Expr\UnaryMinus::class, '-', $node->expr);
+    protected function pExpr_UnaryMinus(Expr\UnaryMinus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\UnaryMinus::class, '-', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_UnaryPlus(Expr\UnaryPlus $node): string {
-        if ($node->expr instanceof Expr\UnaryPlus || $node->expr instanceof Expr\PreInc) {
-            // Enforce +(+$expr) instead of ++$expr
-            return '+(' . $this->p($node->expr) . ')';
-        }
-        return $this->pPrefixOp(Expr\UnaryPlus::class, '+', $node->expr);
+    protected function pExpr_UnaryPlus(Expr\UnaryPlus $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\UnaryPlus::class, '+', $node->expr, $precedence, $lhsPrecedence);
     }
 
     protected function pExpr_PreInc(Expr\PreInc $node): string {
@@ -459,25 +466,25 @@ class Standard extends PrettyPrinterAbstract {
         return $this->p($node->var) . '--';
     }
 
-    protected function pExpr_ErrorSuppress(Expr\ErrorSuppress $node): string {
-        return $this->pPrefixOp(Expr\ErrorSuppress::class, '@', $node->expr);
+    protected function pExpr_ErrorSuppress(Expr\ErrorSuppress $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\ErrorSuppress::class, '@', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_YieldFrom(Expr\YieldFrom $node): string {
-        return $this->pPrefixOp(Expr\YieldFrom::class, 'yield from ', $node->expr);
+    protected function pExpr_YieldFrom(Expr\YieldFrom $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\YieldFrom::class, 'yield from ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Print(Expr\Print_ $node): string {
-        return $this->pPrefixOp(Expr\Print_::class, 'print ', $node->expr);
+    protected function pExpr_Print(Expr\Print_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\Print_::class, 'print ', $node->expr, $precedence, $lhsPrecedence);
     }
 
     // Casts
 
-    protected function pExpr_Cast_Int(Cast\Int_ $node): string {
-        return $this->pPrefixOp(Cast\Int_::class, '(int) ', $node->expr);
+    protected function pExpr_Cast_Int(Cast\Int_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\Int_::class, '(int) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_Double(Cast\Double $node): string {
+    protected function pExpr_Cast_Double(Cast\Double $node, int $precedence, int $lhsPrecedence): string {
         $kind = $node->getAttribute('kind', Cast\Double::KIND_DOUBLE);
         if ($kind === Cast\Double::KIND_DOUBLE) {
             $cast = '(double)';
@@ -487,27 +494,27 @@ class Standard extends PrettyPrinterAbstract {
             assert($kind === Cast\Double::KIND_REAL);
             $cast = '(real)';
         }
-        return $this->pPrefixOp(Cast\Double::class, $cast . ' ', $node->expr);
+        return $this->pPrefixOp(Cast\Double::class, $cast . ' ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_String(Cast\String_ $node): string {
-        return $this->pPrefixOp(Cast\String_::class, '(string) ', $node->expr);
+    protected function pExpr_Cast_String(Cast\String_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\String_::class, '(string) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_Array(Cast\Array_ $node): string {
-        return $this->pPrefixOp(Cast\Array_::class, '(array) ', $node->expr);
+    protected function pExpr_Cast_Array(Cast\Array_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\Array_::class, '(array) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_Object(Cast\Object_ $node): string {
-        return $this->pPrefixOp(Cast\Object_::class, '(object) ', $node->expr);
+    protected function pExpr_Cast_Object(Cast\Object_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\Object_::class, '(object) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_Bool(Cast\Bool_ $node): string {
-        return $this->pPrefixOp(Cast\Bool_::class, '(bool) ', $node->expr);
+    protected function pExpr_Cast_Bool(Cast\Bool_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\Bool_::class, '(bool) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Cast_Unset(Cast\Unset_ $node): string {
-        return $this->pPrefixOp(Cast\Unset_::class, '(unset) ', $node->expr);
+    protected function pExpr_Cast_Unset(Cast\Unset_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Cast\Unset_::class, '(unset) ', $node->expr, $precedence, $lhsPrecedence);
     }
 
     // Function calls and similar constructs
@@ -528,7 +535,7 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pExpr_StaticCall(Expr\StaticCall $node): string {
-        return $this->pDereferenceLhs($node->class) . '::'
+        return $this->pStaticDereferenceLhs($node->class) . '::'
              . ($node->name instanceof Expr
                 ? ($node->name instanceof Expr\Variable
                    ? $this->p($node->name)
@@ -549,7 +556,7 @@ class Standard extends PrettyPrinterAbstract {
         return 'eval(' . $this->p($node->expr) . ')';
     }
 
-    protected function pExpr_Include(Expr\Include_ $node): string {
+    protected function pExpr_Include(Expr\Include_ $node, int $precedence, int $lhsPrecedence): string {
         static $map = [
             Expr\Include_::TYPE_INCLUDE      => 'include',
             Expr\Include_::TYPE_INCLUDE_ONCE => 'include_once',
@@ -557,7 +564,7 @@ class Standard extends PrettyPrinterAbstract {
             Expr\Include_::TYPE_REQUIRE_ONCE => 'require_once',
         ];
 
-        return $map[$node->type] . ' ' . $this->p($node->expr);
+        return $this->pPrefixOp(Expr\Include_::class, $map[$node->type] . ' ', $node->expr, $precedence, $lhsPrecedence);
     }
 
     protected function pExpr_List(Expr\List_ $node): string {
@@ -594,8 +601,23 @@ class Standard extends PrettyPrinterAbstract {
         }
     }
 
+    protected function pKey(?Node $node): string {
+        if ($node === null) {
+            return '';
+        }
+
+        // => is not really an operator and does not typically participate in precedence resolution.
+        // However, there is an exception if yield expressions with keys are involved:
+        // [yield $a => $b] is interpreted as [(yield $a => $b)], so we need to ensure that
+        // [(yield $a) => $b] is printed with parentheses. We approximate this by lowering the LHS
+        // precedence to that of yield (which will also print unnecessary parentheses for rare low
+        // precedence unary operators like include).
+        $yieldPrecedence = $this->precedenceMap[Expr\Yield_::class][0];
+        return $this->p($node, self::MAX_PRECEDENCE, $yieldPrecedence) . ' => ';
+    }
+
     protected function pArrayItem(Node\ArrayItem $node): string {
-        return (null !== $node->key ? $this->p($node->key) . ' => ' : '')
+        return $this->pKey($node->key)
              . ($node->byRef ? '&' : '')
              . ($node->unpack ? '...' : '')
              . $this->p($node->value);
@@ -611,7 +633,7 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pExpr_ClassConstFetch(Expr\ClassConstFetch $node): string {
-        return $this->pDereferenceLhs($node->class) . '::' . $this->p($node->name);
+        return $this->pStaticDereferenceLhs($node->class) . '::' . $this->pObjectProperty($node->name);
     }
 
     protected function pExpr_PropertyFetch(Expr\PropertyFetch $node): string {
@@ -623,7 +645,7 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pExpr_StaticPropertyFetch(Expr\StaticPropertyFetch $node): string {
-        return $this->pDereferenceLhs($node->class) . '::$' . $this->pObjectProperty($node->name);
+        return $this->pStaticDereferenceLhs($node->class) . '::$' . $this->pObjectProperty($node->name);
     }
 
     protected function pExpr_ShellExec(Expr\ShellExec $node): string {
@@ -634,7 +656,7 @@ class Standard extends PrettyPrinterAbstract {
         return $this->pAttrGroups($node->attrGroups, true)
              . $this->pStatic($node->static)
              . 'function ' . ($node->byRef ? '&' : '')
-             . '(' . $this->pMaybeMultiline($node->params, $this->phpVersion->supportsTrailingCommaInParamList()) . ')'
+             . '(' . $this->pParams($node->params) . ')'
              . (!empty($node->uses) ? ' use (' . $this->pCommaSeparated($node->uses) . ')' : '')
              . (null !== $node->returnType ? ': ' . $this->p($node->returnType) : '')
              . ' {' . $this->pStmts($node->stmts) . $this->nl . '}';
@@ -648,18 +670,28 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pMatchArm(Node\MatchArm $node): string {
-        return ($node->conds ? $this->pCommaSeparated($node->conds) : 'default')
-            . ' => ' . $this->p($node->body);
+        $result = '';
+        if ($node->conds) {
+            for ($i = 0, $c = \count($node->conds); $i + 1 < $c; $i++) {
+                $result .= $this->p($node->conds[$i]) . ', ';
+            }
+            $result .= $this->pKey($node->conds[$i]);
+        } else {
+            $result = 'default => ';
+        }
+        return $result . $this->p($node->body);
     }
 
-    protected function pExpr_ArrowFunction(Expr\ArrowFunction $node): string {
-        return $this->pAttrGroups($node->attrGroups, true)
+    protected function pExpr_ArrowFunction(Expr\ArrowFunction $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(
+            Expr\ArrowFunction::class,
+            $this->pAttrGroups($node->attrGroups, true)
             . $this->pStatic($node->static)
             . 'fn' . ($node->byRef ? '&' : '')
-            . '(' . $this->pMaybeMultiline($node->params, $this->phpVersion->supportsTrailingCommaInParamList()) . ')'
+            . '(' . $this->pParams($node->params) . ')'
             . (null !== $node->returnType ? ': ' . $this->p($node->returnType) : '')
-            . ' => '
-            . $this->p($node->expr);
+            . ' => ',
+            $node->expr, $precedence, $lhsPrecedence);
     }
 
     protected function pClosureUse(Node\ClosureUse $node): string {
@@ -671,19 +703,20 @@ class Standard extends PrettyPrinterAbstract {
             $args = $node->args ? '(' . $this->pMaybeMultiline($node->args) . ')' : '';
             return 'new ' . $this->pClassCommon($node->class, $args);
         }
-        return 'new ' . $this->pNewVariable($node->class)
+        return 'new ' . $this->pNewOperand($node->class)
             . '(' . $this->pMaybeMultiline($node->args) . ')';
     }
 
-    protected function pExpr_Clone(Expr\Clone_ $node): string {
-        return 'clone ' . $this->p($node->expr);
+    protected function pExpr_Clone(Expr\Clone_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\Clone_::class, 'clone ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Ternary(Expr\Ternary $node): string {
+    protected function pExpr_Ternary(Expr\Ternary $node, int $precedence, int $lhsPrecedence): string {
         // a bit of cheating: we treat the ternary as a binary op where the ?...: part is the operator.
         // this is okay because the part between ? and : never needs parentheses.
         return $this->pInfixOp(Expr\Ternary::class,
-            $node->cond, ' ?' . (null !== $node->if ? ' ' . $this->p($node->if) . ' ' : '') . ': ', $node->else
+            $node->cond, ' ?' . (null !== $node->if ? ' ' . $this->p($node->if) . ' ' : '') . ': ', $node->else,
+            $precedence, $lhsPrecedence
         );
     }
 
@@ -693,19 +726,21 @@ class Standard extends PrettyPrinterAbstract {
              . (null !== $node->expr ? '(' . $this->p($node->expr) . ')' : '');
     }
 
-    protected function pExpr_Throw(Expr\Throw_ $node): string {
-        return 'throw ' . $this->p($node->expr);
+    protected function pExpr_Throw(Expr\Throw_ $node, int $precedence, int $lhsPrecedence): string {
+        return $this->pPrefixOp(Expr\Throw_::class, 'throw ', $node->expr, $precedence, $lhsPrecedence);
     }
 
-    protected function pExpr_Yield(Expr\Yield_ $node): string {
+    protected function pExpr_Yield(Expr\Yield_ $node, int $precedence, int $lhsPrecedence): string {
         if ($node->value === null) {
-            return 'yield';
+            $opPrecedence = $this->precedenceMap[Expr\Yield_::class][0];
+            return $opPrecedence >= $lhsPrecedence ? '(yield)' : 'yield';
         } else {
-            // this is a bit ugly, but currently there is no way to detect whether the parentheses are necessary
-            return '(yield '
-                 . ($node->key !== null ? $this->p($node->key) . ' => ' : '')
-                 . $this->p($node->value)
-                 . ')';
+            if (!$this->phpVersion->supportsYieldWithoutParentheses()) {
+                return '(yield ' . $this->pKey($node->key) . $this->p($node->value) . ')';
+            }
+            return $this->pPrefixOp(
+                Expr\Yield_::class, 'yield ' . $this->pKey($node->key),
+                $node->value, $precedence, $lhsPrecedence);
         }
     }
 
@@ -751,7 +786,7 @@ class Standard extends PrettyPrinterAbstract {
     protected function pStmt_Enum(Stmt\Enum_ $node): string {
         return $this->pAttrGroups($node->attrGroups)
              . 'enum ' . $node->name
-             . ($node->scalarType ? " : $node->scalarType" : '')
+             . ($node->scalarType ? ' : ' . $this->p($node->scalarType) : '')
              . (!empty($node->implements) ? ' implements ' . $this->pCommaSeparated($node->implements) : '')
              . $this->nl . '{' . $this->pStmts($node->stmts) . $this->nl . '}';
     }
@@ -797,7 +832,8 @@ class Standard extends PrettyPrinterAbstract {
         return $this->pAttrGroups($node->attrGroups)
             . (0 === $node->flags ? 'var ' : $this->pModifiers($node->flags))
             . ($node->type ? $this->p($node->type) . ' ' : '')
-            . $this->pCommaSeparated($node->props) . ';';
+            . $this->pCommaSeparated($node->props)
+            . ($node->hooks ? ' {' . $this->pStmts($node->hooks) . $this->nl . '}' : ';');
     }
 
     protected function pPropertyItem(Node\PropertyItem $node): string {
@@ -805,11 +841,20 @@ class Standard extends PrettyPrinterAbstract {
              . (null !== $node->default ? ' = ' . $this->p($node->default) : '');
     }
 
+    protected function pPropertyHook(Node\PropertyHook $node): string {
+        return $this->pAttrGroups($node->attrGroups)
+             . $this->pModifiers($node->flags)
+             . ($node->byRef ? '&' : '') . $node->name
+             . ($node->params ? '(' . $this->pParams($node->params) . ')' : '')
+             . (\is_array($node->body) ? ' {' . $this->pStmts($node->body) . $this->nl . '}'
+                : ($node->body !== null ? ' => ' . $this->p($node->body) : '') . ';');
+    }
+
     protected function pStmt_ClassMethod(Stmt\ClassMethod $node): string {
         return $this->pAttrGroups($node->attrGroups)
              . $this->pModifiers($node->flags)
              . 'function ' . ($node->byRef ? '&' : '') . $node->name
-             . '(' . $this->pMaybeMultiline($node->params, $this->phpVersion->supportsTrailingCommaInParamList()) . ')'
+             . '(' . $this->pParams($node->params) . ')'
              . (null !== $node->returnType ? ': ' . $this->p($node->returnType) : '')
              . (null !== $node->stmts
                 ? $this->nl . '{' . $this->pStmts($node->stmts) . $this->nl . '}'
@@ -819,19 +864,23 @@ class Standard extends PrettyPrinterAbstract {
     protected function pStmt_ClassConst(Stmt\ClassConst $node): string {
         return $this->pAttrGroups($node->attrGroups)
              . $this->pModifiers($node->flags)
-             . 'const ' . $this->pCommaSeparated($node->consts) . ';';
+             . 'const '
+             . (null !== $node->type ? $this->p($node->type) . ' ' : '')
+             . $this->pCommaSeparated($node->consts) . ';';
     }
 
     protected function pStmt_Function(Stmt\Function_ $node): string {
         return $this->pAttrGroups($node->attrGroups)
              . 'function ' . ($node->byRef ? '&' : '') . $node->name
-             . '(' . $this->pMaybeMultiline($node->params, $this->phpVersion->supportsTrailingCommaInParamList()) . ')'
+             . '(' . $this->pParams($node->params) . ')'
              . (null !== $node->returnType ? ': ' . $this->p($node->returnType) : '')
              . $this->nl . '{' . $this->pStmts($node->stmts) . $this->nl . '}';
     }
 
     protected function pStmt_Const(Stmt\Const_ $node): string {
-        return 'const ' . $this->pCommaSeparated($node->consts) . ';';
+        return $this->pAttrGroups($node->attrGroups)
+            . 'const '
+            . $this->pCommaSeparated($node->consts) . ';';
     }
 
     protected function pStmt_Declare(Stmt\Declare_ $node): string {
@@ -858,6 +907,10 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pStmt_Else(Stmt\Else_ $node): string {
+        if (\count($node->stmts) === 1 && $node->stmts[0] instanceof Stmt\If_) {
+            // Print as "else if" rather than "else { if }"
+            return 'else ' . $this->p($node->stmts[0]);
+        }
         return 'else {' . $this->pStmts($node->stmts) . $this->nl . '}';
     }
 
@@ -924,10 +977,6 @@ class Standard extends PrettyPrinterAbstract {
         return 'return' . (null !== $node->expr ? ' ' . $this->p($node->expr) : '') . ';';
     }
 
-    protected function pStmt_Throw(Stmt\Throw_ $node): string {
-        return 'throw ' . $this->p($node->expr) . ';';
-    }
-
     protected function pStmt_Label(Stmt\Label $node): string {
         return $node->name . ':';
     }
@@ -964,7 +1013,7 @@ class Standard extends PrettyPrinterAbstract {
     }
 
     protected function pStmt_InlineHTML(Stmt\InlineHTML $node): string {
-        $newline = $node->getAttribute('hasLeadingNewline', true) ? "\n" : '';
+        $newline = $node->getAttribute('hasLeadingNewline', true) ? $this->newline : '';
         return '?>' . $newline . $node->value . '<?php ';
     }
 
@@ -974,6 +1023,10 @@ class Standard extends PrettyPrinterAbstract {
 
     protected function pStmt_Nop(Stmt\Nop $node): string {
         return '';
+    }
+
+    protected function pStmt_Block(Stmt\Block $node): string {
+        return '{' . $this->pStmts($node->stmts) . $this->nl . '}';
     }
 
     // Helpers
@@ -1023,6 +1076,12 @@ class Standard extends PrettyPrinterAbstract {
         if (null === $quote) {
             // For doc strings, don't escape newlines
             $escaped = addcslashes($string, "\t\f\v$\\");
+            // But do escape isolated \r. Combined with the terminating newline, it might get
+            // interpreted as \r\n and dropped from the string contents.
+            $escaped = preg_replace('/\r(?!\n)/', '\\r', $escaped);
+            if ($this->phpVersion->supportsFlexibleHeredoc()) {
+                $escaped = $this->indentString($escaped);
+            }
         } else {
             $escaped = addcslashes($string, "\n\r\t\f\v$" . $quote . "\\");
         }
@@ -1047,25 +1106,21 @@ class Standard extends PrettyPrinterAbstract {
         return preg_replace_callback($regex, function ($matches): string {
             assert(strlen($matches[0]) === 1);
             $hex = dechex(ord($matches[0]));
-            ;
             return '\\x' . str_pad($hex, 2, '0', \STR_PAD_LEFT);
         }, $escaped);
     }
 
-    protected function containsEndLabel(string $string, string $label, bool $atStart = true, bool $atEnd = true): bool {
-        $start = $atStart ? '(?:^|[\r\n])' : '[\r\n]';
-        $end = $atEnd ? '(?:$|[;\r\n])' : '[;\r\n]';
+    protected function containsEndLabel(string $string, string $label, bool $atStart = true): bool {
+        $start = $atStart ? '(?:^|[\r\n])[ \t]*' : '[\r\n][ \t]*';
         return false !== strpos($string, $label)
-            && preg_match('/' . $start . $label . $end . '/', $string);
+            && preg_match('/' . $start . $label . '(?:$|[^_A-Za-z0-9\x80-\xff])/', $string);
     }
 
     /** @param (Expr|Node\InterpolatedStringPart)[] $parts */
     protected function encapsedContainsEndLabel(array $parts, string $label): bool {
         foreach ($parts as $i => $part) {
-            $atStart = $i === 0;
-            $atEnd = $i === count($parts) - 1;
             if ($part instanceof Node\InterpolatedStringPart
-                && $this->containsEndLabel($part->value, $label, $atStart, $atEnd)
+                && $this->containsEndLabel($this->escapeString($part->value, null), $label, $i === 0)
             ) {
                 return true;
             }
@@ -1081,6 +1136,14 @@ class Standard extends PrettyPrinterAbstract {
         }
     }
 
+    protected function pStaticDereferenceLhs(Node $node): string {
+        if (!$this->staticDereferenceLhsRequiresParens($node)) {
+            return $this->p($node);
+        } else {
+            return '(' . $this->p($node) . ')';
+        }
+    }
+
     protected function pCallLhs(Node $node): string {
         if (!$this->callLhsRequiresParens($node)) {
             return $this->p($node);
@@ -1089,14 +1152,16 @@ class Standard extends PrettyPrinterAbstract {
         }
     }
 
-    protected function pNewVariable(Node $node): string {
-        // TODO: This is not fully accurate.
-        return $this->pDereferenceLhs($node);
+    protected function pNewOperand(Node $node): string {
+        if (!$this->newOperandRequiresParens($node)) {
+            return $this->p($node);
+        } else {
+            return '(' . $this->p($node) . ')';
+        }
     }
 
     /**
      * @param Node[] $nodes
-     * @return bool
      */
     protected function hasNodeWithComments(array $nodes): bool {
         foreach ($nodes as $node) {
@@ -1114,6 +1179,27 @@ class Standard extends PrettyPrinterAbstract {
         } else {
             return $this->pCommaSeparatedMultiline($nodes, $trailingComma) . $this->nl;
         }
+    }
+
+    /** @param Node\Param[] $params
+     */
+    private function hasParamWithAttributes(array $params): bool {
+        foreach ($params as $param) {
+            if ($param->attrGroups) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @param Node\Param[] $params */
+    protected function pParams(array $params): string {
+        if ($this->hasNodeWithComments($params) ||
+            ($this->hasParamWithAttributes($params) && !$this->phpVersion->supportsAttributes())
+        ) {
+            return $this->pCommaSeparatedMultiline($params, $this->phpVersion->supportsTrailingCommaInParamList()) . $this->nl;
+        }
+        return $this->pCommaSeparated($params);
     }
 
     /** @param Node\AttributeGroup[] $nodes */

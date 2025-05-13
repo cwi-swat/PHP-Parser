@@ -21,6 +21,11 @@ return $config->setRiskyAllowed(true)
         'declare_strict_types' => true,
         // Keep argument formatting for now.
         'method_argument_space' => ['on_multiline' => 'ignore'],
+        'phpdoc_align' => ['align' => 'left'],
+        'phpdoc_trim' => true,
+        'no_empty_phpdoc' => true,
+        'no_superfluous_phpdoc_tags' => ['allow_mixed' => true],
+        'no_extra_blank_lines' => true,
     ])
     ->setFinder($finder)
 ;

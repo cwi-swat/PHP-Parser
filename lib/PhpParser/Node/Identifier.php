@@ -8,11 +8,14 @@ use PhpParser\NodeAbstract;
  * Represents a non-namespaced name. Namespaced names are represented using Name nodes.
  */
 class Identifier extends NodeAbstract {
-    /** @var string Identifier as string */
-    public $name;
+    /**
+     * @psalm-var non-empty-string
+     * @var string Identifier as string
+     */
+    public string $name;
 
     /** @var array<string, bool> */
-    private static $specialClassNames = [
+    private static array $specialClassNames = [
         'self'   => true,
         'parent' => true,
         'static' => true,
@@ -21,10 +24,14 @@ class Identifier extends NodeAbstract {
     /**
      * Constructs an identifier node.
      *
-     * @param string $name       Identifier as string
+     * @param string $name Identifier as string
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(string $name, array $attributes = []) {
+        if ($name === '') {
+            throw new \InvalidArgumentException('Identifier name cannot be empty');
+        }
+
         $this->attributes = $attributes;
         $this->name = $name;
     }
@@ -36,6 +43,7 @@ class Identifier extends NodeAbstract {
     /**
      * Get identifier as string.
      *
+     * @psalm-return non-empty-string
      * @return string Identifier as string.
      */
     public function toString(): string {
@@ -45,6 +53,7 @@ class Identifier extends NodeAbstract {
     /**
      * Get lowercased identifier as string.
      *
+     * @psalm-return non-empty-string&lowercase-string
      * @return string Lowercased identifier as string
      */
     public function toLowerString(): string {
@@ -63,6 +72,7 @@ class Identifier extends NodeAbstract {
     /**
      * Get identifier as string.
      *
+     * @psalm-return non-empty-string
      * @return string Identifier as string
      */
     public function __toString(): string {

@@ -63,9 +63,6 @@ array(
                         conds: array(
                             0: Scalar_Int(
                                 value: 0
-                                comments: array(
-                                    0: // list of conditions
-                                )
                             )
                             1: Scalar_Int(
                                 value: 1
@@ -105,9 +102,7 @@ array(
                         conds: array(
                             0: Expr_ClassConstFetch(
                                 class: Name(
-                                    parts: array(
-                                        0: BinaryOperator
-                                    )
+                                    name: BinaryOperator
                                 )
                                 name: Identifier(
                                     name: ADD

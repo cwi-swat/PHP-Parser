@@ -9,7 +9,7 @@ class CodeParsingTest extends CodeTestAbstract {
     /**
      * @dataProvider provideTestParse
      */
-    public function testParse($name, $code, $expected, $modeLine) {
+    public function testParse($name, $code, $expected, $modeLine): void {
         $modes = $this->parseModeLine($modeLine);
         $parser = $this->createParser($modes['version'] ?? null);
         list($stmts, $output) = $this->getParseOutput($parser, $code, $modes);
@@ -22,19 +22,13 @@ class CodeParsingTest extends CodeTestAbstract {
         $factory = new ParserFactory();
         $version = $version === null
             ? PhpVersion::getNewestSupported() : PhpVersion::fromString($version);
-        return $factory->createForVersion(
-            $version,
-            ['usedAttributes' => [
-                'startLine', 'endLine',
-                'startFilePos', 'endFilePos',
-                'startTokenPos', 'endTokenPos',
-                'comments'
-            ]]);
+        return $factory->createForVersion($version);
     }
 
     // Must be public for updateTests.php
     public function getParseOutput(Parser $parser, $code, array $modes) {
         $dumpPositions = isset($modes['positions']);
+        $dumpOtherAttributes = isset($modes['attributes']);
 
         $errors = new ErrorHandler\Collecting();
         $stmts = $parser->parse($code, $errors);
@@ -45,15 +39,19 @@ class CodeParsingTest extends CodeTestAbstract {
         }
 
         if (null !== $stmts) {
-            $dumper = new NodeDumper(['dumpComments' => true, 'dumpPositions' => $dumpPositions]);
+            $dumper = new NodeDumper([
+                'dumpComments' => true,
+                'dumpPositions' => $dumpPositions,
+                'dumpOtherAttributes' => $dumpOtherAttributes,
+            ]);
             $output .= $dumper->dump($stmts, $code);
         }
 
         return [$stmts, canonicalize($output)];
     }
 
-    public function provideTestParse() {
-        return $this->getTests(__DIR__ . '/../code/parser', 'test');
+    public static function provideTestParse() {
+        return self::getTests(__DIR__ . '/../code/parser', 'test');
     }
 
     private function formatErrorMessage(Error $e, $code) {
@@ -64,14 +62,13 @@ class CodeParsingTest extends CodeTestAbstract {
         return $e->getMessage();
     }
 
-    private function checkAttributes($stmts) {
+    private function checkAttributes($stmts): void {
         if ($stmts === null) {
             return;
         }
 
-        $traverser = new NodeTraverser();
-        $traverser->addVisitor(new class () extends NodeVisitorAbstract {
-            public function enterNode(Node $node) {
+        $traverser = new NodeTraverser(new class () extends NodeVisitorAbstract {
+            public function enterNode(Node $node): void {
                 $startLine = $node->getStartLine();
                 $endLine = $node->getEndLine();
                 $startFilePos = $node->getStartFilePos();

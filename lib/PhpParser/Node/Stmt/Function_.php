@@ -7,20 +7,20 @@ use PhpParser\Node\FunctionLike;
 
 class Function_ extends Node\Stmt implements FunctionLike {
     /** @var bool Whether function returns by reference */
-    public $byRef;
+    public bool $byRef;
     /** @var Node\Identifier Name */
-    public $name;
+    public Node\Identifier $name;
     /** @var Node\Param[] Parameters */
-    public $params;
+    public array $params;
     /** @var null|Node\Identifier|Node\Name|Node\ComplexType Return type */
-    public $returnType;
+    public ?Node $returnType;
     /** @var Node\Stmt[] Statements */
-    public $stmts;
+    public array $stmts;
     /** @var Node\AttributeGroup[] PHP attribute groups */
-    public $attrGroups;
+    public array $attrGroups;
 
     /** @var Node\Name|null Namespaced name (if using NameResolver) */
-    public $namespacedName;
+    public ?Node\Name $namespacedName;
 
     /**
      * Constructs a function node.
@@ -29,7 +29,7 @@ class Function_ extends Node\Stmt implements FunctionLike {
      * @param array{
      *     byRef?: bool,
      *     params?: Node\Param[],
-     *     returnType?: null|string|Node\Identifier|Node\Name|Node\ComplexType,
+     *     returnType?: null|Node\Identifier|Node\Name|Node\ComplexType,
      *     stmts?: Node\Stmt[],
      *     attrGroups?: Node\AttributeGroup[],
      * } $subNodes Array of the following optional subnodes:
@@ -45,8 +45,7 @@ class Function_ extends Node\Stmt implements FunctionLike {
         $this->byRef = $subNodes['byRef'] ?? false;
         $this->name = \is_string($name) ? new Node\Identifier($name) : $name;
         $this->params = $subNodes['params'] ?? [];
-        $returnType = $subNodes['returnType'] ?? null;
-        $this->returnType = \is_string($returnType) ? new Node\Identifier($returnType) : $returnType;
+        $this->returnType = $subNodes['returnType'] ?? null;
         $this->stmts = $subNodes['stmts'] ?? [];
         $this->attrGroups = $subNodes['attrGroups'] ?? [];
     }

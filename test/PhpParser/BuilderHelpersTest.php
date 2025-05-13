@@ -3,12 +3,14 @@
 namespace PhpParser;
 
 use PhpParser\Builder\Class_;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Expr;
 
 class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
-    public function testNormalizeNode() {
+    public function testNormalizeNode(): void {
         $builder = new Class_('SomeClass');
         $this->assertEquals($builder->getNode(), BuilderHelpers::normalizeNode($builder));
 
@@ -20,7 +22,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeNode('test');
     }
 
-    public function testNormalizeStmt() {
+    public function testNormalizeStmt(): void {
         $stmt = new Node\Stmt\Class_('Class');
         $this->assertSame($stmt, BuilderHelpers::normalizeStmt($stmt));
 
@@ -34,13 +36,13 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeStmt(new Node\Attribute(new Node\Name('Test')));
     }
 
-    public function testNormalizeStmtInvalidType() {
+    public function testNormalizeStmtInvalidType(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Expected node or builder object');
         BuilderHelpers::normalizeStmt('test');
     }
 
-    public function testNormalizeIdentifier() {
+    public function testNormalizeIdentifier(): void {
         $identifier = new Node\Identifier('fn');
         $this->assertSame($identifier, BuilderHelpers::normalizeIdentifier($identifier));
         $this->assertEquals($identifier, BuilderHelpers::normalizeIdentifier('fn'));
@@ -50,7 +52,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeIdentifier(1);
     }
 
-    public function testNormalizeIdentifierOrExpr() {
+    public function testNormalizeIdentifierOrExpr(): void {
         $identifier = new Node\Identifier('fn');
         $this->assertSame($identifier, BuilderHelpers::normalizeIdentifierOrExpr($identifier));
 
@@ -63,7 +65,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeIdentifierOrExpr(1);
     }
 
-    public function testNormalizeName() {
+    public function testNormalizeName(): void {
         $name = new Node\Name('test');
         $this->assertSame($name, BuilderHelpers::normalizeName($name));
         $this->assertEquals(
@@ -81,13 +83,13 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeName('');
     }
 
-    public function testNormalizeNameInvalidType() {
+    public function testNormalizeNameInvalidType(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Name must be a string or an instance of Node\Name');
         BuilderHelpers::normalizeName(1);
     }
 
-    public function testNormalizeNameOrExpr() {
+    public function testNormalizeNameOrExpr(): void {
         $expr = new Expr\Variable('fn');
         $this->assertSame($expr, BuilderHelpers::normalizeNameOrExpr($expr));
 
@@ -108,13 +110,13 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeNameOrExpr('');
     }
 
-    public function testNormalizeNameOrExpInvalidType() {
+    public function testNormalizeNameOrExpInvalidType(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Name must be a string or an instance of Node\Name or Node\Expr');
         BuilderHelpers::normalizeNameOrExpr(1);
     }
 
-    public function testNormalizeType() {
+    public function testNormalizeType(): void {
         $this->assertEquals(new Node\Identifier('array'), BuilderHelpers::normalizeType('array'));
         $this->assertEquals(new Node\Identifier('callable'), BuilderHelpers::normalizeType('callable'));
         $this->assertEquals(new Node\Identifier('string'), BuilderHelpers::normalizeType('string'));
@@ -136,7 +138,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         $intName = new Node\Name('int');
         $this->assertSame($intName, BuilderHelpers::normalizeType($intName));
 
-        $intNullable = new Node\NullableType('int');
+        $intNullable = new Node\NullableType(new Identifier('int'));
         $this->assertSame($intNullable, BuilderHelpers::normalizeType($intNullable));
 
         $unionType = new Node\UnionType([new Node\Identifier('int'), new Node\Identifier('string')]);
@@ -155,25 +157,25 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeType(1);
     }
 
-    public function testNormalizeTypeNullableVoid() {
+    public function testNormalizeTypeNullableVoid(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('void type cannot be nullable');
         BuilderHelpers::normalizeType('?void');
     }
 
-    public function testNormalizeTypeNullableMixed() {
+    public function testNormalizeTypeNullableMixed(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('mixed type cannot be nullable');
         BuilderHelpers::normalizeType('?mixed');
     }
 
-    public function testNormalizeTypeNullableNever() {
+    public function testNormalizeTypeNullableNever(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('never type cannot be nullable');
         BuilderHelpers::normalizeType('?never');
     }
 
-    public function testNormalizeValue() {
+    public function testNormalizeValue(): void {
         $expression = new Scalar\Int_(1);
         $this->assertSame($expression, BuilderHelpers::normalizeValue($expression));
 
@@ -199,7 +201,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeValue(new \stdClass());
     }
 
-    public function testNormalizeDocComment() {
+    public function testNormalizeDocComment(): void {
         $docComment = new Comment\Doc('Some doc comment');
         $this->assertSame($docComment, BuilderHelpers::normalizeDocComment($docComment));
 
@@ -210,7 +212,7 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         BuilderHelpers::normalizeDocComment(1);
     }
 
-    public function testNormalizeAttribute() {
+    public function testNormalizeAttribute(): void {
         $attribute = new Node\Attribute(new Node\Name('Test'));
         $attributeGroup = new Node\AttributeGroup([$attribute]);
 
@@ -220,5 +222,15 @@ class BuilderHelpersTest extends \PHPUnit\Framework\TestCase {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Attribute must be an instance of PhpParser\Node\Attribute or PhpParser\Node\AttributeGroup');
         BuilderHelpers::normalizeAttribute('test');
+    }
+
+    public function testNormalizeValueEnum() {
+        if (\PHP_VERSION_ID <= 80100) {
+            $this->markTestSkipped('Enums are supported since PHP 8.1');
+        }
+
+        include __DIR__ . '/../fixtures/Suit.php';
+
+        $this->assertEquals(new Expr\ClassConstFetch(new FullyQualified(\Suit::class), new Identifier('Hearts')), BuilderHelpers::normalizeValue(\Suit::Hearts));
     }
 }

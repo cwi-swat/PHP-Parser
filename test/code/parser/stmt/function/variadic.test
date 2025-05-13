@@ -26,6 +26,8 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
@@ -38,6 +40,8 @@ array(
                     name: b
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: null
@@ -63,6 +67,8 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
@@ -75,6 +81,8 @@ array(
                     name: b
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: null
@@ -100,15 +108,15 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
                 )
                 flags: 0
                 type: Name(
-                    parts: array(
-                        0: Type
-                    )
+                    name: Type
                 )
                 byRef: false
                 variadic: true
@@ -116,6 +124,8 @@ array(
                     name: b
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: null
@@ -141,15 +151,15 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
             1: Param(
                 attrGroups: array(
                 )
                 flags: 0
                 type: Name(
-                    parts: array(
-                        0: Type
-                    )
+                    name: Type
                 )
                 byRef: true
                 variadic: true
@@ -157,6 +167,8 @@ array(
                     name: b
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: null

@@ -20,7 +20,7 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         return new ClassConst($name, $value);
     }
 
-    public function testModifiers() {
+    public function testModifiers(): void {
         $node = $this->createClassConstBuilder("TEST", 1)
             ->makePrivate()
             ->getNode()
@@ -82,7 +82,7 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testDocComment() {
+    public function testDocComment(): void {
         $node = $this->createClassConstBuilder('TEST', 1)
             ->setDocComment('/** Test */')
             ->makePublic()
@@ -102,7 +102,7 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testAddConst() {
+    public function testAddConst(): void {
         $node = $this->createClassConstBuilder('FIRST_TEST', 1)
             ->addConst("SECOND_TEST", 2)
             ->getNode();
@@ -118,7 +118,7 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testAddAttribute() {
+    public function testAddAttribute(): void {
         $attribute = new Attribute(
             new Name('Attr'),
             [new Arg(new Int_(1), false, false, [], new Identifier('name'))]
@@ -142,10 +142,22 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
+    public function testType(): void {
+        $node = $this->createClassConstBuilder('TYPE', 1)
+            ->setType('int')
+            ->getNode();
+        $this->assertEquals(
+            new Stmt\ClassConst(
+                [new Const_('TYPE', new Int_(1))],
+                0, [], [], new Identifier('int')),
+            $node
+        );
+    }
+
     /**
      * @dataProvider provideTestDefaultValues
      */
-    public function testValues($value, $expectedValueNode) {
+    public function testValues($value, $expectedValueNode): void {
         $node = $this->createClassConstBuilder('TEST', $value)
             ->getNode()
         ;
@@ -153,7 +165,7 @@ class ClassConstTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals($expectedValueNode, $node->consts[0]->value);
     }
 
-    public function provideTestDefaultValues() {
+    public static function provideTestDefaultValues() {
         return [
             [
                 null,

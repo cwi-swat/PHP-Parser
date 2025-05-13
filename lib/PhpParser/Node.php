@@ -6,6 +6,7 @@ interface Node {
     /**
      * Gets the type of the node.
      *
+     * @psalm-return non-empty-string
      * @return string Type of the node
      */
     public function getType(): string;
@@ -21,6 +22,9 @@ interface Node {
      * Gets line the node started in (alias of getStartLine).
      *
      * @return int Start line (or -1 if not available)
+     * @phpstan-return -1|positive-int
+     *
+     * @deprecated Use getStartLine() instead
      */
     public function getLine(): int;
 
@@ -58,6 +62,7 @@ interface Node {
      * Requires the 'startLine' attribute to be enabled in the lexer (enabled by default).
      *
      * @return int Start line (or -1 if not available)
+     * @phpstan-return -1|positive-int
      */
     public function getStartLine(): int;
 
@@ -67,6 +72,7 @@ interface Node {
      * Requires the 'endLine' attribute to be enabled in the lexer (enabled by default).
      *
      * @return int End line (or -1 if not available)
+     * @phpstan-return -1|positive-int
      */
     public function getEndLine(): int;
 
@@ -138,25 +144,19 @@ interface Node {
     /**
      * Sets an attribute on a node.
      *
-     * @param string $key
-     * @param mixed  $value
+     * @param mixed $value
      */
     public function setAttribute(string $key, $value): void;
 
     /**
      * Returns whether an attribute exists.
-     *
-     * @param string $key
-     *
-     * @return bool
      */
     public function hasAttribute(string $key): bool;
 
     /**
      * Returns the value of an attribute.
      *
-     * @param string $key
-     * @param mixed  $default
+     * @param mixed $default
      *
      * @return mixed
      */

@@ -10,12 +10,12 @@ class Exit_ extends Expr {
     public const KIND_DIE = 2;
 
     /** @var null|Expr Expression */
-    public $expr;
+    public ?Expr $expr;
 
     /**
      * Constructs an exit() node.
      *
-     * @param null|Expr $expr       Expression
+     * @param null|Expr $expr Expression
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(?Expr $expr = null, array $attributes = []) {

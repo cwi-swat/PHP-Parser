@@ -13,10 +13,10 @@ class String_ extends Scalar {
     public const KIND_NOWDOC = 4;
 
     /** @var string String value */
-    public $value;
+    public string $value;
 
     /** @var array<string, string> Escaped character to its decoded value */
-    protected static $replacements = [
+    protected static array $replacements = [
         '\\' => '\\',
         '$'  =>  '$',
         'n'  => "\n",
@@ -30,7 +30,7 @@ class String_ extends Scalar {
     /**
      * Constructs a string scalar node.
      *
-     * @param string $value      Value of the string
+     * @param string $value Value of the string
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(string $value, array $attributes = []) {
@@ -92,7 +92,7 @@ class String_ extends Scalar {
      *
      * Parses escape sequences in strings (all string types apart from single quoted).
      *
-     * @param string      $str   String without quotes
+     * @param string $str String without quotes
      * @param null|string $quote Quote type
      * @param bool $parseUnicodeEscape Whether to parse PHP 7 \u escapes
      *
@@ -120,7 +120,9 @@ class String_ extends Scalar {
                     return chr(hexdec(substr($str, 1)));
                 }
                 if ('u' === $str[0]) {
-                    return self::codePointToUtf8(hexdec($matches[2]));
+                    $dec = hexdec($matches[2]);
+                    // If it overflowed to float, treat as INT_MAX, it will throw an error anyway.
+                    return self::codePointToUtf8(\is_int($dec) ? $dec : \PHP_INT_MAX);
                 } else {
                     return chr(octdec($str));
                 }
@@ -141,14 +143,14 @@ class String_ extends Scalar {
             return chr($num);
         }
         if ($num <= 0x7FF) {
-            return chr(($num>>6) + 0xC0) . chr(($num&0x3F) + 0x80);
+            return chr(($num >> 6) + 0xC0) . chr(($num & 0x3F) + 0x80);
         }
         if ($num <= 0xFFFF) {
-            return chr(($num>>12) + 0xE0) . chr((($num>>6)&0x3F) + 0x80) . chr(($num&0x3F) + 0x80);
+            return chr(($num >> 12) + 0xE0) . chr((($num >> 6) & 0x3F) + 0x80) . chr(($num & 0x3F) + 0x80);
         }
         if ($num <= 0x1FFFFF) {
-            return chr(($num>>18) + 0xF0) . chr((($num>>12)&0x3F) + 0x80)
-                 . chr((($num>>6)&0x3F) + 0x80) . chr(($num&0x3F) + 0x80);
+            return chr(($num >> 18) + 0xF0) . chr((($num >> 12) & 0x3F) + 0x80)
+                 . chr((($num >> 6) & 0x3F) + 0x80) . chr(($num & 0x3F) + 0x80);
         }
         throw new Error('Invalid UTF-8 codepoint escape sequence: Codepoint too large');
     }

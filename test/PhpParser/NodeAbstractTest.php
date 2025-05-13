@@ -25,7 +25,7 @@ class DummyNode extends NodeAbstract {
 }
 
 class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
-    public function provideNodes() {
+    public static function provideNodes() {
         $attributes = [
             'startLine' => 10,
             'endLine' => 11,
@@ -63,9 +63,9 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
         $this->assertSame('/** doc comment */', $node->getDocComment()->getText());
         $this->assertSame('value1', $node->subNode1);
         $this->assertSame('value2', $node->subNode2);
-        $this->assertObjectHasAttribute('subNode1', $node);
-        $this->assertObjectHasAttribute('subNode2', $node);
-        $this->assertObjectNotHasAttribute('subNode3', $node);
+        $this->assertTrue(isset($node->subNode1));
+        $this->assertTrue(isset($node->subNode2));
+        $this->assertTrue(!isset($node->subNode3));
         $this->assertSame($attributes, $node->getAttributes());
         $this->assertSame($attributes['comments'], $node->getComments());
 
@@ -75,7 +75,7 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideNodes
      */
-    public function testGetDocComment(array $attributes, Node $node) {
+    public function testGetDocComment(array $attributes, Node $node): void {
         $this->assertSame('/** doc comment */', $node->getDocComment()->getText());
         $comments = $node->getComments();
 
@@ -88,7 +88,7 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
         $this->assertNull($node->getDocComment());
     }
 
-    public function testSetDocComment() {
+    public function testSetDocComment(): void {
         $node = new DummyNode(null, null, null, []);
 
         // Add doc comment to node without comments
@@ -119,13 +119,13 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideNodes
      */
-    public function testChange(array $attributes, DummyNode $node) {
+    public function testChange(array $attributes, DummyNode $node): void {
         // direct modification
         $node->subNode1 = 'newValue';
         $this->assertSame('newValue', $node->subNode1);
 
         // indirect modification
-        $subNode =& $node->subNode1;
+        $subNode = &$node->subNode1;
         $subNode = 'newNewValue';
         $this->assertSame('newNewValue', $node->subNode1);
 
@@ -137,7 +137,7 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideNodes
      */
-    public function testIteration(array $attributes, Node $node) {
+    public function testIteration(array $attributes, Node $node): void {
         // Iteration is simple object iteration over properties,
         // not over subnodes
         $i = 0;
@@ -159,7 +159,7 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
         $this->assertSame(3, $i);
     }
 
-    public function testAttributes() {
+    public function testAttributes(): void {
         /** @var $node Node */
         $node = $this->getMockForAbstractClass(NodeAbstract::class);
 
@@ -201,7 +201,7 @@ class NodeAbstractTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testJsonSerialization() {
+    public function testJsonSerialization(): void {
         $code = <<<'PHP'
 <?php
 // comment
@@ -220,7 +220,11 @@ PHP;
             "name": "functionName",
             "attributes": {
                 "startLine": 4,
-                "endLine": 4
+                "startTokenPos": 7,
+                "startFilePos": 45,
+                "endLine": 4,
+                "endTokenPos": 7,
+                "endFilePos": 56
             }
         },
         "params": [
@@ -234,7 +238,11 @@ PHP;
                     "name": "a",
                     "attributes": {
                         "startLine": 4,
-                        "endLine": 4
+                        "startTokenPos": 10,
+                        "startFilePos": 59,
+                        "endLine": 4,
+                        "endTokenPos": 10,
+                        "endFilePos": 60
                     }
                 },
                 "default": {
@@ -242,16 +250,25 @@ PHP;
                     "value": 0,
                     "attributes": {
                         "startLine": 4,
+                        "startTokenPos": 14,
+                        "startFilePos": 64,
                         "endLine": 4,
+                        "endTokenPos": 14,
+                        "endFilePos": 64,
                         "rawValue": "0",
                         "kind": 10
                     }
                 },
                 "flags": 0,
                 "attrGroups": [],
+                "hooks": [],
                 "attributes": {
                     "startLine": 4,
-                    "endLine": 4
+                    "startTokenPos": 9,
+                    "startFilePos": 58,
+                    "endLine": 4,
+                    "endTokenPos": 14,
+                    "endFilePos": 64
                 }
             },
             {
@@ -264,7 +281,11 @@ PHP;
                     "name": "b",
                     "attributes": {
                         "startLine": 4,
-                        "endLine": 4
+                        "startTokenPos": 17,
+                        "startFilePos": 67,
+                        "endLine": 4,
+                        "endTokenPos": 17,
+                        "endFilePos": 68
                     }
                 },
                 "default": {
@@ -272,15 +293,24 @@ PHP;
                     "value": 1,
                     "attributes": {
                         "startLine": 4,
+                        "startTokenPos": 21,
+                        "startFilePos": 72,
                         "endLine": 4,
+                        "endTokenPos": 21,
+                        "endFilePos": 74,
                         "rawValue": "1.0"
                     }
                 },
                 "flags": 0,
                 "attrGroups": [],
+                "hooks": [],
                 "attributes": {
                     "startLine": 4,
-                    "endLine": 4
+                    "startTokenPos": 17,
+                    "startFilePos": 67,
+                    "endLine": 4,
+                    "endTokenPos": 21,
+                    "endFilePos": 74
                 }
             }
         ],
@@ -294,7 +324,11 @@ PHP;
                         "value": "Foo",
                         "attributes": {
                             "startLine": 5,
+                            "startTokenPos": 28,
+                            "startFilePos": 88,
                             "endLine": 5,
+                            "endTokenPos": 28,
+                            "endFilePos": 92,
                             "kind": 1,
                             "rawValue": "'Foo'"
                         }
@@ -302,14 +336,22 @@ PHP;
                 ],
                 "attributes": {
                     "startLine": 5,
-                    "endLine": 5
+                    "startTokenPos": 26,
+                    "startFilePos": 83,
+                    "endLine": 5,
+                    "endTokenPos": 29,
+                    "endFilePos": 93
                 }
             }
         ],
         "attrGroups": [],
-        "namespacedName": null,
         "attributes": {
             "startLine": 4,
+            "startTokenPos": 5,
+            "startFilePos": 36,
+            "endLine": 6,
+            "endTokenPos": 31,
+            "endFilePos": 95,
             "comments": [
                 {
                     "nodeType": "Comment",
@@ -331,8 +373,7 @@ PHP;
                     "endFilePos": 34,
                     "endTokenPos": 3
                 }
-            ],
-            "endLine": 6
+            ]
         }
     }
 ]
@@ -343,6 +384,11 @@ JSON;
         "nodeType": "Stmt_Function",
         "attributes": {
             "startLine": 4,
+            "startTokenPos": 5,
+            "startFilePos": 36,
+            "endLine": 6,
+            "endTokenPos": 31,
+            "endFilePos": 95,
             "comments": [
                 {
                     "nodeType": "Comment",
@@ -364,15 +410,18 @@ JSON;
                     "endFilePos": 34,
                     "endTokenPos": 3
                 }
-            ],
-            "endLine": 6
+            ]
         },
         "byRef": false,
         "name": {
             "nodeType": "Identifier",
             "attributes": {
                 "startLine": 4,
-                "endLine": 4
+                "startTokenPos": 7,
+                "startFilePos": 45,
+                "endLine": 4,
+                "endTokenPos": 7,
+                "endFilePos": 56
             },
             "name": "functionName"
         },
@@ -381,7 +430,11 @@ JSON;
                 "nodeType": "Param",
                 "attributes": {
                     "startLine": 4,
-                    "endLine": 4
+                    "startTokenPos": 9,
+                    "startFilePos": 58,
+                    "endLine": 4,
+                    "endTokenPos": 14,
+                    "endFilePos": 64
                 },
                 "type": null,
                 "byRef": true,
@@ -390,7 +443,11 @@ JSON;
                     "nodeType": "Expr_Variable",
                     "attributes": {
                         "startLine": 4,
-                        "endLine": 4
+                        "startTokenPos": 10,
+                        "startFilePos": 59,
+                        "endLine": 4,
+                        "endTokenPos": 10,
+                        "endFilePos": 60
                     },
                     "name": "a"
                 },
@@ -398,20 +455,29 @@ JSON;
                     "nodeType": "Scalar_Int",
                     "attributes": {
                         "startLine": 4,
+                        "startTokenPos": 14,
+                        "startFilePos": 64,
                         "endLine": 4,
+                        "endTokenPos": 14,
+                        "endFilePos": 64,
                         "rawValue": "0",
                         "kind": 10
                     },
                     "value": 0
                 },
                 "flags": 0,
-                "attrGroups": []
+                "attrGroups": [],
+                "hooks": []
             },
             {
                 "nodeType": "Param",
                 "attributes": {
                     "startLine": 4,
-                    "endLine": 4
+                    "startTokenPos": 17,
+                    "startFilePos": 67,
+                    "endLine": 4,
+                    "endTokenPos": 21,
+                    "endFilePos": 74
                 },
                 "type": null,
                 "byRef": false,
@@ -420,7 +486,11 @@ JSON;
                     "nodeType": "Expr_Variable",
                     "attributes": {
                         "startLine": 4,
-                        "endLine": 4
+                        "startTokenPos": 17,
+                        "startFilePos": 67,
+                        "endLine": 4,
+                        "endTokenPos": 17,
+                        "endFilePos": 68
                     },
                     "name": "b"
                 },
@@ -428,13 +498,18 @@ JSON;
                     "nodeType": "Scalar_Float",
                     "attributes": {
                         "startLine": 4,
+                        "startTokenPos": 21,
+                        "startFilePos": 72,
                         "endLine": 4,
+                        "endTokenPos": 21,
+                        "endFilePos": 74,
                         "rawValue": "1.0"
                     },
                     "value": 1
                 },
                 "flags": 0,
-                "attrGroups": []
+                "attrGroups": [],
+                "hooks": []
             }
         ],
         "returnType": null,
@@ -443,14 +518,22 @@ JSON;
                 "nodeType": "Stmt_Echo",
                 "attributes": {
                     "startLine": 5,
-                    "endLine": 5
+                    "startTokenPos": 26,
+                    "startFilePos": 83,
+                    "endLine": 5,
+                    "endTokenPos": 29,
+                    "endFilePos": 93
                 },
                 "exprs": [
                     {
                         "nodeType": "Scalar_String",
                         "attributes": {
                             "startLine": 5,
+                            "startTokenPos": 28,
+                            "startFilePos": 88,
                             "endLine": 5,
+                            "endTokenPos": 28,
+                            "endFilePos": 92,
                             "kind": 1,
                             "rawValue": "'Foo'"
                         },
@@ -459,8 +542,7 @@ JSON;
                 ]
             }
         ],
-        "attrGroups": [],
-        "namespacedName": null
+        "attrGroups": []
     }
 ]
 JSON;

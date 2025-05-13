@@ -13,18 +13,17 @@ use PhpParser\Node\Stmt;
 class EnumCase implements PhpParser\Builder {
     /** @var Identifier|string */
     protected $name;
-    /** @var ?Node\Expr */
-    protected $value = null;
+    protected ?Node\Expr $value = null;
     /** @var array<string, mixed> */
-    protected $attributes = [];
+    protected array $attributes = [];
 
     /** @var list<Node\AttributeGroup> */
-    protected $attributeGroups = [];
+    protected array $attributeGroups = [];
 
     /**
      * Creates an enum case builder.
      *
-     * @param string|Identifier $name  Name
+     * @param string|Identifier $name Name
      */
     public function __construct($name) {
         $this->name = $name;

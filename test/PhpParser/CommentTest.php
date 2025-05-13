@@ -3,15 +3,12 @@
 namespace PhpParser;
 
 class CommentTest extends \PHPUnit\Framework\TestCase {
-    public function testGetters() {
+    public function testGetters(): void {
         $comment = new Comment('/* Some comment */',
             1, 10, 2, 1, 27, 2);
 
         $this->assertSame('/* Some comment */', $comment->getText());
         $this->assertSame('/* Some comment */', (string) $comment);
-        $this->assertSame(1, $comment->getLine());
-        $this->assertSame(10, $comment->getFilePos());
-        $this->assertSame(2, $comment->getTokenPos());
         $this->assertSame(1, $comment->getStartLine());
         $this->assertSame(10, $comment->getStartFilePos());
         $this->assertSame(2, $comment->getStartTokenPos());
@@ -23,57 +20,47 @@ class CommentTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideTestReformatting
      */
-    public function testReformatting($commentText, $reformattedText) {
+    public function testReformatting($commentText, $reformattedText): void {
         $comment = new Comment($commentText);
         $this->assertSame($reformattedText, $comment->getReformattedText());
     }
 
-    public function provideTestReformatting() {
+    public static function provideTestReformatting() {
         return [
             ['// Some text', '// Some text'],
             ['/* Some text */', '/* Some text */'],
             [
-                '/**
-     * Some text.
-     * Some more text.
-     */',
-                '/**
- * Some text.
- * Some more text.
- */'
+                "/**\n     * Some text.\n     * Some more text.\n     */",
+                "/**\n * Some text.\n * Some more text.\n */"
             ],
             [
-                '/*
-        Some text.
-        Some more text.
-    */',
-                '/*
-    Some text.
-    Some more text.
-*/'
+                "/**\r\n     * Some text.\r\n     * Some more text.\r\n     */",
+                "/**\n * Some text.\n * Some more text.\n */"
             ],
             [
-                '/* Some text.
-       More text.
-       Even more text. */',
-                '/* Some text.
-   More text.
-   Even more text. */'
+                "/*\n        Some text.\n        Some more text.\n    */",
+                "/*\n    Some text.\n    Some more text.\n*/"
             ],
             [
-                '/* Some text.
-       More text.
-         Indented text. */',
-                '/* Some text.
-   More text.
-     Indented text. */',
+                "/*\r\n        Some text.\r\n        Some more text.\r\n    */",
+                "/*\n    Some text.\n    Some more text.\n*/"
+            ],
+            [
+                "/* Some text.\n       More text.\n       Even more text. */",
+                "/* Some text.\n   More text.\n   Even more text. */"
+            ],
+            [
+                "/* Some text.\r\n       More text.\r\n       Even more text. */",
+                "/* Some text.\n   More text.\n   Even more text. */"
+            ],
+            [
+                "/* Some text.\n       More text.\n         Indented text. */",
+                "/* Some text.\n   More text.\n     Indented text. */",
             ],
             // invalid comment -> no reformatting
             [
-                'hallo
-    world',
-                'hallo
-    world',
+                "hello\n    world",
+                "hello\n    world",
             ],
         ];
     }

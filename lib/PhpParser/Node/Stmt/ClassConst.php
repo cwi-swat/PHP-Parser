@@ -7,40 +7,43 @@ use PhpParser\Node;
 
 class ClassConst extends Node\Stmt {
     /** @var int Modifiers */
-    public $flags;
+    public int $flags;
     /** @var Node\Const_[] Constant declarations */
-    public $consts;
-    /** @var Node\AttributeGroup[] */
-    public $attrGroups;
+    public array $consts;
+    /** @var Node\AttributeGroup[] PHP attribute groups */
+    public array $attrGroups;
+    /** @var Node\Identifier|Node\Name|Node\ComplexType|null Type declaration */
+    public ?Node $type;
 
     /**
      * Constructs a class const list node.
      *
-     * @param Node\Const_[]         $consts     Constant declarations
-     * @param int                   $flags      Modifiers
+     * @param Node\Const_[] $consts Constant declarations
+     * @param int $flags Modifiers
      * @param array<string, mixed> $attributes Additional attributes
      * @param list<Node\AttributeGroup> $attrGroups PHP attribute groups
+     * @param null|Node\Identifier|Node\Name|Node\ComplexType $type Type declaration
      */
     public function __construct(
         array $consts,
         int $flags = 0,
         array $attributes = [],
-        array $attrGroups = []
+        array $attrGroups = [],
+        ?Node $type = null
     ) {
         $this->attributes = $attributes;
         $this->flags = $flags;
         $this->consts = $consts;
         $this->attrGroups = $attrGroups;
+        $this->type = $type;
     }
 
     public function getSubNodeNames(): array {
-        return ['attrGroups', 'flags', 'consts'];
+        return ['attrGroups', 'flags', 'type', 'consts'];
     }
 
     /**
      * Whether constant is explicitly or implicitly public.
-     *
-     * @return bool
      */
     public function isPublic(): bool {
         return ($this->flags & Modifiers::PUBLIC) !== 0
@@ -49,8 +52,6 @@ class ClassConst extends Node\Stmt {
 
     /**
      * Whether constant is protected.
-     *
-     * @return bool
      */
     public function isProtected(): bool {
         return (bool) ($this->flags & Modifiers::PROTECTED);
@@ -58,8 +59,6 @@ class ClassConst extends Node\Stmt {
 
     /**
      * Whether constant is private.
-     *
-     * @return bool
      */
     public function isPrivate(): bool {
         return (bool) ($this->flags & Modifiers::PRIVATE);
@@ -67,8 +66,6 @@ class ClassConst extends Node\Stmt {
 
     /**
      * Whether constant is final.
-     *
-     * @return bool
      */
     public function isFinal(): bool {
         return (bool) ($this->flags & Modifiers::FINAL);

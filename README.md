@@ -6,11 +6,9 @@ PHP Parser
 This is a PHP parser written in PHP. Its purpose is to simplify static code analysis and
 manipulation.
 
-[Documentation for version 5.x][doc_master] (in development; for running on PHP >= 7.1; for parsing PHP 7.0 to PHP 8.2, with limited support for parsing PHP 5.x).
+[**Documentation for version 5.x**][doc_master] (current; for running on PHP >= 7.4; for parsing PHP 7.0 to PHP 8.4, with limited support for parsing PHP 5.x).
 
-[**Documentation for version 4.x**][doc_4_x] (stable; for running on PHP >= 7.0; for parsing PHP 5.2 to PHP 8.2).
-
-[Documentation for version 3.x][doc_3_x] (unsupported; for running on PHP >= 5.5; for parsing PHP 5.2 to PHP 7.2).
+[Documentation for version 4.x][doc_4_x] (supported; for running on PHP >= 7.0; for parsing PHP 5.2 to PHP 8.3).
 
 Features
 --------
@@ -70,12 +68,17 @@ This dumps an AST looking something like this:
 ```
 array(
     0: Stmt_Function(
+        attrGroups: array(
+        )
         byRef: false
         name: Identifier(
             name: test
         )
         params: array(
             0: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -90,12 +93,11 @@ array(
             0: Stmt_Expression(
                 expr: Expr_FuncCall(
                     name: Name(
-                        parts: array(
-                            0: var_dump
-                        )
+                        name: var_dump
                     )
                     args: array(
                         0: Arg(
+                            name: null
                             value: Expr_Variable(
                                 name: foo
                             )
@@ -137,12 +139,16 @@ This gives us an AST where the `Function_::$stmts` are empty:
 ```
 array(
     0: Stmt_Function(
+        attrGroups: array(
+        )
         byRef: false
         name: Identifier(
             name: test
         )
         params: array(
             0: Param(
+                attrGroups: array(
+                )
                 type: null
                 byRef: false
                 variadic: false
@@ -205,9 +211,8 @@ Component documentation:
  * [AST builders](doc/component/AST_builders.markdown)
    * Fluent builders for AST nodes
  * [Lexer](doc/component/Lexer.markdown)
-   * Lexer options
-   * Token and file positions for nodes
-   * Custom attributes
+   * Emulation
+   * Tokens, positions and attributes
  * [Error handling](doc/component/Error_handling.markdown)
    * Column information for errors
    * Error recovery (parsing of syntactically incorrect code)

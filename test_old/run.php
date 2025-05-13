@@ -26,6 +26,12 @@ OUTPUT
     );
 }
 
+$allowedOptions = [
+    '--no-progress' => true,
+    '--verbose' => true,
+    '--php-version' => true,
+];
+
 $options = array();
 $arguments = array();
 
@@ -35,7 +41,11 @@ array_shift($argv);
 foreach ($argv as $arg) {
     if ('-' === $arg[0]) {
         $parts = explode('=', $arg);
-        $options[$parts[0]] = $parts[1] ?? true;
+        $name = $parts[0];
+        if (!isset($allowedOptions[$name])) {
+            showHelp("Unknown option \"$name\"");
+        }
+        $options[$name] = $parts[1] ?? true;
     } else {
         $arguments[] = $arg;
     }
@@ -95,12 +105,6 @@ switch ($testType) {
 | tests.run-test.bug75042-3
 # contains invalid chars, which we treat as parse error
 | Zend.tests.warning_during_heredoc_scan_ahead
-# pretty print difference due to INF vs 1e1000
-| ext.standard.tests.general_functions.bug27678
-| tests.lang.bug24640
-| tests.lang.integer_literals.(binary|octal|hexadecimal)_(32|64)bit
-| Zend.tests.bug74947
-| Zend.tests.float_to_int.union_int_string_type_arg
 # pretty print differences due to negative LNumbers
 | Zend.tests.neg_num_string
 | Zend.tests.numeric_strings.neg_num_string
@@ -113,6 +117,10 @@ switch ($testType) {
 # whitespace in namespaced name
 | Zend.tests.bug55086
 | Zend.tests.grammar.regression_010
+# not worth emulating on old PHP versions
+| Zend.tests.type_declarations.intersection_types.parsing_comment
+# comments in property fetch syntax, not emulated on old PHP versions
+| Zend.tests.gh14961
 )\.phpt$~x', $file)) {
                 return null;
             }
@@ -131,17 +139,7 @@ switch ($testType) {
         showHelp('Test type must be one of: PHP or Symfony');
 }
 
-$lexer = new PhpParser\Lexer\Emulative([
-    'usedAttributes' => [
-        'comments', 'startLine', 'endLine', 'startTokenPos', 'endTokenPos',
-    ],
-    'phpVersion' => $phpVersion,
-]);
-if (version_compare($phpVersion, '7.0', '>=')) {
-    $parser = new PhpParser\Parser\Php7($lexer);
-} else {
-    $parser = new PhpParser\Parser\Php5($lexer);
-}
+$parser = (new PhpParser\ParserFactory())->createForVersion(PhpParser\PhpVersion::fromString($phpVersion));
 $prettyPrinter = new PhpParser\PrettyPrinter\Standard;
 $nodeDumper = new PhpParser\NodeDumper;
 
@@ -183,7 +181,7 @@ foreach (new RecursiveIteratorIterator(
         $origStmts = $parser->parse($origCode);
         $parseTime += microtime(true) - $startTime;
 
-        $origTokens = $lexer->getTokens();
+        $origTokens = $parser->getTokens();
 
         $startTime = microtime(true);
         $stmts = $cloningTraverser->traverse($origStmts);

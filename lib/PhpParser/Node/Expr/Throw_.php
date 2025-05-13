@@ -6,12 +6,12 @@ use PhpParser\Node;
 
 class Throw_ extends Node\Expr {
     /** @var Node\Expr Expression */
-    public $expr;
+    public Node\Expr $expr;
 
     /**
      * Constructs a throw expression node.
      *
-     * @param Node\Expr $expr       Expression
+     * @param Node\Expr $expr Expression
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Node\Expr $expr, array $attributes = []) {

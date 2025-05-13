@@ -35,10 +35,10 @@ array(
                 )
                 default: Expr_ConstFetch(
                     name: Name(
-                        parts: array(
-                            0: null
-                        )
+                        name: null
                     )
+                )
+                hooks: array(
                 )
             )
             1: Param(
@@ -54,6 +54,8 @@ array(
                 default: Scalar_String(
                     value: foo
                 )
+                hooks: array(
+                )
             )
             2: Param(
                 attrGroups: array(
@@ -67,13 +69,13 @@ array(
                 )
                 default: Expr_ClassConstFetch(
                     class: Name(
-                        parts: array(
-                            0: A
-                        )
+                        name: A
                     )
                     name: Identifier(
                         name: B
                     )
+                )
+                hooks: array(
                 )
             )
             3: Param(
@@ -91,6 +93,8 @@ array(
                         value: 1
                     )
                 )
+                hooks: array(
+                )
             )
             4: Param(
                 attrGroups: array(
@@ -107,6 +111,8 @@ array(
                         value: 1
                     )
                 )
+                hooks: array(
+                )
             )
             5: Param(
                 attrGroups: array(
@@ -122,6 +128,8 @@ array(
                     items: array(
                     )
                 )
+                hooks: array(
+                )
             )
             6: Param(
                 attrGroups: array(
@@ -136,6 +144,8 @@ array(
                 default: Expr_Array(
                     items: array(
                     )
+                )
+                hooks: array(
                 )
             )
             7: Param(
@@ -159,6 +169,8 @@ array(
                             unpack: false
                         )
                     )
+                )
+                hooks: array(
                 )
             )
             8: Param(
@@ -192,6 +204,8 @@ array(
                             unpack: false
                         )
                     )
+                )
+                hooks: array(
                 )
             )
         )

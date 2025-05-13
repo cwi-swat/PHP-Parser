@@ -8,22 +8,22 @@ use PhpParser\Node\FunctionLike;
 
 class ClassMethod extends Node\Stmt implements FunctionLike {
     /** @var int Flags */
-    public $flags;
+    public int $flags;
     /** @var bool Whether to return by reference */
-    public $byRef;
+    public bool $byRef;
     /** @var Node\Identifier Name */
-    public $name;
+    public Node\Identifier $name;
     /** @var Node\Param[] Parameters */
-    public $params;
+    public array $params;
     /** @var null|Node\Identifier|Node\Name|Node\ComplexType Return type */
-    public $returnType;
+    public ?Node $returnType;
     /** @var Node\Stmt[]|null Statements */
-    public $stmts;
+    public ?array $stmts;
     /** @var Node\AttributeGroup[] PHP attribute groups */
-    public $attrGroups;
+    public array $attrGroups;
 
     /** @var array<string, bool> */
-    private static $magicNames = [
+    private static array $magicNames = [
         '__construct'   => true,
         '__destruct'    => true,
         '__call'        => true,
@@ -51,7 +51,7 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
      *     flags?: int,
      *     byRef?: bool,
      *     params?: Node\Param[],
-     *     returnType?: null|string|Node\Identifier|Node\Name|Node\ComplexType,
+     *     returnType?: null|Node\Identifier|Node\Name|Node\ComplexType,
      *     stmts?: Node\Stmt[]|null,
      *     attrGroups?: Node\AttributeGroup[],
      * } $subNodes Array of the following optional subnodes:
@@ -69,8 +69,7 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
         $this->byRef = $subNodes['byRef'] ?? false;
         $this->name = \is_string($name) ? new Node\Identifier($name) : $name;
         $this->params = $subNodes['params'] ?? [];
-        $returnType = $subNodes['returnType'] ?? null;
-        $this->returnType = \is_string($returnType) ? new Node\Identifier($returnType) : $returnType;
+        $this->returnType = $subNodes['returnType'] ?? null;
         $this->stmts = array_key_exists('stmts', $subNodes) ? $subNodes['stmts'] : [];
         $this->attrGroups = $subNodes['attrGroups'] ?? [];
     }
@@ -101,8 +100,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is explicitly or implicitly public.
-     *
-     * @return bool
      */
     public function isPublic(): bool {
         return ($this->flags & Modifiers::PUBLIC) !== 0
@@ -111,8 +108,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is protected.
-     *
-     * @return bool
      */
     public function isProtected(): bool {
         return (bool) ($this->flags & Modifiers::PROTECTED);
@@ -120,8 +115,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is private.
-     *
-     * @return bool
      */
     public function isPrivate(): bool {
         return (bool) ($this->flags & Modifiers::PRIVATE);
@@ -129,8 +122,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is abstract.
-     *
-     * @return bool
      */
     public function isAbstract(): bool {
         return (bool) ($this->flags & Modifiers::ABSTRACT);
@@ -138,8 +129,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is final.
-     *
-     * @return bool
      */
     public function isFinal(): bool {
         return (bool) ($this->flags & Modifiers::FINAL);
@@ -147,8 +136,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is static.
-     *
-     * @return bool
      */
     public function isStatic(): bool {
         return (bool) ($this->flags & Modifiers::STATIC);
@@ -156,8 +143,6 @@ class ClassMethod extends Node\Stmt implements FunctionLike {
 
     /**
      * Whether the method is magic.
-     *
-     * @return bool
      */
     public function isMagic(): bool {
         return isset(self::$magicNames[$this->name->toLowerString()]);

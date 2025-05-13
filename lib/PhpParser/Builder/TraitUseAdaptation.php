@@ -13,23 +13,18 @@ class TraitUseAdaptation implements Builder {
     private const TYPE_ALIAS      = 1;
     private const TYPE_PRECEDENCE = 2;
 
-    /** @var int Type of building adaptation */
-    protected $type;
-    /** @var Node\Name|null */
-    protected $trait;
-    /** @var Node\Identifier */
-    protected $method;
-    /** @var int|null */
-    protected $modifier = null;
-    /** @var Node\Identifier|null */
-    protected $alias = null;
+    protected int $type;
+    protected ?Node\Name $trait;
+    protected Node\Identifier $method;
+    protected ?int $modifier = null;
+    protected ?Node\Identifier $alias = null;
     /** @var Node\Name[] */
-    protected $insteadof = [];
+    protected array $insteadof = [];
 
     /**
      * Creates a trait use adaptation builder.
      *
-     * @param Node\Name|string|null  $trait  Name of adapted trait
+     * @param Node\Name|string|null $trait Name of adapted trait
      * @param Node\Identifier|string $method Name of adapted method
      */
     public function __construct($trait, $method) {

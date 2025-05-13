@@ -6,12 +6,12 @@ use PhpParser\Node\Scalar;
 
 class Float_ extends Scalar {
     /** @var float Number value */
-    public $value;
+    public float $value;
 
     /**
      * Constructs a float number scalar node.
      *
-     * @param float $value      Value of the number
+     * @param float $value Value of the number
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(float $value, array $attributes = []) {

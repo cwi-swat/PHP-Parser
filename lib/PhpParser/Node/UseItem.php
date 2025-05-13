@@ -3,23 +3,25 @@
 namespace PhpParser\Node;
 
 use PhpParser\Node;
-use PhpParser\Node\Identifier;
+use PhpParser\NodeAbstract;
 use PhpParser\Node\Stmt\Use_;
 
-class UseItem extends Node\Stmt {
-    /** @var int One of the Stmt\Use_::TYPE_* constants. Will only differ from TYPE_UNKNOWN for mixed group uses */
-    public $type;
+class UseItem extends NodeAbstract {
+    /**
+     * @var Use_::TYPE_* One of the Stmt\Use_::TYPE_* constants. Will only differ from TYPE_UNKNOWN for mixed group uses
+     */
+    public int $type;
     /** @var Node\Name Namespace, class, function or constant to alias */
-    public $name;
+    public Name $name;
     /** @var Identifier|null Alias */
-    public $alias;
+    public ?Identifier $alias;
 
     /**
      * Constructs an alias (use) item node.
      *
-     * @param Node\Name              $name       Namespace/Class to alias
-     * @param null|string|Identifier $alias      Alias
-     * @param int                    $type       Type of the use element (for mixed group use only)
+     * @param Node\Name $name Namespace/Class to alias
+     * @param null|string|Identifier $alias Alias
+     * @param Use_::TYPE_* $type Type of the use element (for mixed group use only)
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Node\Name $name, $alias = null, int $type = Use_::TYPE_UNKNOWN, array $attributes = []) {
@@ -35,8 +37,6 @@ class UseItem extends Node\Stmt {
 
     /**
      * Get alias. If not explicitly given this is the last component of the used name.
-     *
-     * @return Identifier
      */
     public function getAlias(): Identifier {
         if (null !== $this->alias) {

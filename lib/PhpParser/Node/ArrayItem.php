@@ -6,20 +6,20 @@ use PhpParser\NodeAbstract;
 
 class ArrayItem extends NodeAbstract {
     /** @var null|Expr Key */
-    public $key;
+    public ?Expr $key;
     /** @var Expr Value */
-    public $value;
+    public Expr $value;
     /** @var bool Whether to assign by reference */
-    public $byRef;
+    public bool $byRef;
     /** @var bool Whether to unpack the argument */
-    public $unpack;
+    public bool $unpack;
 
     /**
      * Constructs an array item node.
      *
-     * @param Expr      $value      Value
-     * @param null|Expr $key        Key
-     * @param bool      $byRef      Whether to assign by reference
+     * @param Expr $value Value
+     * @param null|Expr $key Key
+     * @param bool $byRef Whether to assign by reference
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Expr $value, ?Expr $key = null, bool $byRef = false, array $attributes = [], bool $unpack = false) {

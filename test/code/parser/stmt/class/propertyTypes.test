@@ -36,15 +36,15 @@ array(
                         default: null
                     )
                 )
+                hooks: array(
+                )
             )
             1: Stmt_Property(
                 attrGroups: array(
                 )
                 flags: PROTECTED | STATIC (10)
                 type: Name(
-                    parts: array(
-                        0: D
-                    )
+                    name: D
                 )
                 props: array(
                     0: PropertyItem(
@@ -53,6 +53,8 @@ array(
                         )
                         default: null
                     )
+                )
+                hooks: array(
                 )
             )
             2: Stmt_Property(
@@ -72,6 +74,8 @@ array(
                         default: null
                     )
                 )
+                hooks: array(
+                )
             )
             3: Stmt_Property(
                 attrGroups: array(
@@ -89,6 +93,8 @@ array(
                         )
                         default: null
                     )
+                )
+                hooks: array(
                 )
             )
         )

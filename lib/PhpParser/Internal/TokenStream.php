@@ -11,27 +11,25 @@ use PhpParser\Token;
  */
 class TokenStream {
     /** @var Token[] Tokens (in PhpToken::tokenize() format) */
-    private $tokens;
+    private array $tokens;
     /** @var int[] Map from position to indentation */
-    private $indentMap;
+    private array $indentMap;
 
     /**
      * Create token stream instance.
      *
      * @param Token[] $tokens Tokens in PhpToken::tokenize() format
      */
-    public function __construct(array $tokens) {
+    public function __construct(array $tokens, int $tabWidth) {
         $this->tokens = $tokens;
-        $this->indentMap = $this->calcIndentMap();
+        $this->indentMap = $this->calcIndentMap($tabWidth);
     }
 
     /**
      * Whether the given position is immediately surrounded by parenthesis.
      *
      * @param int $startPos Start position
-     * @param int $endPos   End position
-     *
-     * @return bool
+     * @param int $endPos End position
      */
     public function haveParens(int $startPos, int $endPos): bool {
         return $this->haveTokenImmediatelyBefore($startPos, '(')
@@ -42,9 +40,7 @@ class TokenStream {
      * Whether the given position is immediately surrounded by braces.
      *
      * @param int $startPos Start position
-     * @param int $endPos   End position
-     *
-     * @return bool
+     * @param int $endPos End position
      */
     public function haveBraces(int $startPos, int $endPos): bool {
         return ($this->haveTokenImmediatelyBefore($startPos, '{')
@@ -57,7 +53,7 @@ class TokenStream {
      *
      * During this check whitespace and comments are skipped.
      *
-     * @param int        $pos               Position before which the token should occur
+     * @param int $pos Position before which the token should occur
      * @param int|string $expectedTokenType Token to check for
      *
      * @return bool Whether the expected token was found
@@ -82,7 +78,7 @@ class TokenStream {
      *
      * During this check whitespace and comments are skipped.
      *
-     * @param int        $pos               Position after which the token should occur
+     * @param int $pos Position after which the token should occur
      * @param int|string $expectedTokenType Token to check for
      *
      * @return bool Whether the expected token was found
@@ -199,12 +195,6 @@ class TokenStream {
         return false;
     }
 
-    public function haveBracesInRange(int $startPos, int $endPos): bool {
-        return $this->haveTokenInRange($startPos, $endPos, '{')
-            || $this->haveTokenInRange($startPos, $endPos, T_CURLY_OPEN)
-            || $this->haveTokenInRange($startPos, $endPos, '}');
-    }
-
     public function haveTagInRange(int $startPos, int $endPos): bool {
         return $this->haveTokenInRange($startPos, $endPos, \T_OPEN_TAG)
             || $this->haveTokenInRange($startPos, $endPos, \T_CLOSE_TAG);
@@ -224,8 +214,8 @@ class TokenStream {
     /**
      * Get the code corresponding to a token offset range, optionally adjusted for indentation.
      *
-     * @param int $from   Token start position (inclusive)
-     * @param int $to     Token end position (exclusive)
+     * @param int $from Token start position (inclusive)
+     * @param int $to Token end position (exclusive)
      * @param int $indent By how much the code should be indented (can be negative as well)
      *
      * @return string Code corresponding to token range, adjusted for indentation
@@ -258,17 +248,21 @@ class TokenStream {
      *
      * @return int[] Token position to indentation map
      */
-    private function calcIndentMap(): array {
+    private function calcIndentMap(int $tabWidth): array {
         $indentMap = [];
         $indent = 0;
-        foreach ($this->tokens as $token) {
+        foreach ($this->tokens as $i => $token) {
             $indentMap[] = $indent;
 
             if ($token->id === \T_WHITESPACE) {
                 $content = $token->text;
                 $newlinePos = \strrpos($content, "\n");
                 if (false !== $newlinePos) {
-                    $indent = \strlen($content) - $newlinePos - 1;
+                    $indent = $this->getIndent(\substr($content, $newlinePos + 1), $tabWidth);
+                } elseif ($i === 1 && $this->tokens[0]->id === \T_OPEN_TAG &&
+                          $this->tokens[0]->text[\strlen($this->tokens[0]->text) - 1] === "\n") {
+                    // Special case: Newline at the end of opening tag followed by whitespace.
+                    $indent = $this->getIndent($content, $tabWidth);
                 }
             }
         }
@@ -277,5 +271,12 @@ class TokenStream {
         $indentMap[] = $indent;
 
         return $indentMap;
+    }
+
+    private function getIndent(string $ws, int $tabWidth): int {
+        $spaces = \substr_count($ws, " ");
+        $tabs = \substr_count($ws, "\t");
+        assert(\strlen($ws) === $spaces + $tabs);
+        return $spaces + $tabs * $tabWidth;
     }
 }

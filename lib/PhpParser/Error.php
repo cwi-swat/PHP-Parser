@@ -3,10 +3,9 @@
 namespace PhpParser;
 
 class Error extends \RuntimeException {
-    /** @var string */
-    protected $rawMessage;
+    protected string $rawMessage;
     /** @var array<string, mixed> */
-    protected $attributes;
+    protected array $attributes;
 
     /**
      * Creates an Exception signifying a parse error.
@@ -33,6 +32,7 @@ class Error extends \RuntimeException {
      * Gets the line the error starts in.
      *
      * @return int Error start line
+     * @phpstan-return -1|positive-int
      */
     public function getStartLine(): int {
         return $this->attributes['startLine'] ?? -1;
@@ -42,6 +42,7 @@ class Error extends \RuntimeException {
      * Gets the line the error ends in.
      *
      * @return int Error end line
+     * @phpstan-return -1|positive-int
      */
     public function getEndLine(): int {
         return $this->attributes['endLine'] ?? -1;
@@ -90,8 +91,6 @@ class Error extends \RuntimeException {
      * Returns whether the error has start and end column information.
      *
      * For column information enable the startFilePos and endFilePos in the lexer options.
-     *
-     * @return bool
      */
     public function hasColumnInfo(): bool {
         return isset($this->attributes['startFilePos'], $this->attributes['endFilePos']);
@@ -101,7 +100,6 @@ class Error extends \RuntimeException {
      * Gets the start column (1-based) into the line where the error started.
      *
      * @param string $code Source code of the file
-     * @return int
      */
     public function getStartColumn(string $code): int {
         if (!$this->hasColumnInfo()) {
@@ -115,7 +113,6 @@ class Error extends \RuntimeException {
      * Gets the end column (1-based) into the line where the error ended.
      *
      * @param string $code Source code of the file
-     * @return int
      */
     public function getEndColumn(string $code): int {
         if (!$this->hasColumnInfo()) {
@@ -144,7 +141,7 @@ class Error extends \RuntimeException {
      * Converts a file offset into a column.
      *
      * @param string $code Source code that $pos indexes into
-     * @param int    $pos  0-based position in $code
+     * @param int $pos 0-based position in $code
      *
      * @return int 1-based column (relative to start of line)
      */

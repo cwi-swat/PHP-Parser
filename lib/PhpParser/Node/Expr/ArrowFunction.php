@@ -7,22 +7,22 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\FunctionLike;
 
 class ArrowFunction extends Expr implements FunctionLike {
-    /** @var bool */
-    public $static;
+    /** @var bool Whether the closure is static */
+    public bool $static;
 
-    /** @var bool */
-    public $byRef;
+    /** @var bool Whether to return by reference */
+    public bool $byRef;
 
     /** @var Node\Param[] */
-    public $params = [];
+    public array $params = [];
 
     /** @var null|Node\Identifier|Node\Name|Node\ComplexType */
-    public $returnType;
+    public ?Node $returnType;
 
-    /** @var Expr */
-    public $expr;
+    /** @var Expr Expression body */
+    public Expr $expr;
     /** @var Node\AttributeGroup[] */
-    public $attrGroups;
+    public array $attrGroups;
 
     /**
      * @param array{
@@ -30,7 +30,7 @@ class ArrowFunction extends Expr implements FunctionLike {
      *     static?: bool,
      *     byRef?: bool,
      *     params?: Node\Param[],
-     *     returnType?: null|string|Node\Identifier|Node\Name|Node\ComplexType,
+     *     returnType?: null|Node\Identifier|Node\Name|Node\ComplexType,
      *     attrGroups?: Node\AttributeGroup[]
      * } $subNodes Array of the following subnodes:
      *             'expr'                  : Expression body
@@ -46,8 +46,7 @@ class ArrowFunction extends Expr implements FunctionLike {
         $this->static = $subNodes['static'] ?? false;
         $this->byRef = $subNodes['byRef'] ?? false;
         $this->params = $subNodes['params'] ?? [];
-        $returnType = $subNodes['returnType'] ?? null;
-        $this->returnType = \is_string($returnType) ? new Node\Identifier($returnType) : $returnType;
+        $this->returnType = $subNodes['returnType'] ?? null;
         $this->expr = $subNodes['expr'];
         $this->attrGroups = $subNodes['attrGroups'] ?? [];
     }

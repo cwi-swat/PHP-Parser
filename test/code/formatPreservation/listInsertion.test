@@ -141,7 +141,7 @@ function test() {
 namespace
 Foo;
 -----
-$stmts[0]->name->parts[0] = 'Xyz';
+$stmts[0]->name->name = 'Xyz';
 -----
 <?php
 namespace
@@ -354,3 +354,16 @@ array_splice($stmts[0]->expr->var->items, 1, 0, [null]);
 -----
 <?php
 list($x, , $y) = $z;
+-----
+<?php
+{
+    $a; $b;
+}
+-----
+$stmts[0]->stmts[] = new Stmt\Expression(new Expr\Variable('c'));
+-----
+<?php
+{
+    $a; $b;
+    $c;
+}

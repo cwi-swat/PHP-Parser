@@ -25,20 +25,14 @@ array(
             name: A
         )
         extends: Name(
-            parts: array(
-                0: B
-            )
+            name: B
         )
         implements: array(
             0: Name(
-                parts: array(
-                    0: C
-                )
+                name: C
             )
             1: Name(
-                parts: array(
-                    0: D
-                )
+                name: D
             )
         )
         stmts: array(
@@ -46,6 +40,7 @@ array(
                 attrGroups: array(
                 )
                 flags: 0
+                type: null
                 consts: array(
                     0: Const(
                         name: Identifier(
@@ -88,6 +83,8 @@ array(
                         )
                     )
                 )
+                hooks: array(
+                )
             )
             2: Stmt_Property(
                 attrGroups: array(
@@ -102,6 +99,8 @@ array(
                         default: null
                     )
                 )
+                hooks: array(
+                )
             )
             3: Stmt_Property(
                 attrGroups: array(
@@ -115,6 +114,8 @@ array(
                         )
                         default: null
                     )
+                )
+                hooks: array(
                 )
             )
             4: Stmt_ClassMethod(
@@ -151,6 +152,8 @@ array(
                             name: a
                         )
                         default: null
+                        hooks: array(
+                        )
                     )
                 )
                 returnType: null
@@ -168,9 +171,7 @@ array(
                 params: array(
                 )
                 returnType: Name(
-                    parts: array(
-                        0: B
-                    )
+                    name: B
                 )
                 stmts: array(
                 )

@@ -6,12 +6,12 @@ use PhpParser\NodeAbstract;
 
 class InterpolatedStringPart extends NodeAbstract {
     /** @var string String value */
-    public $value;
+    public string $value;
 
     /**
      * Constructs a node representing a string part of an interpolated string.
      *
-     * @param string $value      String value
+     * @param string $value String value
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(string $value, array $attributes = []) {

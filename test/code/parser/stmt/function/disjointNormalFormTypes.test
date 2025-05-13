@@ -30,28 +30,20 @@ array(
                         0: IntersectionType(
                             types: array(
                                 0: Name(
-                                    parts: array(
-                                        0: A
-                                    )
+                                    name: A
                                 )
                                 1: Name(
-                                    parts: array(
-                                        0: B
-                                    )
+                                    name: B
                                 )
                             )
                         )
                         1: IntersectionType(
                             types: array(
                                 0: Name(
-                                    parts: array(
-                                        0: X
-                                    )
+                                    name: X
                                 )
                                 1: Name(
-                                    parts: array(
-                                        0: Y
-                                    )
+                                    name: Y
                                 )
                             )
                         )
@@ -65,6 +57,8 @@ array(
                         default: null
                     )
                 )
+                hooks: array(
+                )
             )
             1: Stmt_Property(
                 attrGroups: array(
@@ -75,21 +69,15 @@ array(
                         0: IntersectionType(
                             types: array(
                                 0: Name(
-                                    parts: array(
-                                        0: A
-                                    )
+                                    name: A
                                 )
                                 1: Name(
-                                    parts: array(
-                                        0: B
-                                    )
+                                    name: B
                                 )
                             )
                         )
                         1: Name(
-                            parts: array(
-                                0: C
-                            )
+                            name: C
                         )
                     )
                 )
@@ -100,6 +88,8 @@ array(
                         )
                         default: null
                     )
+                )
+                hooks: array(
                 )
             )
         )
@@ -121,28 +111,20 @@ array(
                         0: IntersectionType(
                             types: array(
                                 0: Name(
-                                    parts: array(
-                                        0: A
-                                    )
+                                    name: A
                                 )
                                 1: Name(
-                                    parts: array(
-                                        0: B
-                                    )
+                                    name: B
                                 )
                             )
                         )
                         1: IntersectionType(
                             types: array(
                                 0: Name(
-                                    parts: array(
-                                        0: X
-                                    )
+                                    name: X
                                 )
                                 1: Name(
-                                    parts: array(
-                                        0: Y
-                                    )
+                                    name: Y
                                 )
                             )
                         )
@@ -154,6 +136,8 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: UnionType(
@@ -161,28 +145,20 @@ array(
                 0: IntersectionType(
                     types: array(
                         0: Name(
-                            parts: array(
-                                0: A
-                            )
+                            name: A
                         )
                         1: Name(
-                            parts: array(
-                                0: B
-                            )
+                            name: B
                         )
                     )
                 )
                 1: IntersectionType(
                     types: array(
                         0: Name(
-                            parts: array(
-                                0: X
-                            )
+                            name: X
                         )
                         1: Name(
-                            parts: array(
-                                0: Y
-                            )
+                            name: Y
                         )
                     )
                 )

@@ -13,13 +13,13 @@ use PhpParser\NodeVisitorAbstract;
 
 class NameResolver extends NodeVisitorAbstract {
     /** @var NameContext Naming context */
-    protected $nameContext;
+    protected NameContext $nameContext;
 
     /** @var bool Whether to preserve original names */
-    protected $preserveOriginalNames;
+    protected bool $preserveOriginalNames;
 
     /** @var bool Whether to replace resolved nodes in place, or to add resolvedNode attributes */
-    protected $replaceNodes;
+    protected bool $replaceNodes;
 
     /**
      * Constructs a name resolution visitor.
@@ -42,8 +42,6 @@ class NameResolver extends NodeVisitorAbstract {
 
     /**
      * Get name resolution context.
-     *
-     * @return NameContext
      */
     public function getNameContext(): NameContext {
         return $this->nameContext;
@@ -77,6 +75,8 @@ class NameResolver extends NodeVisitorAbstract {
             $this->resolveAttrGroups($node);
             if (null !== $node->name) {
                 $this->addNamespacedName($node);
+            } else {
+                $node->namespacedName = null;
             }
         } elseif ($node instanceof Stmt\Interface_) {
             foreach ($node->extends as &$interface) {
@@ -91,9 +91,7 @@ class NameResolver extends NodeVisitorAbstract {
             }
 
             $this->resolveAttrGroups($node);
-            if (null !== $node->name) {
-                $this->addNamespacedName($node);
-            }
+            $this->addNamespacedName($node);
         } elseif ($node instanceof Stmt\Trait_) {
             $this->resolveAttrGroups($node);
             $this->addNamespacedName($node);
@@ -112,11 +110,21 @@ class NameResolver extends NodeVisitorAbstract {
                 $node->type = $this->resolveType($node->type);
             }
             $this->resolveAttrGroups($node);
+        } elseif ($node instanceof Node\PropertyHook) {
+            foreach ($node->params as $param) {
+                $param->type = $this->resolveType($param->type);
+                $this->resolveAttrGroups($param);
+            }
+            $this->resolveAttrGroups($node);
         } elseif ($node instanceof Stmt\Const_) {
             foreach ($node->consts as $const) {
                 $this->addNamespacedName($const);
             }
+            $this->resolveAttrGroups($node);
         } elseif ($node instanceof Stmt\ClassConst) {
+            if (null !== $node->type) {
+                $node->type = $this->resolveType($node->type);
+            }
             $this->resolveAttrGroups($node);
         } elseif ($node instanceof Stmt\EnumCase) {
             $this->resolveAttrGroups($node);
@@ -160,6 +168,7 @@ class NameResolver extends NodeVisitorAbstract {
         return null;
     }
 
+    /** @param Stmt\Use_::TYPE_* $type */
     private function addAlias(Node\UseItem $use, int $type, ?Name $prefix = null): void {
         // Add prefix for group uses
         $name = $prefix ? Name::concat($prefix, $use->name) : $use->name;
@@ -206,7 +215,7 @@ class NameResolver extends NodeVisitorAbstract {
      * Resolve name, according to name resolver options.
      *
      * @param Name $name Function or constant name to resolve
-     * @param int  $type One of Stmt\Use_::TYPE_*
+     * @param Stmt\Use_::TYPE_* $type One of Stmt\Use_::TYPE_*
      *
      * @return Name Resolved name, or original name with attribute
      */

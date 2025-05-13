@@ -31,16 +31,30 @@ expression.
 Customizing the formatting
 --------------------------
 
-The pretty printer respects a number of `kind` attributes used by some notes (e.g., whether an
-integer should be printed as decimal, hexadecimal, etc). Additionally, it supports two options:
+The pretty printer respects a number of `kind` attributes used by some nodes (e.g., whether an
+integer should be printed as decimal, hexadecimal, etc). Additionally, it supports three options:
 
-* `phpVersion` (defaults to 7.0) allows opting into formatting that is not supported by older PHP
+* `phpVersion` (defaults to 7.4) allows opting into formatting that is not supported by older PHP
   versions.
+* `newline` (defaults to `"\n"`) can be set to `"\r\n"` in order to produce Windows newlines.
+* `indent` (defaults to four spaces `"    "`) can be set to any number of spaces or a single tab.
 * `shortArraySyntax` determines the used array syntax if the `kind` attribute is not set. This is
   a legacy option, and `phpVersion` should be used to control this behavior instead.
 
-However, the default pretty printer does not provide any functionality for fine-grained
-customization of code formatting.
+The behaviors controlled by `phpVersion` (defaults to PHP 7.4) are:
+
+* For PHP >= 7.0, short array syntax `[]` will be used by default. This does not affect nodes that
+  specify an explicit array syntax using the `kind` attribute.
+* For PHP >= 7.0, parentheses around `yield` expressions will only be printed when necessary.
+* For PHP >= 7.1, the short array syntax `[]` will be used for destructuring by default (instead of
+  `list()`). This does not affect nodes that specify and explicit syntax using the `kind` attribute.
+* For PHP >= 7.3, a newline is no longer forced after heredoc/nowdoc strings, as the requirement
+  for this has been removed with the introduction of flexible heredoc/nowdoc strings.
+* For PHP >= 7.3, heredoc/nowdoc strings are indented just like regular code. This was allowed with
+  the introduction of flexible heredoc/nowdoc strings.
+
+The default pretty printer does not provide functionality for fine-grained customization of code
+formatting.
 
 If you want to make minor changes to the formatting, the easiest way is to extend the pretty printer
 and override the methods responsible for the node types you are interested in.
@@ -63,29 +77,19 @@ code which has been modified or newly inserted.
 Use of the formatting-preservation functionality requires some additional preparatory steps:
 
 ```php
-use PhpParser\{Lexer, NodeTraverser, NodeVisitor, ParserFactory, PrettyPrinter};
+use PhpParser\{NodeTraverser, NodeVisitor, ParserFactory, PrettyPrinter};
 
-$lexerOptions = new [
-    'usedAttributes' => [
-        'comments',
-        'startLine', 'endLine',
-        'startTokenPos', 'endTokenPos',
-    ],
-];
-$parser = (new ParserFactory())->createForHostVersion($lexerOptions);
-
-$traverser = new NodeTraverser();
-$traverser->addVisitor(new NodeVisitor\CloningVisitor());
-
-$printer = new PrettyPrinter\Standard();
-
+$parser = (new ParserFactory())->createForHostVersion();
 $oldStmts = $parser->parse($code);
-$oldTokens = $parser->getLexer()->getTokens();
+$oldTokens = $parser->getTokens();
 
+// Run CloningVisitor before making changes to the AST.
+$traverser = new NodeTraverser(new NodeVisitor\CloningVisitor());
 $newStmts = $traverser->traverse($oldStmts);
 
 // MODIFY $newStmts HERE
 
+$printer = new PrettyPrinter\Standard();
 $newCode = $printer->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
 ```
 
@@ -94,5 +98,5 @@ If you make use of the name resolution functionality, you will likely want to di
 the AST and causing spurious changes to the pretty printed code. For more information, see the
 [name resolution documentation](Name_resolution.markdown).
 
-The formatting-preservation works on a best-effort basis and may sometimes reformat more code tha
+The formatting-preservation works on a best-effort basis and may sometimes reformat more code than
 necessary. If you encounter problems while using this functionality, please open an issue.

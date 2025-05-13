@@ -7,9 +7,8 @@ use PhpParser\NodeAbstract;
 
 class MatchArm extends NodeAbstract {
     /** @var null|list<Node\Expr> */
-    public $conds;
-    /** @var Node\Expr */
-    public $body;
+    public ?array $conds;
+    public Expr $body;
 
     /**
      * @param null|list<Node\Expr> $conds

@@ -11,15 +11,15 @@ class Include_ extends Expr {
     public const TYPE_REQUIRE_ONCE = 4;
 
     /** @var Expr Expression */
-    public $expr;
+    public Expr $expr;
     /** @var int Type of include */
-    public $type;
+    public int $type;
 
     /**
      * Constructs an include node.
      *
-     * @param Expr  $expr       Expression
-     * @param int   $type       Type of include
+     * @param Expr $expr Expression
+     * @param int $type Type of include
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(Expr $expr, int $type, array $attributes = []) {

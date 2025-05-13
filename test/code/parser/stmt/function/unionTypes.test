@@ -27,9 +27,7 @@ array(
                 type: UnionType(
                     types: array(
                         0: Name(
-                            parts: array(
-                                0: A
-                            )
+                            name: A
                         )
                         1: Identifier(
                             name: iterable
@@ -46,6 +44,8 @@ array(
                         )
                         default: null
                     )
+                )
+                hooks: array(
                 )
             )
         )
@@ -65,14 +65,10 @@ array(
                 type: UnionType(
                     types: array(
                         0: Name(
-                            parts: array(
-                                0: A
-                            )
+                            name: A
                         )
                         1: Name(
-                            parts: array(
-                                0: B
-                            )
+                            name: B
                         )
                     )
                 )
@@ -82,6 +78,8 @@ array(
                     name: a
                 )
                 default: null
+                hooks: array(
+                )
             )
         )
         returnType: UnionType(

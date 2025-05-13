@@ -10,13 +10,13 @@ class NodeDumperTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideTestDump
      */
-    public function testDump($node, $dump) {
+    public function testDump($node, $dump): void {
         $dumper = new NodeDumper();
 
         $this->assertSame($this->canonicalize($dump), $this->canonicalize($dumper->dump($node)));
     }
 
-    public function provideTestDump() {
+    public static function provideTestDump() {
         return [
             [
                 [],
@@ -34,10 +34,7 @@ class NodeDumperTest extends \PHPUnit\Framework\TestCase {
             [
                 new Node\Name(['Hallo', 'World']),
 'Name(
-    parts: array(
-        0: Hallo
-        1: World
-    )
+    name: Hallo\World
 )'
             ],
             [
@@ -60,11 +57,8 @@ class NodeDumperTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    public function testDumpWithPositions() {
-        $parser = (new ParserFactory())->create(
-            ParserFactory::ONLY_PHP7,
-            new Lexer(['usedAttributes' => ['startLine', 'endLine', 'startFilePos', 'endFilePos']])
-        );
+    public function testDumpWithPositions(): void {
+        $parser = (new ParserFactory())->createForHostVersion();
         $dumper = new NodeDumper(['dumpPositions' => true]);
 
         $code = "<?php\n\$a = 1;\necho \$a;";
@@ -96,7 +90,7 @@ OUT;
         $this->assertSame($this->canonicalize($expected), $this->canonicalize($dump));
     }
 
-    public function testError() {
+    public function testError(): void {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Can only dump nodes and arrays.');
         $dumper = new NodeDumper();

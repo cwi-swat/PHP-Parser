@@ -6,15 +6,15 @@ use PhpParser\Node;
 
 class Case_ extends Node\Stmt {
     /** @var null|Node\Expr Condition (null for default) */
-    public $cond;
+    public ?Node\Expr $cond;
     /** @var Node\Stmt[] Statements */
-    public $stmts;
+    public array $stmts;
 
     /**
      * Constructs a case node.
      *
-     * @param null|Node\Expr $cond       Condition (null for default)
-     * @param Node\Stmt[]    $stmts      Statements
+     * @param null|Node\Expr $cond Condition (null for default)
+     * @param Node\Stmt[] $stmts Statements
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(?Node\Expr $cond, array $stmts = [], array $attributes = []) {

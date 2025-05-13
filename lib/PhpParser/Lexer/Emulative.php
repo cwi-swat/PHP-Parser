@@ -5,61 +5,48 @@ namespace PhpParser\Lexer;
 use PhpParser\Error;
 use PhpParser\ErrorHandler;
 use PhpParser\Lexer;
+use PhpParser\Lexer\TokenEmulator\AsymmetricVisibilityTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\AttributeEmulator;
 use PhpParser\Lexer\TokenEmulator\EnumTokenEmulator;
-use PhpParser\Lexer\TokenEmulator\CoaleseEqualTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\ExplicitOctalEmulator;
-use PhpParser\Lexer\TokenEmulator\FlexibleDocStringEmulator;
-use PhpParser\Lexer\TokenEmulator\FnTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\MatchTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\NullsafeTokenEmulator;
-use PhpParser\Lexer\TokenEmulator\NumericLiteralSeparatorEmulator;
+use PhpParser\Lexer\TokenEmulator\PropertyTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\ReadonlyFunctionTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\ReadonlyTokenEmulator;
 use PhpParser\Lexer\TokenEmulator\ReverseEmulator;
 use PhpParser\Lexer\TokenEmulator\TokenEmulator;
 use PhpParser\PhpVersion;
+use PhpParser\Token;
 
 class Emulative extends Lexer {
     /** @var array{int, string, string}[] Patches used to reverse changes introduced in the code */
-    private $patches = [];
+    private array $patches = [];
 
     /** @var list<TokenEmulator> */
-    private $emulators = [];
+    private array $emulators = [];
 
-    /** @var PhpVersion */
-    private $targetPhpVersion;
-    /** @var PhpVersion */
-    private $hostPhpVersion;
+    private PhpVersion $targetPhpVersion;
+
+    private PhpVersion $hostPhpVersion;
 
     /**
-     * @param array{usedAttributes?: string[], phpVersion?: PhpVersion|string} $options Lexer options.
-     *        In addition to the usual options, accepts a 'phpVersion' (PhpVersion object or string)
-     *        that specifies the version to emulate. Defaults to newest supported.
+     * @param PhpVersion|null $phpVersion PHP version to emulate. Defaults to newest supported.
      */
-    public function __construct(array $options = []) {
-        $version = $options['phpVersion'] ?? PhpVersion::getNewestSupported();
-        if (!$version instanceof PhpVersion) {
-            $version = PhpVersion::fromString($version);
-        }
-        $this->targetPhpVersion = $version;
+    public function __construct(?PhpVersion $phpVersion = null) {
+        $this->targetPhpVersion = $phpVersion ?? PhpVersion::getNewestSupported();
         $this->hostPhpVersion = PhpVersion::getHostVersion();
-        unset($options['phpVersion']);
-
-        parent::__construct($options);
 
         $emulators = [
-            new FlexibleDocStringEmulator(),
-            new FnTokenEmulator(),
             new MatchTokenEmulator(),
-            new CoaleseEqualTokenEmulator(),
-            new NumericLiteralSeparatorEmulator(),
             new NullsafeTokenEmulator(),
             new AttributeEmulator(),
             new EnumTokenEmulator(),
             new ReadonlyTokenEmulator(),
             new ExplicitOctalEmulator(),
             new ReadonlyFunctionTokenEmulator(),
+            new PropertyTokenEmulator(),
+            new AsymmetricVisibilityTokenEmulator(),
         ];
 
         // Collect emulators that are relevant for the PHP version we're running
@@ -74,15 +61,18 @@ class Emulative extends Lexer {
         }
     }
 
-    public function startLexing(string $code, ?ErrorHandler $errorHandler = null): void {
+    public function tokenize(string $code, ?ErrorHandler $errorHandler = null): array {
         $emulators = array_filter($this->emulators, function ($emulator) use ($code) {
             return $emulator->isEmulationNeeded($code);
         });
 
         if (empty($emulators)) {
             // Nothing to emulate, yay
-            parent::startLexing($code, $errorHandler);
-            return;
+            return parent::tokenize($code, $errorHandler);
+        }
+
+        if ($errorHandler === null) {
+            $errorHandler = new ErrorHandler\Throwing();
         }
 
         $this->patches = [];
@@ -91,9 +81,9 @@ class Emulative extends Lexer {
         }
 
         $collector = new ErrorHandler\Collecting();
-        parent::startLexing($code, $collector);
+        $tokens = parent::tokenize($code, $collector);
         $this->sortPatches();
-        $this->fixupTokens();
+        $tokens = $this->fixupTokens($tokens);
 
         $errors = $collector->getErrors();
         if (!empty($errors)) {
@@ -104,8 +94,10 @@ class Emulative extends Lexer {
         }
 
         foreach ($emulators as $emulator) {
-            $this->tokens = $emulator->emulate($code, $this->tokens);
+            $tokens = $emulator->emulate($code, $tokens);
         }
+
+        return $tokens;
     }
 
     private function isForwardEmulationNeeded(PhpVersion $emulatorPhpVersion): bool {
@@ -126,9 +118,13 @@ class Emulative extends Lexer {
         });
     }
 
-    private function fixupTokens(): void {
+    /**
+     * @param list<Token> $tokens
+     * @return list<Token>
+     */
+    private function fixupTokens(array $tokens): array {
         if (\count($this->patches) === 0) {
-            return;
+            return $tokens;
         }
 
         // Load first patch
@@ -137,10 +133,12 @@ class Emulative extends Lexer {
 
         // We use a manual loop over the tokens, because we modify the array on the fly
         $posDelta = 0;
-        for ($i = 0, $c = \count($this->tokens); $i < $c; $i++) {
-            $token = $this->tokens[$i];
+        $lineDelta = 0;
+        for ($i = 0, $c = \count($tokens); $i < $c; $i++) {
+            $token = $tokens[$i];
             $pos = $token->pos;
             $token->pos += $posDelta;
+            $token->line += $lineDelta;
             $localPosDelta = 0;
             $len = \strlen($token->text);
             while ($patchPos >= $pos && $patchPos < $pos + $len) {
@@ -148,7 +146,7 @@ class Emulative extends Lexer {
                 if ($patchType === 'remove') {
                     if ($patchPos === $pos && $patchTextLen === $len) {
                         // Remove token entirely
-                        array_splice($this->tokens, $i, 1, []);
+                        array_splice($tokens, $i, 1, []);
                         $i--;
                         $c--;
                     } else {
@@ -158,12 +156,14 @@ class Emulative extends Lexer {
                         );
                         $localPosDelta -= $patchTextLen;
                     }
+                    $lineDelta -= \substr_count($patchText, "\n");
                 } elseif ($patchType === 'add') {
                     // Insert into the token string
                     $token->text = substr_replace(
                         $token->text, $patchText, $patchPos - $pos + $localPosDelta, 0
                     );
                     $localPosDelta += $patchTextLen;
+                    $lineDelta += \substr_count($patchText, "\n");
                 } elseif ($patchType === 'replace') {
                     // Replace inside the token string
                     $token->text = substr_replace(
@@ -186,6 +186,7 @@ class Emulative extends Lexer {
 
             $posDelta += $localPosDelta;
         }
+        return $tokens;
     }
 
     /**

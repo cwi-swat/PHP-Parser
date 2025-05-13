@@ -7,7 +7,7 @@ namespace PhpParser;
  */
 class PhpVersion {
     /** @var int Version ID in PHP_VERSION_ID format */
-    public $id;
+    public int $id;
 
     /** @var int[] Minimum versions for builtin types */
     private const BUILTIN_TYPE_VERSIONS = [
@@ -43,7 +43,7 @@ class PhpVersion {
      * if it is still under development.
      */
     public static function getNewestSupported(): self {
-        return self::fromComponents(8, 2);
+        return self::fromComponents(8, 4);
     }
 
     /**
@@ -139,5 +139,33 @@ class PhpVersion {
      */
     public function allowsInvalidOctals(): bool {
         return $this->id < 70000;
+    }
+
+    /**
+     * Whether this version allows DEL (\x7f) to occur in identifiers.
+     */
+    public function allowsDelInIdentifiers(): bool {
+        return $this->id < 70100;
+    }
+
+    /**
+     * Whether this version supports yield in expression context without parentheses.
+     */
+    public function supportsYieldWithoutParentheses(): bool {
+        return $this->id >= 70000;
+    }
+
+    /**
+     * Whether this version supports unicode escape sequences in strings.
+     */
+    public function supportsUnicodeEscapes(): bool {
+        return $this->id >= 70000;
+    }
+
+    /*
+     * Whether this version supports attributes.
+     */
+    public function supportsAttributes(): bool {
+        return $this->id >= 80000;
     }
 }

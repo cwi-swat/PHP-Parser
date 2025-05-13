@@ -7,15 +7,15 @@ use PhpParser\NodeAbstract;
 
 class StaticVar extends NodeAbstract {
     /** @var Expr\Variable Variable */
-    public $var;
+    public Expr\Variable $var;
     /** @var null|Node\Expr Default value */
-    public $default;
+    public ?Expr $default;
 
     /**
      * Constructs a static variable node.
      *
-     * @param Expr\Variable  $var         Name
-     * @param null|Node\Expr $default    Default value
+     * @param Expr\Variable $var Name
+     * @param null|Node\Expr $default Default value
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(

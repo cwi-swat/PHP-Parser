@@ -11,12 +11,12 @@ class List_ extends Expr {
     public const KIND_ARRAY = 2; // [] syntax
 
     /** @var (ArrayItem|null)[] List of items to assign to */
-    public $items;
+    public array $items;
 
     /**
      * Constructs a list() destructuring node.
      *
-     * @param (ArrayItem|null)[] $items      List of items to assign to
+     * @param (ArrayItem|null)[] $items List of items to assign to
      * @param array<string, mixed> $attributes Additional attributes
      */
     public function __construct(array $items, array $attributes = []) {

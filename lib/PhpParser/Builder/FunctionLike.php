@@ -6,13 +6,12 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 
 abstract class FunctionLike extends Declaration {
-    /** @var bool */
-    protected $returnByRef = false;
+    protected bool $returnByRef = false;
     /** @var Node\Param[] */
-    protected $params = [];
+    protected array $params = [];
 
     /** @var Node\Identifier|Node\Name|Node\ComplexType|null */
-    protected $returnType = null;
+    protected ?Node $returnType = null;
 
     /**
      * Make the function return by reference.

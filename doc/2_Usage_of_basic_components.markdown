@@ -50,7 +50,7 @@ The `createXYZ()` methods optionally accept an array of lexer options. Some use 
 customized lexer options are discussed in the [lexer documentation](component/Lexer.markdown).
 
 Subsequently, you can pass PHP code (including the opening `<?php` tag) to the `parse()` method in
-order to create a syntax tree. If a syntax error is encountered, an `PhpParser\Error` exception will
+order to create a syntax tree. If a syntax error is encountered, a `PhpParser\Error` exception will
 be thrown by default:
 
 ```php
@@ -72,7 +72,7 @@ try {
     $stmts = $parser->parse($code);
     // $stmts is an array of statement nodes
 } catch (Error $e) {
-    echo 'Parse Error: ', $e->getMessage();
+    echo 'Parse Error: ', $e->getMessage(), "\n";
 }
 ```
 
@@ -96,12 +96,17 @@ For the sample code from the previous section, this will produce the following o
 ```
 array(
     0: Stmt_Function(
+        attrGroups: array(
+        )
         byRef: false
         name: Identifier(
             name: printLine
         )
         params: array(
             0: Param(
+                attrGroups: array(
+                )
+                flags: 0
                 type: null
                 byRef: false
                 variadic: false
@@ -129,12 +134,11 @@ array(
     1: Stmt_Expression(
         expr: Expr_FuncCall(
             name: Name(
-                parts: array(
-                    0: printLine
-                )
+                name: printLine
             )
             args: array(
                 0: Arg(
+                    name: null
                     value: Scalar_String(
                         value: Hello World!!!
                     )
@@ -202,11 +206,13 @@ without the `PhpParser\Node\` prefix and `\` replaced with `_`. It also does not
 It is possible to associate custom metadata with a node using the `setAttribute()` method. This data
 can then be retrieved using `hasAttribute()`, `getAttribute()` and `getAttributes()`.
 
-By default the lexer adds the `startLine`, `endLine` and `comments` attributes. `comments` is an array
-of `PhpParser\Comment[\Doc]` instances.
+By default, the parser adds the `startLine`, `endLine`, `startTokenPos`, `endTokenPos`,
+`startFilePos`, `endFilePos` and `comments` attributes. `comments` is an array of
+`PhpParser\Comment[\Doc]` instances.
 
-The start line can also be accessed using `getStartLine()` (instead of `getAttribute('startLine')`).
-The last doc comment from the `comments` attribute can be obtained using `getDocComment()`.
+The pre-defined attributes can also be accessed using `getStartLine()` instead of
+`getAttribute('startLine')`, and so on. The last doc comment from the `comments` attribute can be
+obtained using `getDocComment()`.
 
 Pretty printer
 --------------
@@ -240,7 +246,7 @@ try {
 
     echo $code;
 } catch (Error $e) {
-    echo 'Parse Error: ', $e->getMessage();
+    echo 'Parse Error: ', $e->getMessage(), "\n";
 }
 ```
 
@@ -248,7 +254,7 @@ The above code will output:
 
     echo 'Hello ', hi\getTarget();
 
-As you can see the source code was first parsed using `PhpParser\Parser->parse()`, then changed and then
+As you can see, the source code was first parsed using `PhpParser\Parser->parse()`, then changed and then
 again converted to code using `PhpParser\PrettyPrinter\Standard->prettyPrint()`.
 
 The `prettyPrint()` method pretty prints a statements array. It is also possible to pretty print only a
@@ -343,15 +349,18 @@ i.e. before its subnodes are traversed, the latter when it is left.
 All four methods can either return the changed node or not return at all (i.e. `null`) in which
 case the current node is not changed.
 
-The `enterNode()` method can additionally return the value `NodeTraverser::DONT_TRAVERSE_CHILDREN`,
+The `enterNode()` method can additionally return the value `NodeVisitor::DONT_TRAVERSE_CHILDREN`,
 which instructs the traverser to skip all children of the current node. To furthermore prevent subsequent
-visitors from visiting the current node, `NodeTraverser::DONT_TRAVERSE_CURRENT_AND_CHILDREN` can be used instead.
+visitors from visiting the current node, `NodeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN` can be used instead.
 
-Both methods can additionally return the value `NodeTraverser::REMOVE_NODE`, in which
-case the current node will be removed from the parent array. Furthermore, it is possible to return
-an array of nodes, which will be merged into the parent array at the offset of the current node.
-I.e. if in `array(A, B, C)` the node `B` should be replaced with `array(X, Y, Z)` the result will
-be `array(A, X, Y, Z, C)`.
+Both methods can additionally return the following values:
+
+ * `NodeVisitor::STOP_TRAVERSAL`, in which case no further nodes will be visited.
+ * `NodeVisitor::REMOVE_NODE`, in which case the current node will be removed from the parent array.
+ * `NodeVisitor::REPLACE_WITH_NULL`, in which case the current node will be replaced with `null`.
+ * An array of nodes, which will be merged into the parent array at the offset of the current node.
+   I.e. if in `array(A, B, C)` the node `B` should be replaced with `array(X, Y, Z)` the result will
+   be `array(A, X, Y, Z, C)`.
 
 Instead of manually implementing the `NodeVisitor` interface you can also extend the `NodeVisitorAbstract`
 class, which will define empty default implementations for all the above methods.
@@ -386,7 +395,7 @@ declarations that contains the namespaced name instead of only the shortname tha
 Example: Converting namespaced code to pseudo namespaces
 --------------------------------------------------------
 
-A small example to understand the concept: We want to convert namespaced code to pseudo namespaces
+A small example to understand the concept: We want to convert namespaced code to pseudo namespaces,
 so it works on 5.2, i.e. names like `A\\B` should be converted to `A_B`. Note that such conversions
 are fairly complicated if you take PHP's dynamic features into account, so our conversion will
 assume that no dynamic features are used.
@@ -438,7 +447,7 @@ foreach ($files as $file) {
 }
 ```
 
-Now lets start with the main code, the `NodeVisitor\NamespaceConverter`. One thing it needs to do
+Now lets start with the main code, the `NamespaceConverter`. One thing it needs to do
 is convert `A\\B` style names to `A_B` style ones.
 
 ```php
@@ -493,7 +502,7 @@ The last thing we need to do is remove the `namespace` and `use` statements:
 ```php
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
-use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 
 class NodeVisitor_NamespaceConverter extends \PhpParser\NodeVisitorAbstract
 {
@@ -513,7 +522,7 @@ class NodeVisitor_NamespaceConverter extends \PhpParser\NodeVisitorAbstract
             return $node->stmts;
         } elseif ($node instanceof Stmt\Use_) {
             // remove use nodes altogether
-            return NodeTraverser::REMOVE_NODE;
+            return NodeVisitor::REMOVE_NODE;
         }
     }
 }

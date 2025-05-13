@@ -2,6 +2,7 @@
 
 namespace PhpParser\Builder;
 
+use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Attribute;
@@ -20,7 +21,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
     /**
      * @dataProvider provideTestDefaultValues
      */
-    public function testDefaultValues($value, $expectedValueNode) {
+    public function testDefaultValues($value, $expectedValueNode): void {
         $node = $this->createParamBuilder('test')
             ->setDefault($value)
             ->getNode()
@@ -29,7 +30,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals($expectedValueNode, $node->default);
     }
 
-    public function provideTestDefaultValues() {
+    public static function provideTestDefaultValues() {
         return [
             [
                 null,
@@ -88,7 +89,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
      * @dataProvider provideTestNullableTypes
      * @dataProvider provideTestUnionTypes
      */
-    public function testTypes($typeHint, $expectedType) {
+    public function testTypes($typeHint, $expectedType): void {
         $node = $this->createParamBuilder('test')
             ->setType($typeHint)
             ->getNode()
@@ -106,7 +107,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals($expectedType, $type);
     }
 
-    public function provideTestTypes() {
+    public static function provideTestTypes() {
         return [
             ['array', new Node\Identifier('array')],
             ['callable', new Node\Identifier('callable')],
@@ -126,7 +127,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    public function provideTestNullableTypes() {
+    public static function provideTestNullableTypes() {
         return [
             ['?array', new Node\NullableType(new Node\Identifier('array'))],
             ['?Some\Class', new Node\NullableType(new Node\Name('Some\Class'))],
@@ -141,7 +142,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    public function provideTestUnionTypes() {
+    public static function provideTestUnionTypes() {
         return [
             [
                 new Node\UnionType([
@@ -168,19 +169,19 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    public function testVoidTypeError() {
+    public function testVoidTypeError(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Parameter type cannot be void');
         $this->createParamBuilder('test')->setType('void');
     }
 
-    public function testInvalidTypeError() {
+    public function testInvalidTypeError(): void {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Type must be a string, or an instance of Name, Identifier or ComplexType');
         $this->createParamBuilder('test')->setType(new \stdClass());
     }
 
-    public function testByRef() {
+    public function testByRef(): void {
         $node = $this->createParamBuilder('test')
             ->makeByRef()
             ->getNode()
@@ -192,7 +193,7 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testVariadic() {
+    public function testVariadic(): void {
         $node = $this->createParamBuilder('test')
             ->makeVariadic()
             ->getNode()
@@ -204,7 +205,75 @@ class ParamTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testAddAttribute() {
+    public function testMakePublic(): void {
+        $node = $this->createParamBuilder('test')
+            ->makePublic()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::PUBLIC),
+            $node
+        );
+    }
+
+    public function testMakeProtected(): void {
+        $node = $this->createParamBuilder('test')
+            ->makeProtected()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::PROTECTED),
+            $node
+        );
+
+        $node = $this->createParamBuilder('test')
+            ->makeProtectedSet()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::PROTECTED_SET),
+            $node
+        );
+    }
+
+    public function testMakePrivate(): void {
+        $node = $this->createParamBuilder('test')
+            ->makePrivate()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::PRIVATE),
+            $node
+        );
+
+        $node = $this->createParamBuilder('test')
+            ->makePrivateSet()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::PRIVATE_SET),
+            $node
+        );
+    }
+
+    public function testMakeReadonly(): void {
+        $node = $this->createParamBuilder('test')
+            ->makeReadonly()
+            ->getNode()
+        ;
+
+        $this->assertEquals(
+            new Node\Param(new Expr\Variable('test'), null, null, false, false, [], Modifiers::READONLY),
+            $node
+        );
+    }
+
+    public function testAddAttribute(): void {
         $attribute = new Attribute(
             new Name('Attr'),
             [new Arg(new Int_(1), false, false, [], new Identifier('name'))]

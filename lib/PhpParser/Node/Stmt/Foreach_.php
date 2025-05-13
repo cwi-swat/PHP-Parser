@@ -6,21 +6,21 @@ use PhpParser\Node;
 
 class Foreach_ extends Node\Stmt {
     /** @var Node\Expr Expression to iterate */
-    public $expr;
+    public Node\Expr $expr;
     /** @var null|Node\Expr Variable to assign key to */
-    public $keyVar;
+    public ?Node\Expr $keyVar;
     /** @var bool Whether to assign value by reference */
-    public $byRef;
+    public bool $byRef;
     /** @var Node\Expr Variable to assign value to */
-    public $valueVar;
+    public Node\Expr $valueVar;
     /** @var Node\Stmt[] Statements */
-    public $stmts;
+    public array $stmts;
 
     /**
      * Constructs a foreach node.
      *
-     * @param Node\Expr $expr       Expression to iterate
-     * @param Node\Expr $valueVar   Variable to assign value to
+     * @param Node\Expr $expr Expression to iterate
+     * @param Node\Expr $valueVar Variable to assign value to
      * @param array{
      *     keyVar?: Node\Expr|null,
      *     byRef?: bool,

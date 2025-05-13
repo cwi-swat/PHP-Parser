@@ -7,38 +7,33 @@ use PhpParser\Node\Scalar;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
 
-abstract class ParserTest extends \PHPUnit\Framework\TestCase {
+abstract class ParserTestAbstract extends \PHPUnit\Framework\TestCase {
     /** @returns Parser */
     abstract protected function getParser(Lexer $lexer);
 
-    public function testParserThrowsSyntaxError() {
+    public function testParserThrowsSyntaxError(): void {
         $this->expectException(Error::class);
         $this->expectExceptionMessage('Syntax error, unexpected EOF on line 1');
         $parser = $this->getParser(new Lexer());
         $parser->parse('<?php foo');
     }
 
-    public function testParserThrowsSpecialError() {
+    public function testParserThrowsSpecialError(): void {
         $this->expectException(Error::class);
         $this->expectExceptionMessage('Cannot use foo as self because \'self\' is a special class name on line 1');
         $parser = $this->getParser(new Lexer());
         $parser->parse('<?php use foo as self;');
     }
 
-    public function testParserThrowsLexerError() {
+    public function testParserThrowsLexerError(): void {
         $this->expectException(Error::class);
         $this->expectExceptionMessage('Unterminated comment on line 1');
         $parser = $this->getParser(new Lexer());
         $parser->parse('<?php /*');
     }
 
-    public function testAttributeAssignment() {
-        $lexer = new Lexer([
-            'usedAttributes' => [
-                'comments', 'startLine', 'endLine',
-                'startTokenPos', 'endTokenPos',
-            ]
-        ]);
+    public function testAttributeAssignment(): void {
+        $lexer = new Lexer();
 
         $code = <<<'EOC'
 <?php
@@ -66,6 +61,8 @@ EOC;
             'endLine' => 7,
             'startTokenPos' => 3,
             'endTokenPos' => 21,
+            'startFilePos' => 25,
+            'endFilePos' => 86,
         ], $fn->getAttributes());
 
         $param = $fn->params[0];
@@ -75,6 +72,8 @@ EOC;
             'endLine' => 3,
             'startTokenPos' => 7,
             'endTokenPos' => 7,
+            'startFilePos' => 39,
+            'endFilePos' => 40,
         ], $param->getAttributes());
 
         /** @var Stmt\Echo_ $echo */
@@ -91,6 +90,8 @@ EOC;
             'endLine' => 6,
             'startTokenPos' => 16,
             'endTokenPos' => 19,
+            'startFilePos' => 77,
+            'endFilePos' => 84,
         ], $echo->getAttributes());
 
         /** @var \PhpParser\Node\Expr\Variable $var */
@@ -101,10 +102,12 @@ EOC;
             'endLine' => 6,
             'startTokenPos' => 18,
             'endTokenPos' => 18,
+            'startFilePos' => 82,
+            'endFilePos' => 83,
         ], $var->getAttributes());
     }
 
-    public function testInvalidToken() {
+    public function testInvalidToken(): void {
         $this->expectException(\RangeException::class);
         $this->expectExceptionMessage('The lexer returned an invalid token (id=999, value=foobar)');
         $lexer = new InvalidTokenLexer();
@@ -115,7 +118,7 @@ EOC;
     /**
      * @dataProvider provideTestExtraAttributes
      */
-    public function testExtraAttributes($code, $expectedAttributes) {
+    public function testExtraAttributes($code, $expectedAttributes): void {
         $parser = $this->getParser(new Lexer\Emulative());
         $stmts = $parser->parse("<?php $code;");
         $node = $stmts[0] instanceof Stmt\Expression ? $stmts[0]->expr : $stmts[0];
@@ -125,7 +128,7 @@ EOC;
         }
     }
 
-    public function provideTestExtraAttributes() {
+    public static function provideTestExtraAttributes() {
         return [
             ['0', ['kind' => Scalar\Int_::KIND_DEC]],
             ['9', ['kind' => Scalar\Int_::KIND_DEC]],
@@ -177,7 +180,7 @@ EOC;
         ];
     }
 
-    public function testListKindAttribute() {
+    public function testListKindAttribute(): void {
         $parser = $this->getParser(new Lexer\Emulative());
         $stmts = $parser->parse('<?php list(list($x)) = $y; [[$x]] = $y;');
         $this->assertSame($stmts[0]->expr->var->getAttribute('kind'), Expr\List_::KIND_LIST);
@@ -186,16 +189,25 @@ EOC;
         $this->assertSame($stmts[1]->expr->var->items[0]->value->getAttribute('kind'), Expr\List_::KIND_ARRAY);
     }
 
-    public function testGetLexer() {
+    public function testGetTokens(): void {
         $lexer = new Lexer();
         $parser = $this->getParser($lexer);
-        $this->assertSame($lexer, $parser->getLexer());
+        $parser->parse('<?php echo "Foo";');
+        $this->assertEquals([
+            new Token(\T_OPEN_TAG, '<?php ', 1, 0),
+            new Token(\T_ECHO, 'echo', 1, 6),
+            new Token(\T_WHITESPACE, ' ', 1, 10),
+            new Token(\T_CONSTANT_ENCAPSED_STRING, '"Foo"', 1, 11),
+            new Token(ord(';'), ';', 1, 16),
+            new Token(0, "\0", 1, 17),
+        ], $parser->getTokens());
     }
 }
 
 class InvalidTokenLexer extends Lexer {
-    public function getNextToken(&$value = null, &$startAttributes = null, &$endAttributes = null): int {
-        $value = 'foobar';
-        return 999;
+    public function tokenize(string $code, ?ErrorHandler $errorHandler = null): array {
+        return [
+            new Token(999, 'foobar', 42),
+        ];
     }
 }
