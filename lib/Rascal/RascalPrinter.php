@@ -1149,6 +1149,8 @@ class RascalPrinter extends BasePrinter
 
     public function pprintParam(\PhpParser\Node\Param $node)
     {
+        // TODO: Add support for property hoooks
+
         $type = $this->formatType($node->type);
         
         $varName = $node->var->name;
@@ -1173,14 +1175,20 @@ class RascalPrinter extends BasePrinter
             $variadic = "true";
 
         $modifiers = array();
-        if ($node->flags & \PhpParser\Modifiers::PUBLIC)
+        if ($node->isPublic())
             $modifiers[] = "\\public()";
-        if ($node->flags & \PhpParser\Modifiers::PROTECTED)
+        if ($node->isProtected())
             $modifiers[] = "protected()";
-        if ($node->flags & \PhpParser\Modifiers::PRIVATE)
+        if ($node->isPrivate())
             $modifiers[] = "\\private()";
-        if ($node->flags & \PhpParser\Modifiers::READONLY)
+        if ($node->isReadOnly())
             $modifiers[] = "readonly()";
+        if ($node->isPublicSet())
+            $modifiers[] = "publicSet()";
+        if ($node->isPrivateSet())
+            $modifiers[] = "privateSet()";
+        if ($node->isProtectedSet())
+            $modifiers[] = "protectedSet()";
         $mods = implode(",", $modifiers);
 
         $attrs = array();
@@ -1422,26 +1430,24 @@ class RascalPrinter extends BasePrinter
             $modifiers[] = "protected()";
         if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_PRIVATE)
             $modifiers[] = "\\private()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_ABSTRACT)
+        if ($node->isAbstract())
             $modifiers[] = "abstract()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_FINAL)
+        if ($node->isFinal())
             $modifiers[] = "final()";
+        if ($node->isReadOnly())
+            $modifiers[] = "readonly()";
         if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
             $modifiers[] = "static()";
 
-        if (null !== $node->name) {
-            $fragment = "class(\"" . $node->name . "\",{" . implode(",", $modifiers) . "}," . $extends . ",";
-            $fragment .= "[" . implode(",", $implements) . "],[";
-            $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
-            $fragment .= $this->annotateASTNode($node);
-            $fragment .= ")";        
-        } else {
+        if ($node->isAnonymous()) {
             $fragment = "anonymousClass(" . $extends . ",";
-            $fragment .= "[" . implode(",", $implements) . "],[";
-            $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
-            $fragment .= $this->annotateASTNode($node);
-            $fragment .= ")";        
+        } else {
+            $fragment = "class(\"" . $node->name . "\",{" . implode(",", $modifiers) . "}," . $extends . ",";
         }
+        $fragment .= "[" . implode(",", $implements) . "],[";
+        $fragment .= implode(",", $stmts) . "],[" . implode(",",$attrs) . "]";
+        $fragment .= $this->annotateASTNode($node);
+        $fragment .= ")";        
 
         $fragment = "classDef(" . $fragment;
         $priorDecl = $this->addDeclarations;
@@ -1476,7 +1482,9 @@ class RascalPrinter extends BasePrinter
         if ($node->flags & \PhpParser\Node\Stmt\Class_::VISIBILITY_MODIFIER_MASK == 0)
             $modifiers[] = "\\public()";
 
-        $fragment = sprintf("constCI([%s],{%s},[%s]", implode(",", $consts), implode(",", $modifiers), implode(",", $attrs));
+        $type = $this->formatType($node->type);
+        
+        $fragment = sprintf("classConst([%s],{%s},[%s],%s", implode(",", $consts), implode(",", $modifiers), implode(",", $attrs), $type);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1501,21 +1509,23 @@ class RascalPrinter extends BasePrinter
             $params[] = $this->pprint($param);
 
         $modifiers = array();
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_PUBLIC)
+        if ($node->isPublic())
             $modifiers[] = "\\public()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_PROTECTED)
+        if ($node->isProtected())
             $modifiers[] = "protected()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_PRIVATE)
+        if ($node->isPrivate())
             $modifiers[] = "\\private()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_ABSTRACT)
+        if ($node->isAbstract())
             $modifiers[] = "abstract()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_FINAL)
+        if ($node->isFinal())
             $modifiers[] = "final()";
-        if ($node->flags & \PhpParser\Node\Stmt\Class_::MODIFIER_STATIC)
+        if ($node->isStatic())
             $modifiers[] = "static()";
+        if ($node->isMagic())
+            $modifiers[] = "magic()";
 
         $byRef = "false";
-        if ($node->byRef)
+        if ($node->returnsByRef())
             $byRef = "true";
 
         $returnType = $this->formatType($node->returnType);
@@ -2068,18 +2078,6 @@ class RascalPrinter extends BasePrinter
         return $fragment;
     }
 
-    public function pprintThrowStmt(\PhpParser\Node\Stmt\Throw_ $node)
-    {
-        $fragment = "exprstmt(";
-        $fragment .= "\\throw(" . $this->pprint($node->expr);
-        $fragment .= $this->annotateASTNode($node);
-        $fragment .= ")";
-        $fragment .= $this->annotateASTNode($node);
-        $fragment .= ")";
-
-        return $fragment;
-    }
-
     public function pprintTraitStmt(\PhpParser\Node\Stmt\Trait_ $node)
     {
         $body = array();
@@ -2314,14 +2312,9 @@ class RascalPrinter extends BasePrinter
      */
     public function implodeName($node)
     {
-        if (is_string($node))
-            $fragment = $node;
-        else if (is_array($node->parts))
-            $fragment = implode("\\\\", $node->parts);
-        else
-            $fragment = $node->parts;
-
-        return $fragment;
+        // NOTE: Remove this function later. Names are now stored in
+        // imploded form, so we no longer need to implode them here.
+        return $node->toString();
     }
 
     public function pprintEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node)
