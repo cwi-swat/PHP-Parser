@@ -114,7 +114,7 @@ if (! $relativeLocations && ! $usesProjectLoc && file_exists($file)) {
 
 $resolveNames = isset($opts['resolveNames']) ? true : false;
 
-$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+$parser = (new ParserFactory())->createForVersion(\PhpParser\PhpVersion::getNewestSupported());
 $printer = new RascalPrinter($file, $enableLocations, $relativeLocations, $uniqueIds, $prefix, $projectName, $addPHPDocs, $addDeclarations);
 
 // First try parsing with the newest supported version of the parser
