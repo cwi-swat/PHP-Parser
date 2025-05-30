@@ -62,8 +62,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->enterGotoStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Static_) {
 			return $this->visitor->enterStaticStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\Expr) {
-			return $this->visitor->enterExprStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Block) {
 			return $this->visitor->enterBlockStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Return_) {
@@ -424,8 +422,6 @@ class UsefulVisitor extends \PhpParser\NodeVisitorAbstract
 			return $this->visitor->leaveGotoStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Static_) {
 			return $this->visitor->leaveStaticStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\Expr) {
-			return $this->visitor->leaveExprStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Block) {
 			return $this->visitor->leaveBlockStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Return_) {

@@ -55,8 +55,6 @@ class BasePrinter implements IPrinter
 			return $this->pprintGotoStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Static_) {
 			return $this->pprintStaticStmt($node);
-		} elseif ($node instanceof \PhpParser\Node\Stmt\Expr) {
-			return $this->pprintExprStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Block) {
 			return $this->pprintBlockStmt($node);
 		} elseif ($node instanceof \PhpParser\Node\Stmt\Return_) {
@@ -462,10 +460,6 @@ class BasePrinter implements IPrinter
 		return "";
 	}
 	public function pprintStaticStmt(\PhpParser\Node\Stmt\Static_ $node)
-	{
-		return "";
-	}
-	public function pprintExprStmt(\PhpParser\Node\Stmt\Expr $node)
 	{
 		return "";
 	}

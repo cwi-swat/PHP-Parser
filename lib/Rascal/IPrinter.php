@@ -29,7 +29,6 @@ interface IPrinter
 	public function pprintDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function pprintGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function pprintStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
-	public function pprintExprStmt(\PhpParser\Node\Stmt\Expr $node);
 	public function pprintBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function pprintReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function pprintTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);

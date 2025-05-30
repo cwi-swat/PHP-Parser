@@ -103,10 +103,6 @@ class BaseVisitor implements IVisitor
 	{
 		return null;
 	}
-	public function enterExprStmt(\PhpParser\Node\Stmt\Expr $node)
-	{
-		return null;
-	}
 	public function enterBlockStmt(\PhpParser\Node\Stmt\Block $node)
 	{
 		return null;
@@ -817,10 +813,6 @@ class BaseVisitor implements IVisitor
 		return null;
 	}
 	public function leaveStaticStmt(\PhpParser\Node\Stmt\Static_ $node)
-	{
-		return null;
-	}
-	public function leaveExprStmt(\PhpParser\Node\Stmt\Expr $node)
 	{
 		return null;
 	}

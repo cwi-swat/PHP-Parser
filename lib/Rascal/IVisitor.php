@@ -28,7 +28,6 @@ interface IVisitor
 	public function enterDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function enterGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function enterStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
-	public function enterExprStmt(\PhpParser\Node\Stmt\Expr $node);
 	public function enterBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function enterReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function enterTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);
@@ -208,7 +207,6 @@ interface IVisitor
 	public function leaveDeclareDeclareStmt(\PhpParser\Node\Stmt\DeclareDeclare $node);
 	public function leaveGotoStmt(\PhpParser\Node\Stmt\Goto_ $node);
 	public function leaveStaticStmt(\PhpParser\Node\Stmt\Static_ $node);
-	public function leaveExprStmt(\PhpParser\Node\Stmt\Expr $node);
 	public function leaveBlockStmt(\PhpParser\Node\Stmt\Block $node);
 	public function leaveReturnStmt(\PhpParser\Node\Stmt\Return_ $node);
 	public function leaveTryCatchStmt(\PhpParser\Node\Stmt\TryCatch $node);
