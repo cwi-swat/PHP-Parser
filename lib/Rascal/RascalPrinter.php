@@ -86,7 +86,7 @@ class RascalPrinter extends BasePrinter
                 }
                 return 'intersectionType([' . implode(",", $types) . '])';
             } elseif ($node instanceof \PhpParser\Node\Identifier) {
-                return 'regularType(name("' . $node . '"))';
+                return 'regularType(name("' . $node->toString() . '"))';
             } else {
                 return "regularType(" . $this->pprint($node) . ")";
             }
@@ -251,7 +251,7 @@ class RascalPrinter extends BasePrinter
             $unpack = "false";
 
         if (null !== $node->name)
-            $paramName = "someName(" . $this->pprint($node->name) . ")";
+            $paramName = "someName(name(\"" . $this->pprint($node->name) . "\"))";
         else
             $paramName = "noName()";
 
@@ -669,13 +669,19 @@ class RascalPrinter extends BasePrinter
     }
     public function pprintClassConstFetchExpr(\PhpParser\Node\Expr\ClassConstFetch $node)
     {
-        $name = $this->pprint($node->class);
+        $className = $this->pprint($node->class);
         if ($node->class instanceof \PhpParser\Node\Name)
-            $name = "name({$name})";
+            $className = "name({$className})";
         else
-            $name = "expr({$name})";
+            $className = "expr({$className})";
 
-        $fragment = "fetchClassConst(" . $name . ",\"" . $this->pprint($node->name) . "\"";
+        $constName = $this->pprint($node->name);
+        if ($node->name instanceof \PhpParser\Node\Identifier)
+            $constName = sprintf('name(name("%s"))', $constName);
+        else
+            $constName = "expr({$constName})";
+
+        $fragment = sprintf("fetchClassConst(%s,%s", $className, $constName);
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1468,12 +1474,13 @@ class RascalPrinter extends BasePrinter
             $xtypes[] = $this->pprint($xtype);
         }
 
-        $varName = $node->var->name;
-        if (!\is_string($varName)) {
-            throw new \Exception("Catch variable name must be given as string, not more complex expressions");
+        if (null === $node->var) {
+            $varName = "noExpr()";
+        } else {
+            $varName = sprintf("someExpr(%s)", $this->pprint($node->var));
         }
 
-        $fragment = sprintf("\\catch([%s],\"%s\",[%s]", implode(",",$xtypes), $varName, implode(",", $body));
+        $fragment = sprintf("\\catch([%s],%s,[%s]", implode(",",$xtypes), $varName, implode(",", $body));
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1620,7 +1627,7 @@ class RascalPrinter extends BasePrinter
             $attrs[] = $this->pprint($attr);
         }
     
-        $fragment = "method(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "], " . $returnType . ",[" . implode(",", $attrs) . "]";
+        $fragment = "method(\"" . $this->pprint($node->name) . "\",{" . implode(",", $modifiers) . "}," . $byRef . ",[" . implode(",", $params) . "],[" . implode(",", $body) . "]," . $returnType . ",[" . implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -2637,9 +2644,8 @@ class RascalPrinter extends BasePrinter
 
     public function pprintUnionType(\PhpParser\Node\UnionType $node)
     {
-        $fragment = "";
-
-        return $fragment;
+        // NOTE: We handle printing of types elsewhere, so this is just the default logic.
+        throw new Exception("NullableType nodes should not be handled directly");
     }
 
     public function pprintVariadicPlaceholder(\PhpParser\Node\VariadicPlaceholder $node)
@@ -2653,8 +2659,7 @@ class RascalPrinter extends BasePrinter
 
     public function pprintIntersectionType(\PhpParser\Node\IntersectionType $node)
     {
-        $fragment = "";
-
-        return $fragment;
-    }
+        // NOTE: We handle printing of types elsewhere, so this is just the default logic.
+         throw new Exception("NullableType nodes should not be handled directly");
+   }
 }
