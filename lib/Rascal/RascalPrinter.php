@@ -1179,18 +1179,17 @@ class RascalPrinter extends BasePrinter
 
     public function pprintFullyQualifiedName(\PhpParser\Node\Name\FullyQualified $node)
     {
-        return "\\" . $this->pprintName($node);
+        return $this->pprintName($node);
     }
 
     public function pprintRelativeName(\PhpParser\Node\Name\Relative $node)
     {
-        return "namespace\\\\" . $this->pprintName($node);
+       return $this->pprintName($node);
     }
 
     public function pprintName(\PhpParser\Node\Name $node)
     {
-        $fragment = $this->implodeName($node);
-        $fragment = "name(\"" . $fragment . "\"";
+        $fragment = "name(\"" . addslashes($node->toCodeString()) . "\"";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -1642,7 +1641,7 @@ class RascalPrinter extends BasePrinter
             $attrs[] = $this->pprint($attr);
         }
 
-        $fragment = "const([" . implode(",", $consts) . ",[" . implode(",", $attrs) . "]";
+        $fragment = "const([" . implode(",", $consts) . "],[" . implode(",", $attrs) . "]";
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";
 
@@ -2015,7 +2014,7 @@ class RascalPrinter extends BasePrinter
         // namespace { global stuff }
         $priorNamespace = $this->currentNamespace;
         if (null !== $node->name) {
-            $this->currentNamespace = $this->implodeName($node->name);
+            $this->currentNamespace = $node->name->toCodeString();
         } else {
             $this->currentNamespace = "";
         }
@@ -2433,17 +2432,6 @@ class RascalPrinter extends BasePrinter
     public function pprintVarLikeIdentifier(\PhpParser\Node\VarLikeIdentifier $node)
     {
          return $node->name;       
-    }
-
-    /**
-     * @param string|\PhpParser\Node\Name $node
-     * @return string
-     */
-    public function implodeName($node)
-    {
-        // NOTE: Remove this function later. Names are now stored in
-        // imploded form, so we no longer need to implode them here.
-        return $node->toString();
     }
 
     public function pprintEnumCaseStmt(\PhpParser\Node\Stmt\EnumCase $node)
