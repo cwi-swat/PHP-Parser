@@ -1152,18 +1152,23 @@ class RascalPrinter extends BasePrinter
         if ($node->isFinal())
             $modifiers[] = "final()";
 
-        $byRef = $node->returnsByRef();
+        if (false == $node->returnsByRef())
+            $byRef = "false";
+        else
+            $byRef = "true";
 
         $params = array();
         foreach ($node->getParams() as $param)
             $params[] = $this->pprint($param);
 
         $body = array();
-        if ($node->body instanceof Expr) {
-            $body[] = $this->pprint($node->body);
-        } elseif(null !== $node->body) {
-            foreach ($node->body as $stmt) {
-                $body[] = $this->pprint($stmt);
+        if (null !== $node->body) {
+            if ($node->body instanceof \PhpParser\Node\Expr) {
+                $body[] = $this->pprint($node->body);
+            } else {
+                foreach ($node->body as $stmt) {
+                    $body[] = $this->pprint($stmt);
+                }
             }
         }
 
@@ -1172,10 +1177,10 @@ class RascalPrinter extends BasePrinter
             $attrs[] = $this->pprint($attr);
         }
 
-        if ($node->body instanceof Expr) {
-            $fragment = sprintf("propertyHookExpr(\"%s\",[%s],%s,[%s],%s,[%s]", $name, $modifiers, $byRef, implode(",",$params),$body[0],implode(",",$attrs));
+        if ($node->body instanceof \PhpParser\Node\Expr) {
+            $fragment = sprintf("propertyHookExpr(\"%s\",{%s},%s,[%s],%s,[%s]", $name, implode(",",$modifiers), $byRef, implode(",",$params),$body[0],implode(",",$attrs));
         } else {
-            $fragment = sprintf("propertyHookStmts(\"%s\",[%s],%s,[%s],[%s],[%s]", $name, $modifiers, $byRef, implode(",",$params),implode(",",$body),implode(",",$attrs));
+            $fragment = sprintf("propertyHookStmts(\"%s\",{%s},%s,[%s],[%s],[%s]", $name, implode(",",$modifiers), $byRef, implode(",",$params),implode(",",$body),implode(",",$attrs));
         }
         $fragment .= $this->annotateASTNode($node);
         $fragment .= ")";    
@@ -1269,7 +1274,7 @@ class RascalPrinter extends BasePrinter
     public function pprintFloatScalar(\PhpParser\Node\Scalar\Float_ $node)
     {
     	if (is_infinite($node->value)) {
-	        $fragment = "fetchConst(name(\"INF\"))";
+	        $fragment = "fetchConst(name(\"INF\")";
 	    } else {
 	    	$fragment = "float(" . sprintf('%f', $node->value) . ")";
 	        $fragment = "scalar(" . $fragment;
@@ -2313,7 +2318,7 @@ class RascalPrinter extends BasePrinter
             $trait = "noName()";
         }
 
-        $newMethod = $this->pprint($node->method) . "\"";
+        $newMethod = $this->pprint($node->method);
 
         $fragment = "traitPrecedence(" . $trait . ",\"" . $newMethod . "\",{" . implode(",", $insteadOf) . "}";
         $fragment .= $this->annotateASTNode($node);
